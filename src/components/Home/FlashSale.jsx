@@ -1,5 +1,9 @@
 import React from "react";
+<<<<<<< Updated upstream
 import ProductCard from "../shared/ProductCard";
+=======
+import ProductCard from "./ProductCard";
+>>>>>>> Stashed changes
 
 const FlashSale = () => {
   const products = [

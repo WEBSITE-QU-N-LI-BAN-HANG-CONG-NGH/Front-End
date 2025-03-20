@@ -5,7 +5,11 @@ import FlashSale from "./FlashSale";
 import CustomBuilds from "./CustomBuilds";
 import Desktops from "./Desktops";
 import GamingMonitors from "./GamingMonitors";
+<<<<<<< Updated upstream
 import Features from "./Features";
+=======
+import Features from "../shared/Features";
+>>>>>>> Stashed changes
 import Footer from "../shared/Footer";
 import TabMenu from "./TabMenu";
 import Slider from "./Slider";
@@ -88,7 +92,11 @@ const Home1 = () => {
   ];
 
   return (
+<<<<<<< Updated upstream
     <div className="flex overflow-hidden flex-col pt-4 bg-white">
+=======
+    <div className="flex overflow-hidden flex-col pt-3 bg-white">
+>>>>>>> Stashed changes
       <Header />
 
       <div className="flex flex-col items-start items-center self-end mt-3 w-full max-w-[1652px] max-md:mr-2 max-md:max-w-full">

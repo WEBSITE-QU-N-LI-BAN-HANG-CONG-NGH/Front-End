@@ -1,6 +1,10 @@
 import React from "react";
 import CategoryBanner from "../shared/CategoryBanner";
+<<<<<<< Updated upstream
 import ProductCard from "../shared/ProductCard";
+=======
+import ProductCard from "./ProductCard";
+>>>>>>> Stashed changes
 
 const GamingMonitors = () => {
   const products = [
