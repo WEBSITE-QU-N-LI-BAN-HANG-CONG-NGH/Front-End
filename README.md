@@ -1,4 +1,4 @@
-Link drive: https://drive.google.com/drive/folders/13NGyF3eiGrakUE6kUF_y0E1Dqax7ip7W?usp=sharing
+Link drive dự phòng: https://drive.google.com/file/d/13wG8h2jdRnOuarKbVqvwxwZHgtBpwxHR/view?usp=sharing
 (K up mấy cái .next, modules lên nên chắc nó hong chạy dc, update thêm link phụ :P)
 
 T có sửa code lại cho đơn giản hơn gòi á.
