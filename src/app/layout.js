@@ -2,6 +2,13 @@
 import { useState } from 'react'
 import Home1 from '../components/Home/Home1'
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+import Catalog1 from '../components/Catalog/Catalog1'
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 =======
 import Catalog1 from '../components/Catalog/Catalog1'
 >>>>>>> Stashed changes
@@ -23,10 +30,19 @@ function App() {
     <>
       <html>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
           <body>
             <Home1/>
           </body>
 =======
+<<<<<<< Updated upstream
+=======
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
         <body>
           <nav>
             {/* Navigation buttons */}
@@ -36,6 +52,12 @@ function App() {
           {/* Render the selected page */}
           {renderPage()}
         </body>
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 >>>>>>> Stashed changes
       </html>
     </>

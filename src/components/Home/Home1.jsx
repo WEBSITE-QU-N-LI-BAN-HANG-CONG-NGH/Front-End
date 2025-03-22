@@ -6,9 +6,19 @@ import CustomBuilds from "./CustomBuilds";
 import Desktops from "./Desktops";
 import GamingMonitors from "./GamingMonitors";
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 import Features from "./Features";
 =======
 import Features from "../shared/Features";
+>>>>>>> Stashed changes
+<<<<<<< Updated upstream
+=======
+=======
+import Features from "../shared/Features";
+>>>>>>> Stashed changes
 >>>>>>> Stashed changes
 import Footer from "../shared/Footer";
 import TabMenu from "./TabMenu";
@@ -93,9 +103,19 @@ const Home1 = () => {
 
   return (
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
     <div className="flex overflow-hidden flex-col pt-4 bg-white">
 =======
     <div className="flex overflow-hidden flex-col pt-3 bg-white">
+>>>>>>> Stashed changes
+<<<<<<< Updated upstream
+=======
+=======
+    <div className="flex overflow-hidden flex-col pt-3 bg-white">
+>>>>>>> Stashed changes
 >>>>>>> Stashed changes
       <Header />
 

@@ -1,9 +1,19 @@
 import React from "react";
 import CategoryBanner from "../shared/CategoryBanner";
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 import ProductCard from "../shared/ProductCard";
 =======
 import ProductCard from "./ProductCard";
+>>>>>>> Stashed changes
+<<<<<<< Updated upstream
+=======
+=======
+import ProductCard from "./ProductCard";
+>>>>>>> Stashed changes
 >>>>>>> Stashed changes
 
 const Desktops = () => {
