@@ -1,6 +1,6 @@
 import React from "react";
-import CategoryBanner from "../shared/CategoryBanner";
-import ProductCard from "../shared/ProductCard";
+import CategoryBanner from "./CategoryBanner";
+import ProductCard from "./ProductCard";
 
 const Desktops = () => {
   const products = [

@@ -70,7 +70,7 @@ const Header = () => {
 
 
           <button
-           className="gap-2.5 self-stretch py-0.5 pr-5 pl-7 my-auto text-blue-600 border-2 border-solid border-[color:var(--Color---3,#0156FF)] min-h-[25px] rounded-[50px] max-md:pl-5 hover:bg-blue-600 hover:text-white transition-colors">
+           className="gap-2.5 self-stretch py-0.5 pr-5 pl-6 my-auto text-blue-600 border-2 border-solid border-[color:var(--Color---3,#0156FF)] min-h-[25px] rounded-[50px] max-md:pl-5 hover:bg-blue-600 hover:text-white transition-colors">
               Đăng nhập
           </button>
 
