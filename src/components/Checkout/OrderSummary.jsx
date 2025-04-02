@@ -23,7 +23,7 @@ const OrderSummary = () => {
         <div className="flex flex-col gap-5">
           <article className="flex gap-4">
             <img
-              src="https://cdn.builder.io/api/v1/image/assets/TEMP/47a13fc85a6f744d9fe84e0f2b2c5819935a99db"
+              src="/Placeholder1.png"
               alt="Product"
               className="h-[62px] w-[62px]"
             />
@@ -40,7 +40,7 @@ const OrderSummary = () => {
           </article>
           <article className="flex gap-4">
             <img
-              src="https://cdn.builder.io/api/v1/image/assets/TEMP/9d420497c4642db33c8ecd88967b28c150339105"
+              src="/Placeholder1.png"
               alt="Product"
               className="h-[62px] w-[62px]"
             />

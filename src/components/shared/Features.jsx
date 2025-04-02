@@ -8,7 +8,7 @@ const Features = () => {
           <div className="w-[33%] max-md:ml-0 max-md:w-full">
             <div className="flex flex-col grow items-center text-center text-black max-md:mt-10">
               <img
-                src="https://cdn.builder.io/api/v1/image/assets/TEMP/8154905fe520d1fcb48ee63f2e6af5ed6758e70fea632e4f0245c94ed6cd305d?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+                src="/Features1.svg"
                 className="object-contain aspect-square w-[65px]"
                 alt="Product Support"
               />
@@ -26,7 +26,7 @@ const Features = () => {
           <div className="ml-5 w-[33%] max-md:ml-0 max-md:w-full">
             <div className="flex flex-col grow items-center text-center text-black max-md:mt-10">
               <img
-                src="https://cdn.builder.io/api/v1/image/assets/TEMP/43611754d46ecc2e28442aff3456b730f50f5a4ef4113bfa75d07e5ef88b9f9f?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+                src="/Features2.svg"
                 className="object-contain aspect-square w-[65px]"
                 alt="Personal Account"
               />
@@ -44,7 +44,7 @@ const Features = () => {
           <div className="ml-5 w-[33%] max-md:ml-0 max-md:w-full">
             <div className="flex flex-col grow items-center text-center text-black max-md:mt-10">
               <img
-                src="https://cdn.builder.io/api/v1/image/assets/TEMP/fa06bc39263095be2be8d54e475356775ca62772349639aecfe0cca73373b1e7?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+                src="/Features3.svg"
                 className="object-contain aspect-square w-[65px]"
                 alt="Amazing Savings"
               />

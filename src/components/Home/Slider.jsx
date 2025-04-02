@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 
 const Slider = () => {
   const images = [
-    "https://cdn.builder.io/api/v1/image/assets/TEMP/de1a1c17200c70f4d94462b7b1268d15ce0023ba49faac1b3a8643192436aeb4?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088",
-    "https://cdn.builder.io/api/v1/image/assets/TEMP/de1a1c17200c70f4d94462b7b1268d15ce0023ba49faac1b3a8643192436aeb4?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088", // Replace with your own image
-    "https://cdn.builder.io/api/v1/image/assets/TEMP/de1a1c17200c70f4d94462b7b1268d15ce0023ba49faac1b3a8643192436aeb4?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088", // Replace with your own image
+    "/Slider.png",
+    "/Slider.png", // Replace with your own image
+    "/Slider.png", // Replace with your own image
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);

@@ -4,17 +4,6 @@ const Header = () => {
   return (
     <>
       <div className="flex flex-col self-center max-w-full font-semibold text-center w-[1400px]">
-        <div className="flex gap-2 self-end text-xs text-white">
-          <div className="grow my-auto">Call Us: (00) 1234 5678</div>
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets/TEMP/6b0169b1bde236b45476910ad3c76637413217134afade760401139dc8f27ebf?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
-            className="object-contain shrink-0 w-5 aspect-[1.11]"
-          />
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets/TEMP/138ff047db8838eb3ff441aacdb7e870283f33a085b52ea70436f11511c715e1?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
-            className="object-contain shrink-0 w-5 aspect-[1.11]"
-          />
-        </div>
         <div className="flex flex-wrap gap-9 justify-center items-center mt-8 w-full text-sm text-black max-md:mr-2 max-md:max-w-full">
         <div className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300">Laptops</div>
         <div className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300">Máy tính bàn</div>
@@ -57,7 +46,7 @@ const Header = () => {
             onClick={() => alert("Shopping Cart clicked!")}
           >
             <img
-              src="https://cdn.builder.io/api/v1/image/assets/TEMP/1b2d77bfb1312800542195df4d078e0c86bbf490e47ec36179f8927c2116c961?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+              src="/CartIcon.png"
               className="object-contain shrink-0 self-start aspect-[1.18] w-[33px]"
               alt="Cart Icon"
             />
@@ -77,7 +66,7 @@ const Header = () => {
         </div>
       </div>
       <img
-        src="https://cdn.builder.io/api/v1/image/assets/TEMP/56b634f95247e28ee95559d736a262dc44fe3135f7c2bb22e02db925d1e4ac9d?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+        src="/Bar.svg"
         className="object-contain mt-5 w-full aspect-[1000] stroke-[1px] stroke-gray-300 max-md:max-w-full"
       />
     </>

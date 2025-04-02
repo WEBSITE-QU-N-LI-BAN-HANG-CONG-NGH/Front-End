@@ -16,7 +16,7 @@ const ShoppingCart1 = () => {
       price: "48.590.000đ",
       originalPrice: "52.990.000đ",
       image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbIwiKbRMRJkaJBTn7kU1Atnt_Qd6exNbacQ&s",
+        "/Placeholder1.png",
     },
     {
       id: 2,
@@ -24,7 +24,7 @@ const ShoppingCart1 = () => {
       price: "29.490.000đ",
       originalPrice: "31.990.000đ",
       image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSbIwiKbRMRJkaJBTn7kU1Atnt_Qd6exNbacQ&s",
+        "/Placeholder1.png",
     },
   ];
 

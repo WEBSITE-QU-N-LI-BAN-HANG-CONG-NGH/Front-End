@@ -35,7 +35,7 @@ const SortControl = () => {
         <span className="text-[#A2A6B0]">Sort By: </span>Position
       </span>
       <img
-        src="https://cdn.builder.io/api/v1/image/assets/TEMP/192ec7429d9ddfcdcddd91c42b8b6a64688abeac?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+        src="/DownArrow.svg"
         className="object-contain shrink-0 my-auto w-4 aspect-square"
         alt="Sort dropdown indicator"
       />
@@ -58,7 +58,7 @@ const DisplayControl = () => {
           <span className="text-[#A2A6B0]">Show: </span>35 per page
         </span>
         <img
-          src="https://cdn.builder.io/api/v1/image/assets/TEMP/411695f9246914b6d1eeda4e44d91e2c1bd75c0d?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+          src="/DownArrow.svg"
           className="object-contain shrink-0 my-auto w-4 aspect-square"
           alt="Display options dropdown indicator"
         />
@@ -70,7 +70,7 @@ const DisplayControl = () => {
 const ViewToggle = () => {
   return (
     <img
-      src="https://cdn.builder.io/api/v1/image/assets/TEMP/04de518dd7b98d4349c0881a5d28f0f5cbee260a?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+      src="/Grid.svg"
       className="object-contain shrink-0 ml-0.5 max-w-full aspect-[2.2] w-[110px]"
       alt="Toggle view mode"
       role="button"

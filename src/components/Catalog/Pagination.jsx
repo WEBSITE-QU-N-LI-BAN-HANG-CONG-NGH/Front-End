@@ -11,7 +11,7 @@ function Pagination() {
       <ul className="flex flex-row gap-2 items-center p-0 m-0">
         <li>
           <a
-            className="builder-d8fa34eb36e24fdbbb430299dca64837 flex gap-1 items-center px-3 py-2 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
+            className="flex gap-1 items-center px-3 py-2 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
             href="#"
             aria-label="Go to previous page"
           >
@@ -32,7 +32,7 @@ function Pagination() {
         </li>
         <li>
           <a
-            className="builder-80687ea0492a44a7924f85e6e0f656a0 w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
+            className="w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
             href="#"
           >
             1
@@ -40,7 +40,7 @@ function Pagination() {
         </li>
         <li>
           <a
-            className="builder-0812db49182c4f2c81edf99d53d2097f w-9 h-9 px-3 py-3 text-sm font-medium text-black no-underline bg-transparent rounded-md border border border-solid transition-all cursor-pointer duration-[0.2s]"
+            className="w-9 h-9 px-3 py-3 text-sm font-medium text-black no-underline bg-transparent rounded-md border border border-solid transition-all cursor-pointer duration-[0.2s]"
             href="#"
             aria-current="page"
           >
@@ -49,7 +49,7 @@ function Pagination() {
         </li>
         <li>
           <a
-            className="builder-72ed506a3c384899ab9bf8bdf5ce5879 w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
+            className="w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
             href="#"
           >
             3
@@ -81,7 +81,7 @@ function Pagination() {
         </li>
         <li>
           <a
-            className="builder-d3743279cbab4129923a0494ecdba066 w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
+            className=" w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
             href="#"
           >
             8
@@ -89,7 +89,7 @@ function Pagination() {
         </li>
         <li>
           <a
-            className="builder-cedc1f50c878472b9775fed4e9773108 w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
+            className=" w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
             href="#"
           >
             9
@@ -97,7 +97,7 @@ function Pagination() {
         </li>
         <li>
           <a
-            className="builder-991e2d8170ef4f37bbc95aa4d185656d w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
+            className=" w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
             href="#"
           >
             10
@@ -105,7 +105,7 @@ function Pagination() {
         </li>
         <li>
           <a
-            className="builder-2957f41286ec40b9b8eefc244f007cbe flex gap-1 items-center px-3 py-2 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
+            className=" flex gap-1 items-center px-3 py-2 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all cursor-pointer duration-[0.2s] text-zinc-500"
             href="#"
             aria-label="Go to next page"
           >

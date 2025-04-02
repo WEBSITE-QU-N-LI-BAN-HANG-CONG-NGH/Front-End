@@ -1,9 +1,3 @@
-Link drive dự phòng: https://drive.google.com/file/d/18W9qMC4_BFsN4SQVI6I90Xe4f086DW0E/view?usp=sharing
-
-Như đã đề cập, đã đủ các component nma vẫn hơi lmao, có vấn đề thì ý kiến lẹ hé.
-
-(chưa làm cái route tk sang bảo đâu, nma có cái navigator trên đầu)
-
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

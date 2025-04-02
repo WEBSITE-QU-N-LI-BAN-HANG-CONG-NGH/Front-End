@@ -7,7 +7,7 @@ const ProductCard = ({
   price,
   originalPrice,
   reviewCount = 4,
-  ratingImage = "https://cdn.builder.io/api/v1/image/assets/TEMP/c69911b8ada2410925a43ecf4446ac533bac25e2ad400b898670da368828a79d?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088",
+  ratingImage = "",
 }) => {
   const isInStock = stockStatus === "in stock";
 

@@ -2,24 +2,29 @@
 import React from "react";
 import Header from "../shared/Header";
 import FilterSidebar from "./FilterSidebar";
-import ProductList from "./ProductList";
 import Footer from "../shared/Footer";
 import Features from "../shared/Features"
 import ProductControls from "./ProductControls";
 import BreadcrumbNav from "../shared/BreadcrumbNav";
 import Pagination from "./Pagination";
+import Filter from "./Filter";
+import ProductCardList from "./ProductCardList";
 
 const CatalogListView1 = () => {
   const products = [
     {
       image:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/4ed0540ca2cedf398ec97c2e925116c08623c0ff23c3006ceb816cb8a449926d?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088",
+        "/Placeholder2.png",
       sku: "D5515AI",
       title:
         "MSI CREATOR 17 A10SFS-240AU 17 UHD 4K HDR Thin Bezel Intel 10th Gen i7 10875H - RTX 2070 SUPER MAX Q - 16GB RAM - 1TB SSD NVME - Windows 10 PRO Laptop",
       originalPrice: "499.00",
       currentPrice: "499.00",
-      reviews: 4,
+      reviews: "/RatingPlaceholder.svg",
+      available: "in stock",
+      cpu: "N/A",
+      featured: "N/A",
+      ioport: "N/A",
     },
     // Add more products as needed
   ];
@@ -30,7 +35,7 @@ const CatalogListView1 = () => {
 
       <main className="flex flex-col self-center mt-4 w-full max-w-[1407px] max-md:max-w-full">
         <img
-          src="https://cdn.builder.io/api/v1/image/assets/TEMP/df009f648404a862f165ad0ca33b61acfeb57db1?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+          src="/BannerPlaceholder.png"
           className="object-contain w-full aspect-[13.51] max-md:max-w-full"
           alt="Banner"
         />
@@ -48,35 +53,17 @@ const CatalogListView1 = () => {
             <FilterSidebar />
             <section className="ml-5 w-[83%] max-md:ml-0 max-md:w-full">
               <div className="flex flex-col w-full max-md:mt-2.5 max-md:max-w-full">
-                <div className="flex flex-row gap-2 justify-center items-center max-w-full text-sm font-semibold leading-loose text-black w-[611px]">
-                <div className="flex flex-row grow gap-2.5 justify-center items-center px-4 py-3 bg-white rounded-sm border border-solid border-[color:var(--Color---6,#CACDD8)] max-w-[230px] max-md:pr-5">
-                  <span>
-                    CUSTOM PCS{" "}
-                    <span className="font-normal text-gray-400">(24)</span>
-                  </span>
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets%2Fbaf90292c2ac43deb38a7173acaae088%2F0f00ee0f37754e83bffdc00659a5fc77"
-                    alt="Remove filter"
-                    className="box-border object-cover overflow-hidden shrink-0 aspect-square min-h-5 min-w-5 w-[0%]"
-                  />
-                </div>
-                <div className="flex flex-row gap-2.5 justify-center items-center px-4 py-3 bg-white rounded-sm border border-solid border-[color:var(--Color---6,#CACDD8)] max-w-[230px] max-md:pr-5">
-                  <span>
-                    HP/COMPAQ PCS{" "}
-                    <span className="font-normal text-gray-400">(24)</span>
-                  </span>
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets%2Fbaf90292c2ac43deb38a7173acaae088%2F0f00ee0f37754e83bffdc00659a5fc77"
-                    alt="Remove filter"
-                    className="box-border object-cover overflow-hidden shrink-0 aspect-square min-h-5 min-w-5 w-[0%]"
-                  />
-                </div>
-                <button className="px-4 py-3.5 bg-white rounded-sm border border-solid border-[color:var(--Color---6,#CACDD8)] h-[53px]">
-                  Clear All
-                </button>
+                <Filter />
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
               </div>
 
-                <ProductList />
+              <div className="ml-5 w-[83%] max-md:ml-0 max-md:w-full">
+                <div className="flex flex-col mt-1.5 w-full max-md:mt-2.5 max-md:max-w-full">
+                {products.map((product, index) => (
+                  <ProductCardList key={index} {...product} />
+                ))}
+                </div>
+              </div>
                 
                 <Pagination />
 
@@ -114,15 +101,7 @@ const CatalogListView1 = () => {
           </div>
         </div>
       </main>
-
-      {/* Features section */}
-      <section className="flex flex-col justify-center items-center px-16 py-14 mt-9 w-full bg-violet-50 max-md:px-5 max-md:max-w-full">
-        <div className="max-w-full w-[1054px]">
-          <div className="flex gap-5 max-md:flex-col">
             <Features />
-          </div>
-        </div>
-      </section>
 
       <Footer />
     </div>

@@ -1,6 +1,6 @@
 'use client'
 import Home1 from './components/Home/Home1'
-import Catalog1 from './components/Catalog/CatalogGrid1'
+import CatalogGridView1 from './components/Catalog/CatalogGridView1'
 import CatalogListView1 from './components/Catalog/CatalogListView1'
 import ContactUs1 from './components/ContactUs/ContactUs1'
 import "./App.css"
@@ -25,7 +25,7 @@ const App = () => {
       case 'home':
         return <Home1 />;
       case 'catalog':
-        return <Catalog1 />;
+        return <CatalogGridView1 />;
       case 'cataloglist':
         return <CatalogListView1 />;
       case 'contactus':
@@ -64,7 +64,6 @@ const App = () => {
         <button className="mr-5" onClick={() => setCurrentPage('detail')}>Product Detail</button>
         <button className="mr-5" onClick={() => setCurrentPage('user')}>User Account</button>
         <button className="mr-5" onClick={() => setCurrentPage('shoppingcart')}>Cart</button>
-        
         <button className="mr-5" onClick={() => setCurrentPage('checkout1')}>Checkout 1</button>
         <button className="mr-5" onClick={() => setCurrentPage('checkout2')}>Checkout 2</button>
         <button className="mr-5" onClick={() => setCurrentPage('checkout3')}>Checkout 3</button>

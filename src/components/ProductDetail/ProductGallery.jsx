@@ -4,28 +4,28 @@ import React from "react";
 
 const ProductGallery = () => {
   const [selectedImage, setSelectedImage] = useState(
-    "https://cdn.builder.io/api/v1/image/assets/TEMP/e2f7d537ede4a5fde21f5bd0173838fef0902d55",
+    "/Placeholder1.png",
   );
 
   const thumbnails = [
     {
-      url: "https://cdn.builder.io/api/v1/image/assets/TEMP/e2f7d537ede4a5fde21f5bd0173838fef0902d55",
+      url: "/Placeholder1.png",
       alt: "Thumbnail 1",
     },
     {
-      url: "https://cdn.builder.io/api/v1/image/assets/TEMP/2d9ba25f121bda0f2088c0049a2c34793d96869f",
+      url: "/Placeholder1.png",
       alt: "Thumbnail 2",
     },
     {
-      url: "https://cdn.builder.io/api/v1/image/assets/TEMP/164f84db069bfd14b27a15fa2a3edd8622d1ed0c",
+      url: "/Placeholder1.png",
       alt: "Thumbnail 3",
     },
     {
-      url: "https://cdn.builder.io/api/v1/image/assets/TEMP/4f68096aee92ddb16e5916c78fdc6fbccb41469f",
+      url: "/Placeholder1.png",
       alt: "Thumbnail 4",
     },
     {
-      url: "https://cdn.builder.io/api/v1/image/assets/TEMP/2cb1591b85c48d1f78fff2ca5b54dc44fbe4603c",
+      url: "/Placeholder1.png",
       alt: "Thumbnail 5",
     },
   ];

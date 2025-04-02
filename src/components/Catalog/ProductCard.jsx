@@ -22,7 +22,7 @@ const ProductCard = ({
         />
         <div className="flex gap-2.5 py-2.5 max-w-full text-xs leading-loose text-center text-gray-400 w-[152px]">
           <img
-            src="https://cdn.builder.io/api/v1/image/assets/TEMP/166724c782cdf65ba98f890c4696cb329b88cc4d?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+            src="/RatingPlaceholder.svg"
             alt="Rating"
             className="object-contain shrink-0 aspect-[5.68] w-[74px]"
           />

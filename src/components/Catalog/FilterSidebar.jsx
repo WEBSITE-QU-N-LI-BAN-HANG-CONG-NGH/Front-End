@@ -21,7 +21,7 @@ const FilterSidebar = () => {
             <div className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap">
               <h3>Category</h3>
               <img
-                src="https://cdn.builder.io/api/v1/image/assets/TEMP/5090ceeb0eda4690752fa59424cd9782fff03374?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+                src="/UpArrow.svg"
                 alt="Toggle category"
                 className="object-contain shrink-0 w-4 aspect-[1.14]"
               />
@@ -47,7 +47,7 @@ const FilterSidebar = () => {
             <div className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap">
               <h3>Price</h3>
               <img
-                src="https://cdn.builder.io/api/v1/image/assets/TEMP/a436b3fe44141d7cf0bffdc60be50ca5cebb716b?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+                src="/UpArrow.svg"
                 alt="Toggle price"
                 className="object-contain shrink-0 w-4 aspect-square"
               />
@@ -83,7 +83,7 @@ const FilterSidebar = () => {
             <div className="flex gap-5 justify-between">
               <h3 className="my-auto">Color</h3>
               <img
-                src="https://cdn.builder.io/api/v1/image/assets/TEMP/a436b3fe44141d7cf0bffdc60be50ca5cebb716b?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+                src="/UpArrow.svg"
                 alt="Toggle color"
                 className="object-contain shrink-0 w-4 aspect-square"
               />
@@ -95,7 +95,7 @@ const FilterSidebar = () => {
             <div className="flex gap-5 justify-between text-black">
               <h3>Filter Name</h3>
               <img
-                src="https://cdn.builder.io/api/v1/image/assets/TEMP/411695f9246914b6d1eeda4e44d91e2c1bd75c0d?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+                src="/DownArrow.svg"
                 alt="Toggle filter"
                 className="object-contain shrink-0 w-4 aspect-square"
               />
@@ -118,14 +118,14 @@ const FilterSidebar = () => {
             </div>
           </div>
           <img
-            src="https://cdn.builder.io/api/v1/image/assets/TEMP/28d852c39935c46120c324c774798cc43839b32d?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+            src="/BrandPlaceholder.png"
             alt="Brands"
             className="object-contain max-w-full aspect-[1.04] w-[234px]"
           />
         </section>
 
         <img
-          src="https://cdn.builder.io/api/v1/image/assets/TEMP/1698a5f81bd60893316c86f52eae7309cb654e3c?placeholderIfAbsent=true&apiKey=baf90292c2ac43deb38a7173acaae088"
+          src="/WeirdChair.png"
           alt="Advertisement"
           className="object-contain mt-2 w-full aspect-[0.63]"
         />

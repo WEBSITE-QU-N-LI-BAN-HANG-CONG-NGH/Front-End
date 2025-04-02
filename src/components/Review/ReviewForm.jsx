@@ -42,7 +42,7 @@ const ReviewForm = () => {
       >
         <figure className="flex-[0_0_400px] max-md:flex-[0_0_auto]">
           <img
-            src="https://cdn.builder.io/api/v1/image/assets%2Fbaf90292c2ac43deb38a7173acaae088%2F0987198ac51742d7912d86ba220536e6"
+            src="/Placeholder7.jpg"
             className="w-full h-auto"
             alt="Laptop gaming Lenovo LOQ 15IAX9E"
           />
