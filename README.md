@@ -1,6 +1,6 @@
 Link drive dự phòng: https://drive.google.com/file/d/18W9qMC4_BFsN4SQVI6I90Xe4f086DW0E/view?usp=drivesdk
 Gần như đã hoàn thiện. Đã fix phần lỗi rối tung của Catalog🥳, đã recode và phân loại Grid/List. Đồng thời đặt placeholder cho ảnh. (hình như t quên cái nút cho chatbot)
-Các page bao gồm:
+# CUSTOMER
 - Header+Footer: Header đã ổn định, nhưng chưa có chức năng 🥲(cha nội nào xoá cái dropdown menu r thì thay kiểu j tr). Thay đổi Footer để thêm link 
 - Homepage: Trang chủ (đã fix kha khá lại cho đều, nma chưa chắc đẹp 🥲)
 - Catalog: Đã fix độ rối, phân chia lại List và Grid)
@@ -9,12 +9,12 @@ Các page bao gồm:
 - Đánh giá: nút gửi đánh giá sẽ chuyển sang giao diện hoàn tất 🥳
 - Giỏ hàng + checkout: umm.. không biết nói sao, tự xem và đánh giá i.
 - User: yé
-- 
+
 - Giao diện t vẽ hơi khác xíu, và có mấy chỗ chưa đồng bộ màu lắm. Cần sửa chữa, Xin vui lòng góp ý thẳng mặt, không góp ý sau lưng, xin cảm ơn 👁️👄👁️. Thời gian có hạn 💅
 
-
-
-
+# ADMIN
+- Đã update dashboard + account management (lmao lắm. không giống trong hình 🥲, (khó vẽ vỗn lài)
+- Cái account chắc ổn, còn cái dashboard thì mấy cái chart chưa có vẽ (khó vẽ vỗn lài x2) chỉ có mấy cái SVG placeholder thôi.
 
 
 # React + TypeScript + Vite
