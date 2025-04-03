@@ -23,7 +23,7 @@ const UserTableRow = ({ user }) => (
       <input type="checkbox" />
     </div>
     <div className="flex gap-3 items-center">
-      <div className="w-8 h-8 font-medium text-white bg-indigo-600 rounded-[full] flex items-center justify-center">
+      <div className="w-8 h-8 font-medium text-white bg-blue-600 rounded-[full] flex items-center justify-center">
         {user.name[0]}
       </div>
       <span>{user.name}</span>
