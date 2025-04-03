@@ -13,8 +13,8 @@ Gần như đã hoàn thiện. Đã fix phần lỗi rối tung của Catalog�
 - Giao diện t vẽ hơi khác xíu, và có mấy chỗ chưa đồng bộ màu lắm. Cần sửa chữa, Xin vui lòng góp ý thẳng mặt, không góp ý sau lưng, xin cảm ơn 👁️👄👁️. Thời gian có hạn 💅
 
 # ADMIN
-- Đã update dashboard + account management (lmao lắm. không giống trong hình 🥲,  ̶(̶d̶u̶m̶a̶ ̶v̶ẽ̶ ̶k̶h̶ó̶ ̶v̶l̶,̶ ̶d̶j̶t̶m̶e̶ ̶f̶r̶o̶n̶t̶e̶n̶d̶)̶ )
-- Cái account chắc ổn, còn cái dashboard thì mấy cái chart chưa có vẽ ( v̶ì̶ ̶b̶i̶ế̶t̶ ̶v̶ẽ̶ ̶đ̶é̶o̶) chỉ có mấy cái SVG placeholder thôi.
+- Đã update dashboard + account management (lmao lắm. không giống trong hình 🥲, (khó vẽ vỗn lài)
+- Cái account chắc ổn, còn cái dashboard thì mấy cái chart chưa có vẽ (khó vẽ vỗn lài x2) chỉ có mấy cái SVG placeholder thôi.
 
 
 # React + TypeScript + Vite
