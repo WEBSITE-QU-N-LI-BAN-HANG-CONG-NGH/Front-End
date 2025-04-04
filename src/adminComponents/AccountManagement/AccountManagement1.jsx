@@ -24,41 +24,7 @@ const PageHeader = () => (
 
 const AccountManagement1 = () => {
   const users = [
-    {
-      name: "Nguyễn Văn Admin",
-      email: "admin@techshop.com",
-      role: "Quản trị viên",
-      status: "Hoạt động",
-      createdAt: "15/01/2023",
-    },
-    {
-      name: "Trần Thị Seller",
-      email: "seller1@techshop.com",
-      role: "Người bán hàng",
-      status: "Hoạt động",
-      createdAt: "20/02/2023",
-    },
-    {
-      name: "Lê Văn Staff",
-      email: "staff1@techshop.com",
-      role: "Nhân viên",
-      status: "Hoạt động",
-      createdAt: "05/03/2023",
-    },
-    {
-      name: "Phạm Thị Seller",
-      email: "seller2@techshop.com",
-      role: "Người bán hàng",
-      status: "Vô hiệu",
-      createdAt: "12/04/2023",
-    },
-    {
-      name: "Hoàng Văn Staff",
-      email: "staff2@techshop.com",
-      role: "Nhân viên",
-      status: "Hoạt động",
-      createdAt: "18/05/2023",
-    },
+    
   ];
 
   return (
