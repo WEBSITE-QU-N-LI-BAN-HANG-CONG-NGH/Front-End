@@ -18,8 +18,6 @@ Link drive dự phòng: https://drive.google.com/file/d/18W9qMC4_BFsN4SQVI6I90Xe
 - Đã thêm cái Revenue Analysis (for those who IELTS 10.0: Phân tích doanh thu)
 - Chưa làm: ~ 3-4 page j đó, đang bệnh, từ từ i
 
-  (Vẽ hơi 6677)
-
 
 # React + Vite
 
@@ -71,3 +69,6 @@ export default tseslint.config({
   },
 })
 ```
+
+Code xấu thiệt, và dở nữa, khỏi bàn vụ này hé 🥲
+(Lần đầu làm chuyện ấy)
