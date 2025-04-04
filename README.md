@@ -1,5 +1,5 @@
 Link drive dự phòng: https://drive.google.com/file/d/18W9qMC4_BFsN4SQVI6I90Xe4f086DW0E/view?usp=drivesdk
-Gần như đã hoàn thiện. Đã fix phần lỗi rối tung của Catalog🥳, đã recode và phân loại Grid/List. Đồng thời đặt placeholder cho ảnh. (hình như t quên cái nút cho chatbot)
+(hình như k có cái nút cho chatbot)
 # CUSTOMER
 - Header+Footer: Header đã ổn định, nhưng chưa có chức năng 🥲(cha nội nào xoá cái dropdown menu r thì thay kiểu j tr). Thay đổi Footer để thêm link 
 - Homepage: Trang chủ (đã fix kha khá lại cho đều, nma chưa chắc đẹp 🥲)
@@ -15,6 +15,9 @@ Gần như đã hoàn thiện. Đã fix phần lỗi rối tung của Catalog�
 # ADMIN
 - Đã update dashboard + account management (lmao lắm. không giống trong hình 🥲, (khó vẽ vỗn lài)
 - Cái account chắc ổn, còn cái dashboard thì mấy cái chart chưa có vẽ (khó vẽ vỗn lài x2) chỉ có mấy cái SVG placeholder thôi.
+- Đã thêm cái Revenue Analysis (for those who IELTS 10.0: Phân tích doanh thu)
+
+  (Vẽ hơi 6677)
 
 
 # React + TypeScript + Vite
