@@ -3,13 +3,13 @@ const RevenueOverview = () => {
   return (
     <section className="p-6 rounded-3xl w-[1049.9px]">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-indigo-900">
+        <h2 className="text-2xl font-semibold">
           Tổng quan doanh thu
         </h2>
         <p className="text-sm text-slate-400">Tổng doanh thu và tăng trưởng</p>
       </div>
       <div className="flex gap-12 mt-6 max-md:flex-col">
-        <div className="text-3xl font-semibold text-indigo-900">
+        <div className="text-3xl font-semibold">
           <span>3.980.000.000đ</span>
           <div className="gap-1 mt-2 text-sm text-teal-500">
             +12.5% so với kỳ trước

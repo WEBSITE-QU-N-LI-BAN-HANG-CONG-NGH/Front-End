@@ -14,6 +14,9 @@ import UserAccount1 from './components/UserAccount/UserAccount1'
 import Checkout1 from './components/Checkout/Checkout1'
 import Checkout2 from './components/Checkout/Checkout2'
 import Checkout3 from './components/Checkout/Checkout3'
+import DashboardLayout from './adminComponents/Dashboard/Dashboard1'
+import AccountManagement1 from './adminComponents/AccountManagement/AccountManagement1'
+import RevenueAnalysis1 from './adminComponents/RevenueAnalysis/RevenueAnalysis1'
 
 
 // Define App component
@@ -46,6 +49,12 @@ const App = () => {
         return <Checkout2 />;    
       case 'checkout3':
         return <Checkout3 />;    
+      case 'adminaccount':
+        return <AccountManagement1 />; 
+      case 'admindashboard':
+          return <DashboardLayout />; 
+      case 'adminrevenue':
+          return <RevenueAnalysis1 />; 
       default:
         return <Home1 />;
     }
@@ -67,6 +76,9 @@ const App = () => {
         <button className="mr-5" onClick={() => setCurrentPage('checkout1')}>Checkout 1</button>
         <button className="mr-5" onClick={() => setCurrentPage('checkout2')}>Checkout 2</button>
         <button className="mr-5" onClick={() => setCurrentPage('checkout3')}>Checkout 3</button>
+        <button className="mr-5" onClick={() => setCurrentPage('adminaccount')}>ADMIN - Account</button>
+        <button className="mr-5" onClick={() => setCurrentPage('admindashboard')}>ADMIN - Dashboard</button>
+        <button className="mr-5" onClick={() => setCurrentPage('adminrevenue')}>ADMIN - Revenue Analysis</button>
       </nav>
       {/* Render the selected page */}
       {renderPage()}

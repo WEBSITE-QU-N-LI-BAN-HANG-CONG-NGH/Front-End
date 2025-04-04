@@ -3,7 +3,7 @@ const RevenueTrends = () => {
   return (
     <section className="p-6 rounded-3xl">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-indigo-900">
+        <h2 className="text-2xl font-semibold">
           Phân tích xu hướng doanh thu
         </h2>
         <p className="text-sm text-slate-400">
