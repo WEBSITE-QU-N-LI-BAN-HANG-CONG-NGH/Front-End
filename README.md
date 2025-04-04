@@ -21,7 +21,7 @@ Link drive dự phòng: https://drive.google.com/file/d/18W9qMC4_BFsN4SQVI6I90Xe
   (Vẽ hơi 6677)
 
 
-# React + TypeScript + Vite
+# React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
