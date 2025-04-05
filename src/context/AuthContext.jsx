@@ -36,29 +36,45 @@ export const AuthProvider = ({ children }) => {
 
   // Đăng ký
   const register = async (userData) => {
+    console.log("AuthContext - Bắt đầu đăng ký với:", userData.email);
     try {
-      const result = await authService.register(userData);
-      return { success: true, data: result };
+      const response = await authService.register(userData);
+      console.log("AuthContext - Kết quả từ authService:", response);
+      
+      // Kiểm tra xem response có đúng format không
+      if (typeof response === 'object') {
+        // Nếu response đã có thuộc tính success
+        if ('success' in response) {
+          return response;
+        }
+        
+        // Nếu response không có thuộc tính success, giả định là thành công
+        return { success: true, data: response };
+      }
+      
+      // Nếu response không phải là object, coi như thành công
+      return { success: true, data: response };
     } catch (error) {
+      console.error("AuthContext - Lỗi khi đăng ký:", error);
       return {
         success: false,
-        error: error.response?.data?.message || 'Đăng ký không thành công',
+        error: error.message || 'Đăng ký không thành công'
       };
     }
   };
 
   // Xác thực OTP đăng ký
   const verifyRegistration = async (email, otp) => {
+    console.log("AuthContext - Xác thực đăng ký với email:", email, "và OTP:", otp);
     try {
-      console.log("Gửi yêu cầu xác thực OTP:", { email, otp });
       const result = await authService.verifyRegistration(email, otp);
-      console.log("Kết quả xác thực:", result);
-      return { success: true, data: result };
+      console.log("AuthContext - Kết quả xác thực:", result);
+      return result;
     } catch (error) {
-      console.error("Lỗi xác thực:", error.response?.data || error);
+      console.error("AuthContext - Lỗi xác thực:", error);
       return {
         success: false,
-        error: error.response?.data?.message || 'Xác thực không thành công',
+        error: error.message || 'Xác thực không thành công',
       };
     }
   };

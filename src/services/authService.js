@@ -64,8 +64,27 @@ api.interceptors.response.use(
 const authService = {
   // Đăng ký tài khoản
   register: async (userData) => {
-    const response = await api.post('/auth/register', userData);
-    return response.data;
+    console.log("authService - Đang gửi yêu cầu đăng ký:", {
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      role: userData.role
+    });
+    
+    try {
+      const response = await api.post('/auth/register', userData);
+      console.log("authService - Phản hồi từ API đăng ký:", response.data);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      console.error("authService - Lỗi đăng ký:", error.response?.data || error);
+      return {
+        success: false,
+        error: error.response?.data?.message || "Đăng ký không thành công"
+      };
+    }
   },
   
   // Xác thực OTP sau khi đăng ký
@@ -74,10 +93,16 @@ const authService = {
     try {
       const response = await api.post('/auth/register/verify', { email, otp });
       console.log("authService - Phản hồi từ server:", response.data);
-      return response.data;
+      return {
+        success: true,
+        data: response.data
+      };
     } catch (error) {
       console.error("authService - Lỗi xác thực:", error.response?.data || error);
-      throw error;
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Xác thực không thành công'
+      };
     }
   },
   

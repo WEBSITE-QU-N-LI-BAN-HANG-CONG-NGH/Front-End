@@ -4,22 +4,30 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const RegisterForm = () => {
-  const [step, setStep] = useState(1); // 1: Form đăng ký, 2: Xác thực OTP
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    firstName: "",
-    lastName: "",
-    role: "CUSTOMER", // Mặc định là khách hàng
+  // Sử dụng state cho các bước
+  const [formState, setFormState] = useState({
+    step: 1, // 1: Form đăng ký, 2: Xác thực OTP
+    formData: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+      firstName: "",
+      lastName: "",
+      role: "CUSTOMER", // Mặc định là khách hàng
+    },
+    otp: "",
+    error: "",
+    loading: false,
+    countdown: 0
   });
-  const [otp, setOtp] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [countdown, setCountdown] = useState(0);
   
   const { register, verifyRegistration, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Debug: Log khi step thay đổi
+  useEffect(() => {
+    console.log("Current step:", formState.step);
+  }, [formState.step]);
 
   // Kiểm tra nếu đã đăng nhập thì chuyển hướng về trang chủ
   useEffect(() => {
@@ -30,18 +38,27 @@ const RegisterForm = () => {
 
   // Countdown cho việc gửi lại OTP
   useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    if (formState.countdown > 0) {
+      const timer = setTimeout(() => 
+        setFormState(prev => ({
+          ...prev,
+          countdown: prev.countdown - 1
+        })),
+        1000
+      );
       return () => clearTimeout(timer);
     }
-  }, [countdown]);
+  }, [formState.countdown]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormState(prev => ({
+      ...prev,
+      formData: {
+        ...prev.formData,
+        [name]: value
+      }
+    }));
   };
 
   const validatePassword = (password) => {
@@ -63,24 +80,37 @@ const RegisterForm = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    console.log("Bắt đầu xử lý đăng ký");
 
+    const { formData } = formState;
+    
     // Kiểm tra mật khẩu
     const passwordError = validatePassword(formData.password);
     if (passwordError) {
-      setError(passwordError);
+      setFormState(prev => ({ ...prev, error: passwordError }));
+      console.log("Lỗi mật khẩu:", passwordError);
       return;
     }
     
     // Kiểm tra mật khẩu xác nhận
     if (formData.password !== formData.confirmPassword) {
-      setError("Mật khẩu xác nhận không khớp");
+      setFormState(prev => ({ ...prev, error: "Mật khẩu xác nhận không khớp" }));
+      console.log("Mật khẩu xác nhận không khớp");
       return;
     }
     
-    setLoading(true);
-    setError("");
+    // Set loading state
+    setFormState(prev => ({ ...prev, loading: true, error: "" }));
+    console.log("Đang gửi yêu cầu đăng ký đến API...");
 
     try {
+      console.log("Dữ liệu gửi đi:", {
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        role: formData.role,
+      });
+      
       // Gửi yêu cầu đăng ký
       const result = await register({
         email: formData.email,
@@ -90,71 +120,109 @@ const RegisterForm = () => {
         role: formData.role,
       });
       
+      console.log("Kết quả từ API đăng ký:", result);
+      
       if (!result.success) {
-        setError(result.error);
+        console.log("Đăng ký thất bại:", result.error);
+        setFormState(prev => ({ 
+          ...prev, 
+          error: result.error,
+          loading: false
+        }));
         return;
       }
       
-      // Chuyển đến bước xác thực OTP
-      setStep(2);
-      console.log("Đã chuyển sang bước:", step); // Kiểm tra xem đã chuyển sang bước 2 chưa
-
-      setCountdown(60); // 60 giây chờ để gửi lại OTP
+      console.log("Đăng ký thành công, chuyển sang bước nhập OTP");
+      
+      // Cập nhật state trong một lần update duy nhất
+      setFormState(prev => ({
+        ...prev,
+        step: 2,
+        countdown: 60,
+        loading: false
+      }));
+      
+      console.log("Đã cập nhật state: step=2, countdown=60");
     } catch (err) {
-      setError("Đăng ký không thành công. Vui lòng thử lại sau.");
-    } finally {
-      setLoading(false);
+      console.error("Lỗi khi đăng ký:", err);
+      setFormState(prev => ({
+        ...prev,
+        error: "Đăng ký không thành công. Vui lòng thử lại sau.",
+        loading: false
+      }));
     }
   };
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    console.log("Đang xác thực OTP:", otp, "cho email:", formData.email);
+    console.log("Đang xác thực OTP:", formState.otp, "cho email:", formState.formData.email);
 
-    setLoading(true);
-    setError("");
+    setFormState(prev => ({ ...prev, loading: true, error: "" }));
 
     try {
       // Gửi yêu cầu xác thực OTP
-      const result = await verifyRegistration(formData.email, otp);
+      const result = await verifyRegistration(formState.formData.email, formState.otp);
       console.log("Kết quả xác thực OTP:", result);
       
       // Hiển thị thông báo thành công và điều hướng đến trang đăng nhập
       alert("Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.");
       navigate("/login");
     } catch (err) {
-      setError("Xác thực OTP không thành công. Vui lòng kiểm tra lại mã OTP.");
-    } finally {
-      setLoading(false);
+      console.error("Lỗi xác thực OTP:", err);
+      setFormState(prev => ({
+        ...prev,
+        error: "Xác thực OTP không thành công. Vui lòng kiểm tra lại mã OTP.",
+        loading: false
+      }));
     }
   };
 
   const handleResendOtp = async () => {
-    if (countdown > 0) return;
+    if (formState.countdown > 0) return;
     
-    setLoading(true);
+    setFormState(prev => ({ ...prev, loading: true, error: "" }));
+    
     try {
       // Gửi lại yêu cầu đăng ký để nhận OTP mới
       const result = await register({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        role: formData.role,
+        email: formState.formData.email,
+        password: formState.formData.password,
+        firstName: formState.formData.firstName,
+        lastName: formState.formData.lastName,
+        role: formState.formData.role,
       });
       
       if (!result.success) {
-        setError(result.error);
+        setFormState(prev => ({ 
+          ...prev, 
+          error: result.error,
+          loading: false
+        }));
         return;
       }
       
-      setCountdown(60); // Reset countdown
+      setFormState(prev => ({
+        ...prev,
+        countdown: 60,
+        loading: false
+      }));
+      
       alert("Mã OTP mới đã được gửi đến email của bạn.");
     } catch (err) {
-      setError("Không thể gửi lại mã OTP. Vui lòng thử lại sau.");
-    } finally {
-      setLoading(false);
+      setFormState(prev => ({
+        ...prev,
+        error: "Không thể gửi lại mã OTP. Vui lòng thử lại sau.",
+        loading: false
+      }));
     }
+  };
+
+  const handleOtpChange = (e) => {
+    setFormState(prev => ({ ...prev, otp: e.target.value }));
+  };
+
+  const goBackToRegisterForm = () => {
+    setFormState(prev => ({ ...prev, step: 1 }));
   };
 
   // Render form đăng ký
@@ -169,7 +237,7 @@ const RegisterForm = () => {
             type="text"
             id="firstName"
             name="firstName"
-            value={formData.firstName}
+            value={formState.formData.firstName}
             onChange={handleChange}
             className="p-2.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Nguyễn"
@@ -185,7 +253,7 @@ const RegisterForm = () => {
             type="text"
             id="lastName"
             name="lastName"
-            value={formData.lastName}
+            value={formState.formData.lastName}
             onChange={handleChange}
             className="p-2.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Văn A"
@@ -202,7 +270,7 @@ const RegisterForm = () => {
           type="email"
           id="email"
           name="email"
-          value={formData.email}
+          value={formState.formData.email}
           onChange={handleChange}
           className="p-2.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="example@techshop.vn"
@@ -218,7 +286,7 @@ const RegisterForm = () => {
           type="password"
           id="password"
           name="password"
-          value={formData.password}
+          value={formState.formData.password}
           onChange={handleChange}
           className="p-2.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
@@ -237,7 +305,7 @@ const RegisterForm = () => {
           type="password"
           id="confirmPassword"
           name="confirmPassword"
-          value={formData.confirmPassword}
+          value={formState.formData.confirmPassword}
           onChange={handleChange}
           className="p-2.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
@@ -251,7 +319,7 @@ const RegisterForm = () => {
         <select
           id="role"
           name="role"
-          value={formData.role}
+          value={formState.formData.role}
           onChange={handleChange}
           className="p-2.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
@@ -281,10 +349,10 @@ const RegisterForm = () => {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={formState.loading}
         className="py-3 mt-2 font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors disabled:opacity-70"
       >
-        {loading ? "Đang xử lý..." : "Đăng ký"}
+        {formState.loading ? "Đang xử lý..." : "Đăng ký"}
       </button>
 
       <div className="mt-4 text-center">
@@ -300,11 +368,10 @@ const RegisterForm = () => {
 
   // Render form xác thực OTP
   const renderOtpForm = () => (
-    
     <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
       <div className="mb-4 text-center">
         <p className="mb-2">
-          Chúng tôi đã gửi mã OTP đến email <strong>{formData.email}</strong>
+          Chúng tôi đã gửi mã OTP đến email <strong>{formState.formData.email}</strong>
         </p>
         <p className="text-sm text-gray-600">
           Vui lòng kiểm tra hộp thư đến (và thư mục spam) để lấy mã xác thực
@@ -318,8 +385,8 @@ const RegisterForm = () => {
         <input
           type="text"
           id="otp"
-          value={otp}
-          onChange={(e) => setOtp(e.target.value)}
+          value={formState.otp}
+          onChange={handleOtpChange}
           className="p-2.5 text-center text-xl tracking-widest border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="Nhập mã OTP"
           required
@@ -329,16 +396,16 @@ const RegisterForm = () => {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={formState.loading}
         className="py-3 mt-2 font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors disabled:opacity-70"
       >
-        {loading ? "Đang xử lý..." : "Xác thực"}
+        {formState.loading ? "Đang xử lý..." : "Xác thực"}
       </button>
 
       <div className="flex justify-between items-center mt-4 text-sm">
         <button
           type="button"
-          onClick={() => setStep(1)}
+          onClick={goBackToRegisterForm}
           className="text-gray-600 hover:text-gray-800"
         >
           Quay lại
@@ -347,29 +414,28 @@ const RegisterForm = () => {
         <button
           type="button"
           onClick={handleResendOtp}
-          disabled={countdown > 0}
-          className={`text-blue-600 hover:underline ${countdown > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={formState.countdown > 0}
+          className={`text-blue-600 hover:underline ${formState.countdown > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          {countdown > 0 ? `Gửi lại sau ${countdown}s` : 'Gửi lại mã OTP'}
+          {formState.countdown > 0 ? `Gửi lại sau ${formState.countdown}s` : 'Gửi lại mã OTP'}
         </button>
       </div>
     </form>
   );
-  console.log("Hiển thị form OTP");
 
   return (
     <div className="flex flex-col p-8 mx-auto my-10 bg-white rounded-lg shadow-md w-full max-w-md">
       <h1 className="mb-6 text-3xl font-bold text-center">
-        {step === 1 ? "Đăng ký" : "Xác thực OTP"}
+        {formState.step === 1 ? "Đăng ký" : "Xác thực OTP"}
       </h1>
       
-      {error && (
+      {formState.error && (
         <div className="p-3 mb-4 text-sm text-red-700 bg-red-100 rounded-md">
-          {error}
+          {formState.error}
         </div>
       )}
       
-      {step === 1 ? renderRegisterForm() : renderOtpForm()}
+      {formState.step === 1 ? renderRegisterForm() : renderOtpForm()}
     </div>
   );
 };
