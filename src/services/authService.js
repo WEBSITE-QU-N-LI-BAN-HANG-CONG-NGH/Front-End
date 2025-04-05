@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 // Axios instance với cấu hình mặc định
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: "http://localhost:8080/api/v1",
   timeout: 50000,
   headers: {
     'Content-Type': 'application/json',
@@ -108,15 +109,25 @@ const authService = {
   
   // Đăng nhập
   login: async (email, password) => {
-    const response = await api.post('/auth/login', { email, password });
-    
-    // Lưu token
-    const { accessToken } = response.data;
-
-    console.log("Token nhận được:", accessToken);
-    localStorage.setItem('accessToken', accessToken);
-    
-    return response.data;
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      
+      // Kiểm tra response có đúng định dạng không
+      if (!response.data || !response.data.accessToken) {
+        console.error('Lỗi đăng nhập: Response không có accessToken');
+        throw new Error('Định dạng phản hồi không hợp lệ');
+      }
+      
+      // Lưu token
+      const { accessToken } = response.data;
+      console.log("Token nhận được:", accessToken);
+      localStorage.setItem('accessToken', accessToken);
+      
+      return response.data;
+    } catch (error) {
+      console.error('Lỗi đăng nhập:', error.response?.data || error);
+      throw error;
+    }
   },
   
   // Đăng xuất
@@ -160,9 +171,50 @@ const authService = {
   
   // Lấy thông tin người dùng đã đăng nhập
   getCurrentUser: async () => {
-    const response = await api.get('/auth/current-user');
-    return response.data;
+    try {
+      // Kiểm tra token trước khi gửi request
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.warn('Không thể lấy thông tin người dùng: Token không tồn tại');
+        throw new Error('Chưa đăng nhập');
+      }
+      
+      console.log('Gửi request với token:', token.substring(0, 10) + '...');
+      const response = await api.get('/auth/current-user');
+      
+      console.log('Thông tin người dùng nhận được:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Lỗi khi lấy thông tin người dùng:', error.response?.data || error);
+      throw error;
+    }
   },
+
+  verifyTokenStorage: () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      console.warn('Không tìm thấy token trong localStorage');
+      return false;
+    }
+    console.log('Token đã được lưu trong localStorage');
+    return true;
+  },
+  
+  validateToken: async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        return false;
+      }
+      
+      // Gọi API kiểm tra token
+      await api.get('/auth/validate-token');
+      return true;
+    } catch (error) {
+      console.error('Token không hợp lệ:', error.response?.status);
+      return false;
+    }
+  }
 };
 
 export default authService;

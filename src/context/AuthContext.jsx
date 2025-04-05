@@ -83,8 +83,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const result = await authService.login(email, password);
+      // Kiểm tra token
+      if (!authService.verifyTokenStorage()) {
+        return {
+          success: false,
+          error: 'Không thể lưu token đăng nhập'
+        };
+      }
+
       const userData = await authService.getCurrentUser();
       setCurrentUser(userData);
+
+      console.log('Đăng nhập thành công:', userData);
       return { success: true, data: result };
     } catch (error) {
       return {
@@ -161,6 +171,19 @@ export const AuthProvider = ({ children }) => {
     return currentUser?.roles?.includes(role);
   };
 
+  const debugAuthStatus = () => {
+    const token = localStorage.getItem('accessToken');
+    console.group('Debug Auth Status');
+    console.log('User đã đăng nhập:', !!currentUser);
+    console.log('Token tồn tại:', !!token);
+    if (token) {
+      console.log('Token bắt đầu với:', token.substring(0, 15) + '...');
+    }
+    console.log('Thông tin người dùng:', currentUser);
+    console.groupEnd();
+  };
+  
+
   // Context value
   const value = {
     currentUser,
@@ -175,6 +198,7 @@ export const AuthProvider = ({ children }) => {
     updateUserProfile,
     isAuthenticated: !!currentUser,
     hasRole,
+    debugAuthStatus,
   };
 
   return (

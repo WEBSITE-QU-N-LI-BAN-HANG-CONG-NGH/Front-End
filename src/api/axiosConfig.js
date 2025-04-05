@@ -11,16 +11,16 @@ const API = axios.create({
 });
 
 // Thêm interceptor cho request
-API.interceptors.request.use(
+api.interceptors.request.use(
   (config) => {
-    // Lấy token từ localStorage
     const token = localStorage.getItem('accessToken');
-    
-    // Nếu có token, thêm vào header
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+      // Debug header
+      console.log('Request headers:', config.headers);
+    } else {
+      console.warn('Không tìm thấy token cho request:', config.url);
     }
-    
     return config;
   },
   (error) => {
