@@ -4,7 +4,7 @@ import { useAuth } from '../../../context/AuthContext';
 
 const ProtectedRoute = ({ children, roles = [] }) => {
   const { isAuthenticated, currentUser, loading } = useAuth();
-  const location = useLocation();
+  const   location = useLocation();
 
   // Kiểm tra xem component đã load xong chưa
   if (loading) {
