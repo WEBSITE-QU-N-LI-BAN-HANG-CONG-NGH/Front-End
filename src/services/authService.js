@@ -3,7 +3,7 @@ import axios from 'axios';
 // Axios instance với cấu hình mặc định
 const api = axios.create({
   baseURL: '/api/v1',
-  timeout: 10000,
+  timeout: 50000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -112,6 +112,8 @@ const authService = {
     
     // Lưu token
     const { accessToken } = response.data;
+
+    console.log("Token nhận được:", accessToken);
     localStorage.setItem('accessToken', accessToken);
     
     return response.data;
