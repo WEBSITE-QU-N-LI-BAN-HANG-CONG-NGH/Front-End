@@ -63,7 +63,7 @@ const RegisterForm = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    
+
     // Kiểm tra mật khẩu
     const passwordError = validatePassword(formData.password);
     if (passwordError) {
@@ -97,6 +97,8 @@ const RegisterForm = () => {
       
       // Chuyển đến bước xác thực OTP
       setStep(2);
+      console.log("Đã chuyển sang bước:", step); // Kiểm tra xem đã chuyển sang bước 2 chưa
+
       setCountdown(60); // 60 giây chờ để gửi lại OTP
     } catch (err) {
       setError("Đăng ký không thành công. Vui lòng thử lại sau.");
@@ -107,17 +109,15 @@ const RegisterForm = () => {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    console.log("Đang xác thực OTP:", otp, "cho email:", formData.email);
+
     setLoading(true);
     setError("");
 
     try {
       // Gửi yêu cầu xác thực OTP
       const result = await verifyRegistration(formData.email, otp);
-      
-      if (!result.success) {
-        setError(result.error);
-        return;
-      }
+      console.log("Kết quả xác thực OTP:", result);
       
       // Hiển thị thông báo thành công và điều hướng đến trang đăng nhập
       alert("Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.");
@@ -300,6 +300,7 @@ const RegisterForm = () => {
 
   // Render form xác thực OTP
   const renderOtpForm = () => (
+    
     <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
       <div className="mb-4 text-center">
         <p className="mb-2">
@@ -354,6 +355,7 @@ const RegisterForm = () => {
       </div>
     </form>
   );
+  console.log("Hiển thị form OTP");
 
   return (
     <div className="flex flex-col p-8 mx-auto my-10 bg-white rounded-lg shadow-md w-full max-w-md">

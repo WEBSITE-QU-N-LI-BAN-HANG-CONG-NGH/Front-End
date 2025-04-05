@@ -50,9 +50,12 @@ export const AuthProvider = ({ children }) => {
   // Xác thực OTP đăng ký
   const verifyRegistration = async (email, otp) => {
     try {
+      console.log("Gửi yêu cầu xác thực OTP:", { email, otp });
       const result = await authService.verifyRegistration(email, otp);
+      console.log("Kết quả xác thực:", result);
       return { success: true, data: result };
     } catch (error) {
+      console.error("Lỗi xác thực:", error.response?.data || error);
       return {
         success: false,
         error: error.response?.data?.message || 'Xác thực không thành công',

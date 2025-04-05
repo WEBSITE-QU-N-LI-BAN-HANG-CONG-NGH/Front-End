@@ -70,8 +70,15 @@ const authService = {
   
   // Xác thực OTP sau khi đăng ký
   verifyRegistration: async (email, otp) => {
-    const response = await api.post('/auth/register/verify', { email, otp });
-    return response.data;
+    console.log("authService - Xác thực đăng ký:", { email, otp });
+    try {
+      const response = await api.post('/auth/register/verify', { email, otp });
+      console.log("authService - Phản hồi từ server:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("authService - Lỗi xác thực:", error.response?.data || error);
+      throw error;
+    }
   },
   
   // Đăng nhập
@@ -89,7 +96,7 @@ const authService = {
   logout: async () => {
     try {
       await api.post('/auth/logout');
-    } catch (error) {
+    } catch (error) { 
       console.error('Lỗi đăng xuất:', error);
     } finally {
       // Xóa token khỏi localStorage
