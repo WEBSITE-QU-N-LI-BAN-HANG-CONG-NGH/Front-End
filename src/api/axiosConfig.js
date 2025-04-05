@@ -11,7 +11,7 @@ const API = axios.create({
 });
 
 // Thêm interceptor cho request
-api.interceptors.request.use(
+API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
     if (token) {

@@ -90,11 +90,18 @@ export const AuthProvider = ({ children }) => {
           error: 'Không thể lưu token đăng nhập'
         };
       }
-
-      const userData = await authService.getCurrentUser();
-      setCurrentUser(userData);
-
-      console.log('Đăng nhập thành công:', userData);
+  
+      // Lấy dữ liệu người dùng từ kết quả đăng nhập nếu có
+      if (result.user) {
+        setCurrentUser(result.user);
+        console.log('Đăng nhập thành công, dữ liệu người dùng:', result.user);
+      } else {
+        // Nếu không có dữ liệu người dùng trong kết quả đăng nhập, gọi API riêng
+        const userData = await authService.getCurrentUser();
+        setCurrentUser(userData);
+        console.log('Đăng nhập thành công, dữ liệu người dùng:', userData);
+      }
+  
       return { success: true, data: result };
     } catch (error) {
       return {

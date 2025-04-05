@@ -112,23 +112,27 @@ const authService = {
     try {
       const response = await api.post('/auth/login', { email, password });
       
-      // Kiểm tra response có đúng định dạng không
-      if (!response.data || !response.data.accessToken) {
+      console.log("Phản hồi từ API login:", response.data);
+      
+      // Kiểm tra cấu trúc phản hồi từ API
+      if (!response.data || !response.data.data || !response.data.data.accessToken) {
         console.error('Lỗi đăng nhập: Response không có accessToken');
         throw new Error('Định dạng phản hồi không hợp lệ');
       }
       
-      // Lưu token
-      const { accessToken } = response.data;
+      // Lưu token - chú ý vị trí token đúng là response.data.data.accessToken
+      const { accessToken } = response.data.data;
       console.log("Token nhận được:", accessToken);
       localStorage.setItem('accessToken', accessToken);
       
-      return response.data;
+      // Trả về dữ liệu người dùng
+      return response.data.data;
     } catch (error) {
       console.error('Lỗi đăng nhập:', error.response?.data || error);
       throw error;
     }
   },
+  
   
   // Đăng xuất
   logout: async () => {
@@ -182,6 +186,13 @@ const authService = {
       console.log('Gửi request với token:', token.substring(0, 10) + '...');
       const response = await api.get('/auth/current-user');
       
+      // Nếu API trả về cấu trúc tương tự như login
+      if (response.data && response.data.data && response.data.data.user) {
+        console.log('Thông tin người dùng nhận được:', response.data.data.user);
+        return response.data.data.user;
+      }
+      
+      // Nếu API trả về dữ liệu người dùng trực tiếp
       console.log('Thông tin người dùng nhận được:', response.data);
       return response.data;
     } catch (error) {
@@ -199,7 +210,7 @@ const authService = {
     console.log('Token đã được lưu trong localStorage');
     return true;
   },
-  
+
   validateToken: async () => {
     try {
       const token = localStorage.getItem('accessToken');
