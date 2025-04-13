@@ -7,9 +7,9 @@ const ProductCard = ({
   title,
   price,
   originalPrice,
-  reviewCount = 4,
-  ratingImage = "",
-  productId = "1", 
+  reviewCount,
+  ratingImage,
+  productId, 
 }) => {
   const isInStock = stockStatus === "in stock";
   const navigate = useNavigate();
@@ -17,6 +17,34 @@ const ProductCard = ({
   // Handler to navigate to detail page
   const handleCardClick = () => {
     navigate(`/detail/${productId}`);
+  };
+
+  // Determine if we should render stars based on ratingImage
+  const renderStars = !isNaN(Number(ratingImage));
+  const rating = renderStars ? Number(ratingImage) : 0;
+
+  // Create star rating display using Unicode stars
+  const renderStarRating = () => {
+    const totalStars = 5;
+    const stars = [];
+    
+    for (let i = 1; i <= totalStars; i++) {
+      stars.push(
+        <span 
+          key={i}
+          className={i <= rating ? "text-yellow-400" : "text-gray-300"}
+          style={{ fontSize: '16px' }}
+        >
+          ★
+        </span>
+      );
+    }
+    
+    return (
+      <div className="flex">
+        {stars}
+      </div>
+    );
   };
 
   return (
@@ -37,12 +65,16 @@ const ProductCard = ({
           className="object-contain self-center max-w-full aspect-square w-[150px]"
           alt={title}
         />
-        <div className="flex gap-2.5 py-2.5 max-w-full text-xs leading-loose text-center text-gray-400 w-[152px]">
-          <img
-            src={ratingImage}
-            className="object-contain shrink-0 aspect-[5.68] w-[74px]"
-            alt="Rating"
-          />
+        <div className="flex gap-2.5 py-2.5 max-w-full text-xs items-center leading-loose text-center text-gray-400 w-[152px]">
+          {renderStars ? (
+            renderStarRating()
+          ) : (
+            <img
+              src={ratingImage}
+              className="object-contain shrink-0 aspect-[5.68] w-[74px]"
+              alt="Rating"
+            />
+          )}
           <div>Reviews ({reviewCount})</div>
         </div>
         <div className="text-sm">{title}</div>

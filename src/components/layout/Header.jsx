@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Correct import for useNavigate
-import LoginForm from '../../pages/Auth/LoginForm';
+import { useNavigate } from 'react-router-dom'; 
+import AuthForms from '../../pages/Auth/AuthForm';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -133,7 +133,7 @@ const Header = () => {
 
           <div>
       <button
-        className="py-2 px-6 text-blue-600 border-2 border-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-colors"
+        className="py-2 px-6 text-blue-600 cursor-pointer  border-2 border-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-colors"
         onClick={handleButtonClick}
       >
         Đăng nhập
@@ -144,7 +144,7 @@ const Header = () => {
             ref={modalRef}
             className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white p-20 rounded-lg shadow-lg"
           >
-            <LoginForm />
+            <AuthForms />
           </div>
         </div>
       )}

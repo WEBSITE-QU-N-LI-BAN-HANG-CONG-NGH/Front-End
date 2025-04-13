@@ -5,40 +5,51 @@ import ProductCard from "./ProductCard";
 const GamingMonitors = () => {
   const products = [
     {
-      image:
-        "/Placeholder3.png",
-      title: "EX DISPLAY : MSI Pro 16 Flex-036AU 15.6 MULTITOUCH All-In-On...",
-      price: "499.00",
-      originalPrice: "499.00",
-    },
-    {
-      image:
-        "/Placeholder3.png",
-      title: "EX DISPLAY : MSI Pro 16 Flex-036AU 15.6 MULTITOUCH All-In-On...",
-      price: "499.00",
-      originalPrice: "499.00",
-    },
-    {
-      image:
-        "/Placeholder3.png",
-      title: "EX DISPLAY : MSI Pro 16 Flex-036AU 15.6 MULTITOUCH All-In-On...",
-      price: "499.00",
-      originalPrice: "499.00",
-    },
-    {
-      image:
-        "/Placeholder3.png",
-      title: "EX DISPLAY : MSI Pro 16 Flex-036AU 15.6 MULTITOUCH All-In-On...",
-      price: "499.00",
-      originalPrice: "499.00",
-    },
-    {
-      image:
-        "/Placeholder3.png",
-      title: "EX DISPLAY : MSI Pro 16 Flex-036AU 15.6 MULTITOUCH All-In-On...",
-      price: "499.00",
-      originalPrice: "499.00",
-    },
+      image: "/Placeholder2.png",
+      stockStatus: "in stock",
+      title: "NahNah",
+      price: "999",
+      originalPrice: "499",
+      reviewCount: 4,
+      ratingImage: "4",
+      productId: "2", 
+    },{
+      image: "/Placeholder2.png",
+      stockStatus: "in stock",
+      title: "NahNah",
+      price: "999",
+      originalPrice: "499",
+      reviewCount: 4,
+      ratingImage: "4",
+      productId: "2", 
+    },{
+      image: "/Placeholder2.png",
+      stockStatus: "in stock",
+      title: "NahNah",
+      price: "999",
+      originalPrice: "499",
+      reviewCount: 4,
+      ratingImage: "4",
+      productId: "2", 
+    },{
+      image: "/Placeholder2.png",
+      stockStatus: "in stock",
+      title: "NahNah",
+      price: "999",
+      originalPrice: "499",
+      reviewCount: 4,
+      ratingImage: "4",
+      productId: "2", 
+    },{
+      image: "/Placeholder2.png",
+      stockStatus: "in stock",
+      title: "NahNah",
+      price: "999",
+      originalPrice: "499",
+      reviewCount: 4,
+      ratingImage: "4",
+      productId: "2", 
+    }
   ];
 
   return (

@@ -132,21 +132,29 @@ const Footer = () => {
         <div className="flex flex-wrap gap-10 items-start mt-9 w-full max-w-[1360px] max-md:max-w-full">
           <div className="flex gap-10">
           <FooterAddressSection />
-            <img
-              src="/FacebookIcon.svg"
-              className="object-contain shrink-0 aspect-[1.06] w-[40px]"
-              alt="Social icon 1"
-            />
-            <img
-              src="/InstagramIcon.svg"
-              className="object-contain shrink-0 aspect-[1.06] w-[40px]"
-              alt="Social icon 2"
-            />
-            <img
-              src="/VNPayIcon.jpg"
-              className="object-contain shrink-0 aspect-[1.06] w-[40px]"
-              alt="Payment methods"
-            />
+            <a href="https://www.facebook.com/EdenHoangKim/">
+              <img
+                src="/FacebookIcon.svg"
+                className="object-contain shrink-0 aspect-[1.06] w-[40px]"
+                alt="Social icon 1"
+              />
+            </a>
+
+            <a href="https://www.instagram.com/edenhoangkim/">
+              <img
+                src="/InstagramIcon.svg"
+                className="object-contain shrink-0 aspect-[1.06] w-[40px]"
+                alt="Social icon 2"
+              />
+            </a>
+
+            <a href="https://vnpay.vn">
+              <img
+                src="/VNPayIcon.jpg"
+                className="object-contain shrink-0 aspect-[1.06] w-[40px]"
+                alt="Payment methods"
+              />
+            </a>
           </div>
         </div>
     </footer>
