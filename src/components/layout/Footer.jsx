@@ -34,7 +34,7 @@ const FooterAddressSection = () => {
         <p className="mb-2.5">
           <span>Phones: </span>
           <a href="tel:0012345678" className="text-sky-500">
-            (00) 1234 5678
+            098 5214 127
           </a>
         </p>
         <p className="mb-2.5">
@@ -114,7 +114,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="flex relative flex-wrap justify-between px-12 py-10 bg-black text-[white] max-md:px-4 max-md:py-8 max-sm:flex-col max-sm:p-5">
+    <footer className="flex relative flex-wrap justify-between px-20 py-10 bg-black text-[white] max-md:px-4 max-md:py-8 max-sm:flex-col max-sm:p-5">
       <FooterLinkSection title="Information" links={informationLinks} />
       <FooterLinkSection title="Linh kiện" links={componentsLinks} />
       <FooterLinkSection title="Máy tính bàn" links={desktopLinks} />
@@ -123,7 +123,7 @@ const Footer = () => {
       <FooterLinkSection title="Phụ kiện" links={accessoryLinks} />
       <FooterCopyright />
       <div className="flex shrink-0 mt-14 max-w-full h-px bg-white w-full max-md:mt-10" />
-        <div className="flex flex-wrap gap-10 items-start mt-9 w-full max-w-[1360px] max-md:max-w-full">
+        <div className="flex flex-wrap ml-50 justify-center gap-10 mt-9 w-full max-w-[1360px] max-md:max-w-full">
           <div className="flex gap-10">
           <FooterAddressSection />
             <img
