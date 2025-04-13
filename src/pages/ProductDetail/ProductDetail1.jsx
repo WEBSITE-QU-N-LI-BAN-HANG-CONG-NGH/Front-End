@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import Header from "../../components/layout/Header";
 import ProductGallery from "../../components/ui/ProductGallery"
 import ProductInfo from "../../components/ui/ProductInfo"
-import RelatedProducts from "../../components/ui/RelatedProducts"
 import ProductReviews from "../../components/ui/ProductReviews"
 import Footer from "../../components/layout/Footer";
 
@@ -17,7 +16,6 @@ const ProductDetail1 = () => {
           <ProductGallery />
           <ProductInfo />
         </section>
-        <RelatedProducts />
         <ProductReviews />
       </main>
       <Footer />

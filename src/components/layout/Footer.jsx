@@ -1,21 +1,27 @@
 "use client";
 import React from "react";
+import { Link } from "react-router-dom";
 
-const FooterLinkSection = ({ title, links }) => {
+const FooterLinkSection = ({ title, links, pathPrefix = "" }) => {
   return (
     <nav className="mr-10 mb-8 min-w-[200px] max-md:mr-5 max-md:min-w-[150px] max-sm:mb-6 max-sm:w-full">
       <h2 className="mb-5 text-xl font-bold max-md:text-lg">{title}</h2>
       <ul className="flex flex-col gap-3">
-        {links.map((link, index) => (
-          <li key={index}>
-            <a
-              href="#"
-              className="text-xl font-light cursor-pointer duration-[0.2s] transition-[color] hover:text-gray-300 max-md:text-lg"
-            >
-              {link}
-            </a>
-          </li>
-        ))}
+        {links.map((link, index) => {
+          const linkPath = link.toLowerCase().replace(/\s+/g, '-');
+          const fullPath = `${pathPrefix}/${linkPath}`;
+          
+          return (
+            <li key={index}>
+              <Link 
+                to={fullPath}
+                className="text-xl font-light cursor-pointer duration-[0.2s] transition-[color] hover:text-gray-300 max-md:text-lg"
+              >
+                {link}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
@@ -34,7 +40,7 @@ const FooterAddressSection = () => {
         <p className="mb-2.5">
           <span>Phones: </span>
           <a href="tel:0012345678" className="text-sky-500">
-            098 5214 127
+            (00) 1234 5678
           </a>
         </p>
         <p className="mb-2.5">
@@ -114,16 +120,16 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="flex relative flex-wrap justify-between px-20 py-10 bg-black text-[white] max-md:px-4 max-md:py-8 max-sm:flex-col max-sm:p-5">
-      <FooterLinkSection title="Information" links={informationLinks} />
-      <FooterLinkSection title="Linh kiện" links={componentsLinks} />
-      <FooterLinkSection title="Máy tính bàn" links={desktopLinks} />
-      <FooterLinkSection title="Điện thoại" links={phoneLinks} />
-      <FooterLinkSection title="Laptops" links={laptopLinks} />
-      <FooterLinkSection title="Phụ kiện" links={accessoryLinks} />
+    <footer className="flex relative flex-wrap justify-between px-12 py-10 bg-black text-[white] max-md:px-4 max-md:py-8 max-sm:flex-col max-sm:p-5">
+      <FooterLinkSection title="Information" links={informationLinks} pathPrefix="/information" />
+      <FooterLinkSection title="Linh kiện" links={componentsLinks} pathPrefix="/components" />
+      <FooterLinkSection title="Máy tính bàn" links={desktopLinks} pathPrefix="/desktop" />
+      <FooterLinkSection title="Điện thoại" links={phoneLinks} pathPrefix="/phone" />
+      <FooterLinkSection title="Laptops" links={laptopLinks} pathPrefix="/laptop" />
+      <FooterLinkSection title="Phụ kiện" links={accessoryLinks} pathPrefix="/accessories" />
       <FooterCopyright />
       <div className="flex shrink-0 mt-14 max-w-full h-px bg-white w-full max-md:mt-10" />
-        <div className="flex flex-wrap ml-50 justify-center gap-10 mt-9 w-full max-w-[1360px] max-md:max-w-full">
+        <div className="flex flex-wrap gap-10 items-start mt-9 w-full max-w-[1360px] max-md:max-w-full">
           <div className="flex gap-10">
           <FooterAddressSection />
             <img
