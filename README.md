@@ -1,4 +1,29 @@
+<<<<<<< HEAD
 # React + TypeScript + Vite
+=======
+Link drive dự phòng: https://drive.google.com/file/d/18W9qMC4_BFsN4SQVI6I90Xe4f086DW0E/view?usp=drivesdk
+(hình như k có cái nút cho chatbot)
+# CUSTOMER
+- Header+Footer: Header đã ổn định, nhưng chưa có chức năng 🥲(cái dropdown menu where?). Thay đổi Footer để thêm link 
+- Homepage: Trang chủ (đã fix kha khá lại cho đều, nma chưa chắc đẹp 🥲)
+- Catalog: Đã fix độ rối, phân chia lại List và Grid)
+- Contact/Khiếu nại: Form điền, có cái thanh chat bên cạnh (chưa hoạt động be)
+- FAQ: bình thường
+- Đánh giá: nút gửi đánh giá sẽ chuyển sang giao diện hoàn tất 🥳
+- Giỏ hàng + checkout: umm.. không biết nói sao, tự xem và đánh giá i.
+- User: yé
+  
+- Giao diện t vẽ hơi khác xíu, và có mấy chỗ chưa đồng bộ màu lắm. Cần sửa chữa, Xin vui lòng góp ý thẳng mặt, không góp ý sau lưng, xin cảm ơn 👁️👄👁️. Thời gian có hạn 💅
+
+# ADMIN
+- Đã update dashboard + account management (lmao lắm. không giống trong hình 🥲, (khó vẽ vỗn lài)
+- Cái account chắc ổn, còn cái dashboard thì mấy cái chart chưa có vẽ (khó vẽ vỗn lài x2) chỉ có mấy cái SVG placeholder thôi.
+- Đã thêm cái Revenue Analysis (for those who IELTS 10.0: Phân tích doanh thu)
+- Chưa làm: ~ 3-4 page j đó, đang bệnh, từ từ i
+
+
+# React + Vite
+>>>>>>> b44e009b8abc9c69d801bb20093c2d1a5eeea1e4
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
@@ -48,3 +73,6 @@ export default tseslint.config({
   },
 })
 ```
+
+Code xấu thiệt, và dở nữa, khỏi bàn vụ này hé 🥲
+(Lần đầu làm chuyện ấy)
