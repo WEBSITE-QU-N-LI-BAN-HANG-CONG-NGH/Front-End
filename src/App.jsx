@@ -17,13 +17,13 @@ function App() {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route index element={<Home />} />
-          <Route path="laptops" element={<Catalog />} />
-          <Route path="desktop-computers" element={<Catalog />} />
-          <Route path="accessories" element={<Catalog />} />
-          <Route path="phones" element={<Catalog />} />
-          <Route path="computer-parts" element={<Catalog />} />
-          <Route path="other-products" element={<Catalog />} />
-          <Route path="our-deals" element={<Catalog />} />
+          <Route path="laptops" element={<Catalog category="laptops" />} />
+          <Route path="desktop-computers" element={<Catalog category="desktops" />} />
+          <Route path="accessories" element={<Catalog category="accessories" />} />
+          <Route path="phones" element={<Catalog category="phones" />} />
+          <Route path="computer-parts" element={<Catalog category="components" />} />
+          <Route path="other-products" element={<Catalog category="others" />} />
+          <Route path="our-deals" element={<Catalog category="deals" />} />
           <Route path="product/all/:page?" element={<Catalog />} />
           <Route path="detail/:productId" element={<ProductDetail1 />} />
           <Route path="account" element={<UserAccount />} />

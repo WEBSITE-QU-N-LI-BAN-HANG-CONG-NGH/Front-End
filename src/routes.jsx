@@ -9,7 +9,7 @@ import ComputerParts from "./components/features/product/ComputerParts"; // Tạ
 import OtherProducts from "./components/features/product/OtherProducts"; // Tạo file này nếu chưa có
 import OurDeals from "./components/features/product/OurDeals"; // Tạo file này nếu chưa có
 
-export const router = createBrowserRouter([
+export const routerConfig = createBrowserRouter([
   {
     path: "/",
     element: <AppLayout />,

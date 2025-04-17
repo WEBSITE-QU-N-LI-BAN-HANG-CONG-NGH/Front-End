@@ -9,7 +9,7 @@ import ProductCard from "../../components/features/product/ProductCard";
 import Pagination from "../../components/common/Pagination";
 import { FilterProvider } from "../../components/features/catalog/FilterContext";
 
-const Catalog = () => {
+const Catalog = ({ category }) => {
   const { page = "1" } = useParams();
   const currentPage = parseInt(page, 10) || 1;
   const navigate = useNavigate();
@@ -18,29 +18,49 @@ const Catalog = () => {
   
   // Dữ liệu sản phẩm và logic trang giữ nguyên...
   const allProducts = [
-    // ... danh sách sản phẩm của bạn
+    // ... danh sách sản phẩm của bạn từ nguồn dữ liệu thực tế
   ];
-
-  const totalPages = Math.ceil(allProducts.length / itemsPerPage);
+  
+  // Lọc sản phẩm theo category
+  const filterProductsByCategory = (products, categoryFilter) => {
+    if (!categoryFilter) return products;
+    return products.filter(product => product.category === categoryFilter);
+  };
+  
+  const categoryTitle = {
+    "laptops": "Laptops",
+    "desktops": "Máy tính bàn",
+    "phones": "Điện thoại",
+    "components": "Linh kiện máy tính",
+    "accessories": "Phụ kiện",
+    "others": "Sản phẩm khác",
+    "deals": "Khuyến mãi"
+  };
+  
+  // Áp dụng bộ lọc category
+  const filteredByCategory = category ? filterProductsByCategory(allProducts, category) : allProducts;
+  console.log("Category:", category);
+  console.log("Filtered products count:", filteredByCategory.length);
+  
+  const totalPages = Math.ceil(filteredByCategory.length / itemsPerPage);
 
   const getCurrentProducts = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return allProducts.slice(startIndex, endIndex);
+    return filteredByCategory.slice(startIndex, endIndex);
   };
 
   const [currentProducts, setCurrentProducts] = useState(getCurrentProducts());
 
   useEffect(() => {
-    if (currentPage < 1 || currentPage > totalPages) {
+    if (currentPage < 1 || (totalPages > 0 && currentPage > totalPages)) {
       navigate("/product/all/1");
       return;
     }
     
     setCurrentProducts(getCurrentProducts());
- 
     window.scrollTo(0, 0);
-  }, [currentPage]);
+  }, [currentPage, category]);
 
   return (
     <FilterProvider>
@@ -53,7 +73,7 @@ const Catalog = () => {
           />
           <BreadcrumbNav />
           <h1 className="self-start mt-5 mb-5 text-3xl font-semibold text-center text-black max-md:ml-2">
-            MSI PS Series ({allProducts.length}) - Page {currentPage}
+            {categoryTitle[category] || "MSI PS Series"} ({filteredByCategory.length}) - Page {currentPage}
           </h1>
           <div className="flex gap-5 max-md:flex-col">
             <FilterSidebar />
@@ -64,7 +84,7 @@ const Catalog = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
                   {currentProducts.map((product, index) => (
-                    <ProductCard key={`product-${product.productId}`} {...product} />
+                    <ProductCard key={`product-${product.productId || index}`} {...product} />
                   ))}
                 </div>
                 
