@@ -1,4 +1,3 @@
-// src/components/layout/BreadcrumbNav.jsx
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -20,7 +19,8 @@ const BreadcrumbNav = () => {
     'cart': 'Giỏ hàng',
     'information': 'Thông tin',
     'contact-us': 'Liên hệ',
-    'review': 'Đánh giá'
+    'review': 'Đánh giá',
+    'all': 'Tất cả sản phẩm'
   };
 
   return (
@@ -33,7 +33,12 @@ const BreadcrumbNav = () => {
         // Xây dựng URL cho breadcrumb
         const url = `/${pathSegments.slice(0, index + 1).join('/')}`;
         const isLast = index === pathSegments.length - 1;
-        const label = breadcrumbMap[segment] || segment;
+        
+        // Xử lý trường hợp segment là số trang
+        const isPageNumber = !isNaN(parseInt(segment));
+        const label = isPageNumber 
+          ? `Trang ${segment}` 
+          : (breadcrumbMap[segment] || segment);
         
         return (
           <React.Fragment key={segment}>

@@ -1,4 +1,3 @@
-"use client";
 import React, { useState } from "react";
 
 const BackButton = () => {
@@ -20,7 +19,6 @@ const ItemsCounter = ({ itemsShown, totalItems }) => {
     </p>
   );
 };
-
 
 const DisplayControl = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -64,12 +62,13 @@ const ViewToggle = () => {
   );
 };
 
-const ProductControls = (shown, total) => {
+// Đúng cách định nghĩa component với destructuring props
+const ProductControls = ({ shown, total }) => {
   return (
     <nav className="flex flex-wrap gap-2 mt-5 w-full font-semibold max-md:max-w-full">
       <BackButton />
       <div className="flex flex-row flex-auto gap-3 justify-end my-auto ml-auto text-sm leading-7 text-black max-md:max-w-full">
-        <ItemsCounter itemsShown={shown} totalItems={total} />
+        <ItemsCounter itemsShown={shown || 0} totalItems={total || 0} />
         <DisplayControl />
         <ViewToggle />
       </div>

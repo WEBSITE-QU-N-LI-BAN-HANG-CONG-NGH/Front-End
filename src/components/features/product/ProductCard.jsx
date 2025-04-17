@@ -19,13 +19,17 @@ const ProductCard = ({
 
   // Handler to navigate to detail page
   const handleCardClick = () => {
-    navigate(`/detail/${productId || id}`);
+    navigate(`/detail/${productId || id || 1}`); // Fallback to id 1 if none provided
   };
 
   const handleAddToCart = (e) => {
     e.stopPropagation(); // Prevent navigation when clicking the button
     if (isInStock) {
-      addToCart(productId || id, 1);
+      try {
+        addToCart(productId || id || 1, 1);
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+      }
     }
   };
 
@@ -68,15 +72,15 @@ const ProductCard = ({
           {stockStatus}
         </div>
         <img
-          src={image}
+          src={image || "/Placeholder2.png"} // Fallback image if none provided
           className="object-contain self-center max-w-full aspect-square w-[150px]"
-          alt={title}
+          alt={title || "Product"}
         />
         <div className="flex gap-2.5 py-2.5 max-w-full text-xs items-center leading-loose text-center text-gray-400 w-[152px]">
           {renderStarRating()}
-          <div>Reviews ({reviewCount})</div>
+          <div>Reviews ({reviewCount || 0})</div>
         </div>
-        <div className="text-sm">{title}</div>
+        <div className="text-sm">{title || "Product Name"}</div>
         <div className="text-lg font-semibold leading-6">
           {originalPrice && (
             <span
@@ -91,7 +95,7 @@ const ProductCard = ({
               {originalPrice}
             </span>
           )}
-          <br />{price}
+          <br />{price || "0đ"}
         </div>
         
         <button 

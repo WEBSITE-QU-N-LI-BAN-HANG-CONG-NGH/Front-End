@@ -1,5 +1,5 @@
 import React from "react";
-import { useFilter } from "../../../hooks/useFilter";
+import { useFilter } from "../../../components/features/catalog/FilterContext";
 
 const Filter = () => {
   const { activeFilters, removeFilter, clearAllFilters } = useFilter();
