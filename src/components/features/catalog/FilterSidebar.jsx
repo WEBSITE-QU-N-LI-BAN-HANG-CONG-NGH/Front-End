@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useFilter } from "./FilterContext";
+import { useFilter } from "../../../components/features/catalog/FilterContext";
 
 // Category filter data
 const categories = [
@@ -53,6 +53,13 @@ const FilterSidebar = () => {
       ...expandedSections,
       [section]: !expandedSections[section]
     });
+  };
+
+  // Handle apply filters button
+  const handleApplyFilters = () => {
+    // This could navigate to a filtered URL or trigger a different action
+    console.log("Applying filters:", activeFilters);
+    // For now it does nothing since filters are applied automatically
   };
 
   return (
@@ -223,7 +230,10 @@ const FilterSidebar = () => {
                 className="object-contain shrink-0 w-4 aspect-square"
               />
             </div>
-            <button className="px-11 py-2 mt-4 cursor-pointer w-full text-center text-white bg-blue-600 rounded-[50px] max-md:px-5">
+            <button 
+              className="px-11 py-2 mt-4 cursor-pointer w-full text-center text-white bg-blue-600 rounded-[50px] max-md:px-5 hover:bg-blue-700 transition-colors"
+              onClick={handleApplyFilters}
+            >
               Apply Filters ({getActiveFilterCount()})
             </button>
           </section>

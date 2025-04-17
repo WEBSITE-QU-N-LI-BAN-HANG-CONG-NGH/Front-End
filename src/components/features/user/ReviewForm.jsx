@@ -1,9 +1,10 @@
 "use client";
+// Sửa imports để trỏ đến vị trí mới
 import React, { useState } from "react";
-import Rating from "./Rating";
-import TextArea from "./TextArea";
-import ImageUpload from "./ImageUpload";
-import ReviewedForm from "./ReviewedForm"
+import Rating from "../../common/StarRating";
+import TextArea from "../../common/TextArea";
+import ImageUpload from "../../common/ImageUpload";
+import ReviewedForm from "./ReviewedForm";
 
 const ReviewForm = () => {
   const [rating, setRating] = useState(0);

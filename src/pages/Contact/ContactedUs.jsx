@@ -1,11 +1,10 @@
 "use client";
+// Sửa imports để trỏ đến vị trí mới
 import React from "react";
-import ComplaintForm from "../../components/ui/ComplaintForm";
-import ChatSupport from "../../components/ui/ChatSupport";
+import ComplaintedForm from "../../components/features/user/ComplaintedForm";
 import Header from "../../components/layout/Header";
 import Features from "../../components/layout/Features";
 import Footer from "../../components/layout/Footer";
-import ComplaintedForm from "../../components/ui/ComplaintedForm";
 
 const ContactedUs = () => {
   return (

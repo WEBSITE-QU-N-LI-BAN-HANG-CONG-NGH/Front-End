@@ -2,7 +2,7 @@
 import React from "react";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
-import ReviewForm from "../../components/ui/ReviewForm";
+import ReviewForm from "../../components/features/user/ReviewForm";
 import Features from "../../components/layout/Features";
 
 const Review = () => {
