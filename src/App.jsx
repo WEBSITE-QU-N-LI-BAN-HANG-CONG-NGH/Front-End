@@ -1,15 +1,22 @@
 // src/App.jsx
-import React from "react";
-import { RouterProvider } from "react-router-dom";
-import { Provider } from "react-redux";
-import { store } from "./State/store";
-import { router } from "./routes";
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Home from './pages/Home/Home';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
 
 function App() {
   return (
-    <Provider store={store}>
-      <RouterProvider router={router} />
-    </Provider>
+    <div className="App">
+      <Header />
+      <main>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          {/* Thêm các Route khác sau khi đã sửa lỗi cơ bản */}
+        </Routes>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
