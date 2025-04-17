@@ -1,9 +1,10 @@
 "use client";
+// Sửa imports để trỏ đến vị trí mới
 import React from "react";
 import Header from "../../components/layout/Header";
-import CartProgress from "../../components/ui/CartProgress";
-import CartItem from "../../components/ui/CartItem";
-import CartSummary from "../../components/ui/CartSummary";
+import CartProgress from "../../components/features/cart/CartProgress";
+import CartItem from "../../components/features/cart/CartItem";
+import CartSummary from "../../components/features/cart/CartSummary";
 import Features from "../../components/layout/Features";
 import Footer from "../../components/layout/Footer";
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";

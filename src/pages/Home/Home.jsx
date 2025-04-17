@@ -1,4 +1,5 @@
 "use client";
+// Sửa imports để trỏ đến vị trí mới
 import React from "react";
 import CircularProgress from '@mui/material/CircularProgress';
 import { useState } from "react";
@@ -6,12 +7,12 @@ import { useEffect } from "react";
 import Header from "../../components/layout/Header"
 import Footer from "../../components/layout/Footer"
 import Features from "../../components/layout/Features"
-import CustomBuilds from "../../components/ui/CustomBuilds"
-import Slider from "../../components/ui/Slider"
-import FlashSale from "../../components/ui/FlashSale"
-import TabMenu from "../../components/ui/TabMenu"
-import Desktops from "../../components/ui/Desktops"
-import GamingMonitors from "../../components/ui/GamingMonitors"
+import CustomBuilds from "../../components/features/product/CustomBuilds"
+import Slider from "../../components/features/product/Slider"
+import FlashSale from "../../components/features/product/FlashSale"
+import TabMenu from "../../components/features/catalog/TabMenu"
+import Desktops from "../../components/features/product/Desktops"
+import GamingMonitors from "../../components/features/product/GamingMonitors"
 
 const Home = () => {
   const [isLoading, setIsLoading] = useState(true);

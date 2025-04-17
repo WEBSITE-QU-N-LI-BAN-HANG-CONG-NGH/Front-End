@@ -1,9 +1,10 @@
 "use client";
+// Sửa imports để trỏ đến vị trí mới
 import React from "react";
 import Header from "../../components/layout/Header";
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
-import AccountSidebar from "../../components/ui/AccountSidebar";
-import AccountForm from "../../components/ui/Account";
+import AccountSidebar from "../../components/features/user/AccountSidebar";
+import AccountForm from "../../components/features/user/AccountForm";
 import Features from "../../components/layout/Features";
 import Footer from "../../components/layout/Footer";
 

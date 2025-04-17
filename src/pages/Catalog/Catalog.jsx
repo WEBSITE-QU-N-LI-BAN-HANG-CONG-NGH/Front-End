@@ -1,15 +1,16 @@
+// Sửa imports để trỏ đến vị trí mới
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Header from "../../components/layout/Header";
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
-import ProductControls from "../../components/ui/ProductControls";
-import FilterSidebar from "../../components/ui/FilterSidebar";
-import Filter from "../../components/ui/Filter";
-import ProductCard from "../../components/ui/ProductCard";
-import Pagination from "../../components/ui/Pagination";
+import ProductControls from "../../components/features/catalog/ProductControls";
+import FilterSidebar from "../../components/features/catalog/FilterSidebar";
+import Filter from "../../components/features/catalog/Filter";
+import ProductCard from "../../components/features/product/ProductCard";
+import Pagination from "../../components/common/Pagination";
 import Footer from "../../components/layout/Footer";
 import Features from "../../components/layout/Features";
-import { FilterProvider } from "../../components/ui/FilterContext";
+import { FilterProvider } from "../../components/features/catalog/FilterContext";
 
 const Catalog = () => {
   const { page = "1" } = useParams();

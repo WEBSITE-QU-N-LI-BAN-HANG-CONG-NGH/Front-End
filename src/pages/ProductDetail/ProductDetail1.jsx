@@ -1,10 +1,11 @@
 "use client";
+// Sửa imports để trỏ đến vị trí mới
 import React from "react";
 import { useEffect } from "react";
 import Header from "../../components/layout/Header";
-import ProductGallery from "../../components/ui/ProductGallery"
-import ProductInfo from "../../components/ui/ProductInfo"
-import ProductReviews from "../../components/ui/ProductReviews"
+import ProductGallery from "../../components/features/product/ProductGallery"
+import ProductInfo from "../../components/features/product/ProductInfo"
+import ProductReviews from "../../components/features/product/ProductReviews"
 import Footer from "../../components/layout/Footer";
 
 const ProductDetail1 = () => {

@@ -1,7 +1,8 @@
 "use client";
+// Sửa imports để trỏ đến vị trí mới
 import React from "react";
-import ComplaintForm from "../../components/ui/ComplaintForm";
-import ChatSupport from "../../components/ui/ChatSupport";
+import ComplaintForm from "../../components/features/user/ComplaintForm";
+import ChatSupport from "../../components/features/user/ChatSupport";
 import Header from "../../components/layout/Header";
 import Features from "../../components/layout/Features";
 import Footer from "../../components/layout/Footer";
