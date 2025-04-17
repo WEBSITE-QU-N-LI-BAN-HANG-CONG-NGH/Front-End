@@ -1,3 +1,4 @@
+// src/components/layout/AppLayout.jsx
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
@@ -6,9 +7,9 @@ import Features from './Features';
 
 const AppLayout = () => {
     return (
-        <div className="flex flex-col bg-white">
+        <div className="flex flex-col bg-white min-h-screen">
             <Header />
-            <main>
+            <main className="flex-grow">
                 <Outlet />
             </main>
             <Features />
