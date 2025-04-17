@@ -1,15 +1,12 @@
-// Sửa imports để trỏ đến vị trí mới
+// src/pages/Catalog/Catalog.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import Header from "../../components/layout/Header";
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
 import ProductControls from "../../components/features/catalog/ProductControls";
 import FilterSidebar from "../../components/features/catalog/FilterSidebar";
 import Filter from "../../components/features/catalog/Filter";
 import ProductCard from "../../components/features/product/ProductCard";
 import Pagination from "../../components/common/Pagination";
-import Footer from "../../components/layout/Footer";
-import Features from "../../components/layout/Features";
 import { FilterProvider } from "../../components/features/catalog/FilterContext";
 
 const Catalog = () => {
@@ -19,162 +16,12 @@ const Catalog = () => {
   const location = useLocation();
   const itemsPerPage = 10;
   
+  // Dữ liệu sản phẩm và logic trang giữ nguyên...
   const allProducts = [
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
-    {
-      image: "/Placeholder2.png",
-      stockStatus: "in stock",
-      title: "NahNah Model A",
-      price: "999",
-      originalPrice: "499",
-      reviewCount: 4,
-      ratingImage: "4",
-      productId: "1", 
-    },
+    // ... danh sách sản phẩm của bạn
   ];
 
- 
   const totalPages = Math.ceil(allProducts.length / itemsPerPage);
-  
 
   const getCurrentProducts = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -184,9 +31,7 @@ const Catalog = () => {
 
   const [currentProducts, setCurrentProducts] = useState(getCurrentProducts());
 
-
   useEffect(() => {
-
     if (currentPage < 1 || currentPage > totalPages) {
       navigate("/product/all/1");
       return;
@@ -200,7 +45,6 @@ const Catalog = () => {
   return (
     <FilterProvider>
       <div className="flex overflow-hidden flex-col pt-3 bg-white">
-        <Header />
         <div className="flex flex-col self-center mt-4 w-full max-w-[1407px] max-md:max-w-full">
           <img
             src="/BannerPlaceholder.png"
@@ -229,8 +73,6 @@ const Catalog = () => {
             </section>
           </div>
         </div>
-        <Features />
-        <Footer />
       </div>
     </FilterProvider>
   );

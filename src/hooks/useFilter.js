@@ -1,3 +1,4 @@
+// src/hooks/useFilter.js
 import { useContext } from "react";
 import { FilterContext } from "../components/features/catalog/FilterContext";
 
