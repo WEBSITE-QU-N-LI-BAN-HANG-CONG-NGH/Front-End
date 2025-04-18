@@ -1,4 +1,4 @@
-"use client";
+// Cập nhật cho src/pages/Auth/LoginForm.jsx
 import React from 'react'
 import { useState, useEffect } from "react";
 import Github from "@mui/icons-material/GitHub";
@@ -41,7 +41,7 @@ export default function LoginForm({ handleClose }) {
     if(jwt) {
       dispatch(getUser(jwt))
     }
-  }, [jwt, auth.jwt])
+  }, [jwt, auth.jwt, dispatch])
 
   useEffect(() => {
     if(auth.jwt) {
@@ -82,6 +82,14 @@ export default function LoginForm({ handleClose }) {
     e.preventDefault();
     handleClose();
     navigate('/sign-up');
+  };
+
+  const handleForgotPassword = () => {
+    // Đóng form đăng nhập và chuyển hướng đến trang quên mật khẩu
+    // Hoặc có thể hiển thị modal/form quên mật khẩu
+    console.log("Forgot password clicked");
+    // Ví dụ: navigate('/forgot-password');
+    alert("Chức năng đặt lại mật khẩu sẽ được triển khai trong phiên bản tiếp theo.");
   };
 
   const handleTogglePassword = () => {
@@ -180,7 +188,18 @@ export default function LoginForm({ handleClose }) {
             }}
           />
 
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 2 }}>
+          {/* Thêm nút quên mật khẩu */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1, mb: 2 }}>
+            <Button 
+              onClick={handleForgotPassword} 
+              sx={{ p: 0, textTransform: 'none' }}
+              color="primary"
+            >
+              Quên mật khẩu?
+            </Button>
+          </Box>
+
+          <Button type="submit" fullWidth variant="contained" sx={{ mt: 1 }}>
             Sign In
           </Button>
         </form>

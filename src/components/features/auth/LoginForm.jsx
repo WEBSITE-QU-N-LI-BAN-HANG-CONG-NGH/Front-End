@@ -1,3 +1,4 @@
+// Cập nhật cho src/components/features/auth/LoginForm.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import Github from "@mui/icons-material/GitHub";
@@ -71,6 +72,12 @@ function LoginForm({ handleClose, toggleForm }) {
 
   const handleGitHubLogin = () => {
     window.location.href = 'http://localhost:8080/oauth2/authorization/github';
+  };
+
+  const handleForgotPassword = () => {
+    // Logic xử lý quên mật khẩu
+    console.log("Forgot password clicked");
+    alert("Chức năng đặt lại mật khẩu sẽ được triển khai trong phiên bản tiếp theo.");
   };
 
   return (
@@ -152,6 +159,17 @@ function LoginForm({ handleClose, toggleForm }) {
             }}
           />
 
+          {/* Thêm nút Quên mật khẩu */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1, mb: 2 }}>
+            <Button 
+              onClick={handleForgotPassword} 
+              sx={{ p: 0, textTransform: 'none' }}
+              color="primary"
+            >
+              Quên mật khẩu?
+            </Button>
+          </Box>
+
           {error && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }}>
               {error}
@@ -162,7 +180,7 @@ function LoginForm({ handleClose, toggleForm }) {
             type="submit" 
             fullWidth 
             variant="contained" 
-            sx={{ mt: 2 }}
+            sx={{ mt: 1 }}
             disabled={loading}
           >
             {loading ? "Signing In..." : "Sign In"}

@@ -1,4 +1,4 @@
-"use client";
+// Cập nhật cho src/pages/Auth/AuthForm.jsx
 import React, { useState, useEffect } from "react";
 import Github from "@mui/icons-material/GitHub";
 import Google from "@mui/icons-material/Google";
@@ -95,6 +95,12 @@ function LoginForm({ handleClose, toggleForm }) {
     }
   };
 
+  const handleForgotPassword = () => {
+    // Logic để xử lý quên mật khẩu
+    console.log("Forgot password clicked");
+    alert("Chức năng đặt lại mật khẩu sẽ được triển khai trong phiên bản tiếp theo.");
+  };
+
   const handleTogglePassword = () => {
     setShowPassword(!showPassword);
   };
@@ -186,7 +192,18 @@ function LoginForm({ handleClose, toggleForm }) {
             }}
           />
 
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 2 }}>
+          {/* Thêm nút quên mật khẩu */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1, mb: 2 }}>
+            <Button 
+              onClick={handleForgotPassword} 
+              sx={{ p: 0, textTransform: 'none' }}
+              color="primary"
+            >
+              Quên mật khẩu?
+            </Button>
+          </Box>
+
+          <Button type="submit" fullWidth variant="contained" sx={{ mt: 1 }}>
             Sign In
           </Button>
         </form>
