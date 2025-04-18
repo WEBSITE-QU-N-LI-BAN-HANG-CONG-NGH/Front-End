@@ -1,4 +1,4 @@
-// Cập nhật cho src/pages/Auth/AuthForm.jsx
+// src/pages/Auth/AuthForm.jsx
 import React, { useState, useEffect } from "react";
 import Github from "@mui/icons-material/GitHub";
 import Google from "@mui/icons-material/Google";
@@ -12,13 +12,15 @@ import {
   InputAdornment, 
   IconButton,
   Divider,
-  Stack
+  Stack,
+  Dialog
 } from "@mui/material";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { login, getUser, register, logout } from "../../State/Auth/Action";
+import ForgotPasswordFlow from "../../components/features/auth/ForgotPasswordFlow";
 
 // Main component that contains both forms
 const AuthForms = ({ handleClose }) => {
@@ -53,6 +55,7 @@ function LoginForm({ handleClose, toggleForm }) {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   useEffect(() => {
     if(jwt) {
@@ -95,14 +98,16 @@ function LoginForm({ handleClose, toggleForm }) {
     }
   };
 
-  const handleForgotPassword = () => {
-    // Logic để xử lý quên mật khẩu
-    console.log("Forgot password clicked");
-    alert("Chức năng đặt lại mật khẩu sẽ được triển khai trong phiên bản tiếp theo.");
-  };
-
   const handleTogglePassword = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleForgotPasswordOpen = () => {
+    setShowForgotPassword(true);
+  };
+
+  const handleForgotPasswordClose = () => {
+    setShowForgotPassword(false);
   };
 
   const handleGoogleLogin = () => {
@@ -167,6 +172,7 @@ function LoginForm({ handleClose, toggleForm }) {
             error={!!errors.email}
             helperText={errors.email}
           />
+          
           <TextField
             fullWidth
             required
@@ -192,18 +198,7 @@ function LoginForm({ handleClose, toggleForm }) {
             }}
           />
 
-          {/* Thêm nút quên mật khẩu */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1, mb: 2 }}>
-            <Button 
-              onClick={handleForgotPassword} 
-              sx={{ p: 0, textTransform: 'none' }}
-              color="primary"
-            >
-              Quên mật khẩu?
-            </Button>
-          </Box>
-
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 1 }}>
+          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3 }}>
             Sign In
           </Button>
         </form>
@@ -216,7 +211,28 @@ function LoginForm({ handleClose, toggleForm }) {
             </Button>
           </Box>
         </Typography>
+        
+        {/* Nút Quên mật khẩu được đặt dưới dòng đăng ký */}
+        <Typography variant="body2" align="center">
+          <Button 
+            onClick={handleForgotPasswordOpen}
+            sx={{ p: 0, textTransform: 'none' }}
+            color="primary"
+          >
+            Quên mật khẩu?
+          </Button>
+        </Typography>
       </CardContent>
+
+      {/* Dialog hiển thị luồng quên mật khẩu */}
+      <Dialog 
+        open={showForgotPassword} 
+        onClose={handleForgotPasswordClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <ForgotPasswordFlow onClose={handleForgotPasswordClose} />
+      </Dialog>
     </Card>
   );
 }
