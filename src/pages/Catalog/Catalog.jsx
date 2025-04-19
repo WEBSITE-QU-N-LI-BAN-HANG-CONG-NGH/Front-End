@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
 import ProductControls from "../../components/features/catalog/ProductControls";
 import FilterSidebar from "../../components/features/catalog/FilterSidebar";
@@ -10,19 +10,20 @@ import { useFilter } from "../../components/features/catalog/FilterContext";
 
 const Catalog = ({ category }) => {
   const { page = "1" } = useParams();
-  const currentPage = parseInt(page, 10) || 1;
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentPage = parseInt(page, 10) || 1;
   const itemsPerPage = 10;
-  
-  // Tạo dữ liệu mẫu
-  const allProducts = [
-
-  ];
   
   // Sử dụng hook useFilter
   const { activeFilters } = useFilter();
   
-  // Lọc sản phẩm theo category
+  // Tạo dữ liệu mẫu
+  const allProducts = [
+    // Thay thế bằng danh sách sản phẩm của bạn
+  ];
+  
+  // Lọc sản phẩm theo category và các bộ lọc khác
   const applyFilters = (products) => {
     let filtered = [...products];
     
@@ -40,7 +41,6 @@ const Catalog = ({ category }) => {
     
     // Lọc theo color nếu có
     if (activeFilters.color.length > 0) {
-      // Giả sử các sản phẩm có thuộc tính color
       filtered = filtered.filter(product => 
         activeFilters.color.includes(product.color)
       );
@@ -48,7 +48,6 @@ const Catalog = ({ category }) => {
     
     // Lọc theo size nếu có
     if (activeFilters.size.length > 0) {
-      // Giả sử các sản phẩm có thuộc tính size
       filtered = filtered.filter(product => 
         activeFilters.size.includes(product.size)
       );
@@ -57,7 +56,6 @@ const Catalog = ({ category }) => {
     // Lọc theo price nếu có
     if (activeFilters.price) {
       const [min, max] = activeFilters.price.split('-').map(p => parseInt(p));
-      // Giả sử price là số nguyên
       filtered = filtered.filter(product => {
         const productPrice = parseInt(product.price.replace(/\D/g, ''));
         return productPrice >= min && productPrice <= max;
@@ -67,6 +65,7 @@ const Catalog = ({ category }) => {
     return filtered;
   };
   
+  // Tên hiển thị cho mỗi danh mục
   const categoryTitle = {
     "laptops": "Laptops",
     "desktops": "Máy tính bàn",
@@ -80,8 +79,10 @@ const Catalog = ({ category }) => {
   // Áp dụng tất cả các bộ lọc
   const filteredProducts = applyFilters(allProducts);
   
+  // Tính tổng số trang
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
+  // Lấy sản phẩm cho trang hiện tại
   const getCurrentProducts = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
@@ -90,15 +91,30 @@ const Catalog = ({ category }) => {
 
   const [currentProducts, setCurrentProducts] = useState(getCurrentProducts());
 
+  // Cập nhật sản phẩm hiển thị khi trang hoặc bộ lọc thay đổi
   useEffect(() => {
+    // Kiểm tra trang hợp lệ
     if (currentPage < 1 || (totalPages > 0 && currentPage > totalPages)) {
-      navigate("/product/all/1");
+      // Chuyển hướng về trang 1 nếu trang không hợp lệ
+      const params = new URLSearchParams(location.search);
+      navigate(`/product/all/1${params.toString() ? `?${params.toString()}` : ''}`, { replace: true });
       return;
     }
     
+    // Cập nhật sản phẩm hiển thị
     setCurrentProducts(getCurrentProducts());
+    // Cuộn lên đầu trang
     window.scrollTo(0, 0);
   }, [currentPage, category, activeFilters]);
+
+  // Cập nhật URL khi chuyển trang
+  const handlePageChange = (newPage) => {
+    const params = new URLSearchParams(location.search);
+    const basePath = "/product/all";
+    const queryString = params.toString();
+    
+    navigate(`${basePath}/${newPage}${queryString ? `?${queryString}` : ''}`, { replace: true });
+  };
 
   return (
     <div className="flex overflow-hidden flex-col pt-3 bg-white">
@@ -117,7 +133,7 @@ const Catalog = ({ category }) => {
 
           <section className="ml-5 w-[83%] max-md:ml-0 max-md:w-full">
             <div className="flex flex-col w-full max-md:mt-3 max-md:max-w-full">
-              <Filter/>
+              <Filter />
               <ProductControls shown={currentProducts.length} total={filteredProducts.length} />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
@@ -126,7 +142,11 @@ const Catalog = ({ category }) => {
                 ))}
               </div>
               
-              <Pagination totalPages={totalPages} basePath="product/all" />
+              <Pagination 
+                totalPages={totalPages} 
+                basePath="product/all"
+                onPageChange={handlePageChange}
+              />
             </div>
           </section>
         </div>

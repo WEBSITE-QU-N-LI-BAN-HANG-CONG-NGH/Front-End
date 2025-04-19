@@ -1,8 +1,7 @@
-"use client";
-import * as React from "react";
+import React from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 
-function Pagination({ totalPages = 10, basePath = "product/all" }) {
+function Pagination({ totalPages = 10, basePath = "product/all", onPageChange }) {
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -16,8 +15,11 @@ function Pagination({ totalPages = 10, basePath = "product/all" }) {
 
   const currentPage = getCurrentPage();
   
-  // Generate page links
-  const getPageUrl = (page) => `/${basePath}/${page}`;
+  // Generate page links with query parameters
+  const getPageUrl = (page) => {
+    const params = new URLSearchParams(location.search);
+    return `/${basePath}/${page}${params.toString() ? `?${params.toString()}` : ''}`;
+  };
   
   // Define which page numbers to show
   const getVisiblePages = () => {
@@ -54,7 +56,11 @@ function Pagination({ totalPages = 10, basePath = "product/all" }) {
 
   const handleNavigate = (e, page) => {
     e.preventDefault();
-    navigate(getPageUrl(page));
+    if (onPageChange) {
+      onPageChange(page);
+    } else {
+      navigate(getPageUrl(page));
+    }
   };
 
   return (
@@ -75,6 +81,8 @@ function Pagination({ totalPages = 10, basePath = "product/all" }) {
             onClick={(e) => {
               if (currentPage <= 1) {
                 e.preventDefault();
+              } else {
+                handleNavigate(e, currentPage - 1);
               }
             }}
           >
@@ -137,6 +145,7 @@ function Pagination({ totalPages = 10, basePath = "product/all" }) {
                 } border-solid transition-all cursor-pointer duration-200`}
                 to={getPageUrl(page)}
                 aria-current={isActive ? "page" : undefined}
+                onClick={(e) => handleNavigate(e, page)}
               >
                 {page}
               </Link>
@@ -155,6 +164,8 @@ function Pagination({ totalPages = 10, basePath = "product/all" }) {
             onClick={(e) => {
               if (currentPage >= totalPages) {
                 e.preventDefault();
+              } else {
+                handleNavigate(e, currentPage + 1);
               }
             }}
           >
