@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useFilter } from "../../../components/features/catalog/FilterContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 // Category filter data
 const categories = [
@@ -37,6 +38,8 @@ const sizes = [
 
 const FilterSidebar = () => {
   const { activeFilters, updateFilters, clearAllFilters, getActiveFilterCount } = useFilter();
+  const location = useLocation();
+  const navigate = useNavigate();
   
   // State for collapsible sections
   const [expandedSections, setExpandedSections] = useState({
@@ -57,9 +60,13 @@ const FilterSidebar = () => {
 
   // Handle apply filters button
   const handleApplyFilters = () => {
-    // This could navigate to a filtered URL or trigger a different action
+    // Không cần làm gì vì updateFilters đã cập nhật URL rồi
     console.log("Applying filters:", activeFilters);
-    // For now it does nothing since filters are applied automatically
+  };
+  
+  // Xử lý xóa tất cả bộ lọc
+  const handleClearAll = () => {
+    clearAllFilters();
   };
 
   return (
@@ -73,7 +80,7 @@ const FilterSidebar = () => {
               </h2>
               <button 
                 className="px-6 py-2 mt-4 text-sm font-semibold cursor-pointer text-gray-400 border-2 border-solid border-[color:var(--Color---5,#A2A6B0)] rounded-[50px] max-md:px-5"
-                onClick={clearAllFilters}
+                onClick={handleClearAll}
               >
                 Clear Filter
               </button>

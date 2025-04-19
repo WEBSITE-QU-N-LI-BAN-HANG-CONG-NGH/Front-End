@@ -1,35 +1,38 @@
 import React from "react";
 import { useFilter } from "../../../components/features/catalog/FilterContext";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Filter = () => {
   const { activeFilters, removeFilter, clearAllFilters } = useFilter();
+  const navigate = useNavigate();
+  const location = useLocation();
   
-  // Create an array of all active filter items for display
+  // Tạo mảng các bộ lọc đang active để hiển thị
   const getActiveFilterItems = () => {
     const items = [];
     
-    // Add category filters
+    // Thêm bộ lọc category
     activeFilters.category.forEach(category => {
       items.push({ type: 'category', value: category });
     });
     
-    // Add color filters
+    // Thêm bộ lọc color
     activeFilters.color.forEach(color => {
       items.push({ type: 'color', value: color });
     });
     
-    // Add size filters
+    // Thêm bộ lọc size
     activeFilters.size.forEach(size => {
       items.push({ type: 'size', value: size });
     });
     
-    // Add price filter
+    // Thêm bộ lọc price
     if (activeFilters.price) {
       const [min, max] = activeFilters.price.split('-');
       items.push({ type: 'price', value: `$${min} - $${max}` });
     }
     
-    // Add discount filter
+    // Thêm bộ lọc discount
     if (activeFilters.discount) {
       items.push({ type: 'discount', value: activeFilters.discount });
     }
@@ -39,7 +42,7 @@ const Filter = () => {
   
   const filterItems = getActiveFilterItems();
   
-  // Don't render if no filters are active
+  // Không hiển thị nếu không có bộ lọc nào đang active
   if (filterItems.length === 0) {
     return null;
   }

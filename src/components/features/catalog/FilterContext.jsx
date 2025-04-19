@@ -7,6 +7,8 @@ export const FilterContext = createContext();
 export const FilterProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Khởi tạo state cho các bộ lọc
   const [activeFilters, setActiveFilters] = useState({
     category: [],
     color: [],
@@ -15,12 +17,34 @@ export const FilterProvider = ({ children }) => {
     discount: null
   });
   
-  // Cập nhật filter
+  // Phân tích tham số URL khi component được tạo
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    
+    // Trích xuất các tham số từ URL
+    const categoryParam = params.get('category');
+    const colorParam = params.get('color');
+    const sizeParam = params.get('size');
+    const priceParam = params.get('price');
+    
+    // Thiết lập các bộ lọc dựa trên tham số URL
+    const initialFilters = {
+      category: categoryParam ? categoryParam.split(',') : [],
+      color: colorParam ? colorParam.split(',') : [],
+      size: sizeParam ? sizeParam.split(',') : [],
+      price: priceParam || null,
+      discount: null
+    };
+    
+    setActiveFilters(initialFilters);
+  }, [location.pathname]);
+  
+  // Cập nhật bộ lọc và URL
   const updateFilters = (filterType, value, isActive) => {
     setActiveFilters(prev => {
       const newFilters = { ...prev };
       
-      // Xử lý các filter dạng mảng (category, color, size)
+      // Xử lý các bộ lọc dạng mảng (category, color, size)
       if (Array.isArray(newFilters[filterType])) {
         if (isActive) {
           // Thêm vào nếu chưa có
@@ -32,16 +56,45 @@ export const FilterProvider = ({ children }) => {
           newFilters[filterType] = newFilters[filterType].filter(item => item !== value);
         }
       } 
-      // Xử lý các filter dạng đơn giá trị (price, discount)
+      // Xử lý các bộ lọc dạng đơn giá trị (price, discount)
       else {
         newFilters[filterType] = isActive ? value : null;
       }
+      
+      // Cập nhật URL
+      const params = new URLSearchParams();
+      
+      if (newFilters.category.length > 0) {
+        params.set('category', newFilters.category.join(','));
+      }
+      
+      if (newFilters.color.length > 0) {
+        params.set('color', newFilters.color.join(','));
+      }
+      
+      if (newFilters.size.length > 0) {
+        params.set('size', newFilters.size.join(','));
+      }
+      
+      if (newFilters.price) {
+        params.set('price', newFilters.price);
+      }
+      
+      // Lấy đường dẫn cơ sở (không có tham số truy vấn)
+      const basePath = location.pathname.split('?')[0];
+      
+      // Tạo URL mới với tham số truy vấn
+      const queryString = params.toString();
+      const newUrl = queryString ? `${basePath}?${queryString}` : basePath;
+      
+      // Cập nhật URL mà không tải lại trang
+      navigate(newUrl, { replace: true });
       
       return newFilters;
     });
   };
   
-  // Xóa một filter cụ thể
+  // Xóa một bộ lọc cụ thể
   const removeFilter = (filterType, value) => {
     setActiveFilters(prev => {
       const newFilters = { ...prev };
@@ -52,11 +105,40 @@ export const FilterProvider = ({ children }) => {
         newFilters[filterType] = null;
       }
       
+      // Cập nhật URL sau khi xóa bộ lọc
+      const params = new URLSearchParams();
+      
+      if (newFilters.category.length > 0) {
+        params.set('category', newFilters.category.join(','));
+      }
+      
+      if (newFilters.color.length > 0) {
+        params.set('color', newFilters.color.join(','));
+      }
+      
+      if (newFilters.size.length > 0) {
+        params.set('size', newFilters.size.join(','));
+      }
+      
+      if (newFilters.price) {
+        params.set('price', newFilters.price);
+      }
+      
+      // Lấy đường dẫn cơ sở
+      const basePath = location.pathname.split('?')[0];
+      
+      // Tạo URL mới
+      const queryString = params.toString();
+      const newUrl = queryString ? `${basePath}?${queryString}` : basePath;
+      
+      // Cập nhật URL
+      navigate(newUrl, { replace: true });
+      
       return newFilters;
     });
   };
   
-  // Xóa tất cả filter
+  // Xóa tất cả bộ lọc
   const clearAllFilters = () => {
     setActiveFilters({
       category: [],
@@ -65,9 +147,13 @@ export const FilterProvider = ({ children }) => {
       price: null,
       discount: null
     });
+    
+    // Đặt lại URL về đường dẫn cơ sở
+    const basePath = location.pathname.split('?')[0];
+    navigate(basePath, { replace: true });
   };
   
-  // Đếm số lượng filter đang active
+  // Đếm số lượng bộ lọc đang active
   const getActiveFilterCount = () => {
     let count = 0;
     
