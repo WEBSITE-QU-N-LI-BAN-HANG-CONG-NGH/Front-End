@@ -13,7 +13,8 @@ import {
   IconButton,
   Divider,
   Stack,
-  Dialog
+  Dialog,
+  DialogContent
 } from "@mui/material";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -102,7 +103,8 @@ function LoginForm({ handleClose, toggleForm }) {
     setShowPassword(!showPassword);
   };
 
-  const handleForgotPasswordOpen = () => {
+  const handleForgotPasswordOpen = (e) => {
+    e.stopPropagation(); // Ngăn sự kiện bubble lên
     setShowForgotPassword(true);
   };
 
@@ -116,6 +118,11 @@ function LoginForm({ handleClose, toggleForm }) {
 
   const handleGitHubLogin = () => {
     window.location.href = 'http://localhost:8080/oauth2/authorization/github';
+  };
+
+  // Ngăn chặn sự kiện click từ Dialog lan tỏa ra ngoài
+  const handleDialogClick = (e) => {
+    e.stopPropagation();
   };
 
   return (
@@ -230,8 +237,11 @@ function LoginForm({ handleClose, toggleForm }) {
         onClose={handleForgotPasswordClose}
         maxWidth="sm"
         fullWidth
+        onClick={handleDialogClick}
       >
-        <ForgotPasswordFlow onClose={handleForgotPasswordClose} />
+        <DialogContent>
+          <ForgotPasswordFlow onClose={handleForgotPasswordClose} />
+        </DialogContent>
       </Dialog>
     </Card>
   );

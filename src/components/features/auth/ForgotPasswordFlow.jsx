@@ -10,7 +10,8 @@ import {
   InputAdornment,
   IconButton,
   CircularProgress,
-  Alert
+  Alert,
+  Container
 } from "@mui/material";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
@@ -35,14 +36,25 @@ const EmailForm = ({ onSubmit, loading, error }) => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    if (e) e.stopPropagation();
+    
     if (validateForm()) {
       onSubmit(email);
     }
   };
 
+  // Sửa lỗi: Xử lý onChange và ngăn chặn propagation
+  const handleChange = (e) => {
+    if (e) e.stopPropagation();
+    setEmail(e.target.value);
+    if (validationError) {
+      setValidationError("");
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
       <Typography variant="h6" gutterBottom>
         Quên mật khẩu
       </Typography>
@@ -63,7 +75,9 @@ const EmailForm = ({ onSubmit, loading, error }) => {
         type="email"
         margin="normal"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={handleChange}
+        onClick={(e) => e.stopPropagation()}
+        onFocus={(e) => e.stopPropagation()}
         error={!!validationError}
         helperText={validationError}
         disabled={loading}
@@ -75,6 +89,10 @@ const EmailForm = ({ onSubmit, loading, error }) => {
         variant="contained"
         sx={{ mt: 2 }}
         disabled={loading}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleSubmit(e);
+        }}
       >
         {loading ? <CircularProgress size={24} /> : "Tiếp tục"}
       </Button>
@@ -107,14 +125,24 @@ const OtpForm = ({ onSubmit, loading, error, email, onBack }) => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    if (e) e.stopPropagation();
+    
     if (validateForm()) {
       onSubmit(otp);
     }
   };
 
+  const handleChange = (e) => {
+    if (e) e.stopPropagation();
+    setOtp(e.target.value);
+    if (validationError) {
+      setValidationError("");
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
       <Typography variant="h6" gutterBottom>
         Nhập mã xác thực
       </Typography>
@@ -134,7 +162,9 @@ const OtpForm = ({ onSubmit, loading, error, email, onBack }) => {
         label="Mã OTP"
         margin="normal"
         value={otp}
-        onChange={(e) => setOtp(e.target.value)}
+        onChange={handleChange}
+        onClick={(e) => e.stopPropagation()}
+        onFocus={(e) => e.stopPropagation()}
         error={!!validationError}
         helperText={validationError}
         inputProps={{ maxLength: 6 }}
@@ -142,10 +172,24 @@ const OtpForm = ({ onSubmit, loading, error, email, onBack }) => {
       />
 
       <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-        <Button onClick={onBack} disabled={loading}>
+        <Button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onBack();
+          }}
+          disabled={loading}
+        >
           Quay lại
         </Button>
-        <Button type="submit" variant="contained" disabled={loading}>
+        <Button 
+          type="submit" 
+          variant="contained" 
+          disabled={loading}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSubmit(e);
+          }}
+        >
           {loading ? <CircularProgress size={24} /> : "Xác nhận"}
         </Button>
       </Box>
@@ -202,22 +246,32 @@ const ResetPasswordForm = ({ onSubmit, loading, error, onBack }) => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    if (e) e.stopPropagation();
+    
     if (validateForm()) {
       onSubmit(passwords.password);
     }
   };
 
   const handleChange = (e) => {
+    if (e) e.stopPropagation();
     const { name, value } = e.target;
-    setPasswords({
-      ...passwords,
+    setPasswords(prev => ({
+      ...prev,
       [name]: value
-    });
+    }));
+
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
       <Typography variant="h6" gutterBottom>
         Đặt mật khẩu mới
       </Typography>
@@ -240,6 +294,8 @@ const ResetPasswordForm = ({ onSubmit, loading, error, onBack }) => {
         margin="normal"
         value={passwords.password}
         onChange={handleChange}
+        onClick={(e) => e.stopPropagation()}
+        onFocus={(e) => e.stopPropagation()}
         error={!!validationErrors.password}
         helperText={validationErrors.password}
         disabled={loading}
@@ -248,7 +304,10 @@ const ResetPasswordForm = ({ onSubmit, loading, error, onBack }) => {
             <InputAdornment position="end">
               <IconButton
                 aria-label="toggle password visibility"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPassword(!showPassword);
+                }}
                 edge="end"
               >
                 {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -267,6 +326,8 @@ const ResetPasswordForm = ({ onSubmit, loading, error, onBack }) => {
         margin="normal"
         value={passwords.confirmPassword}
         onChange={handleChange}
+        onClick={(e) => e.stopPropagation()}
+        onFocus={(e) => e.stopPropagation()}
         error={!!validationErrors.confirmPassword}
         helperText={validationErrors.confirmPassword}
         disabled={loading}
@@ -275,7 +336,10 @@ const ResetPasswordForm = ({ onSubmit, loading, error, onBack }) => {
             <InputAdornment position="end">
               <IconButton
                 aria-label="toggle confirm password visibility"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowConfirmPassword(!showConfirmPassword);
+                }}
                 edge="end"
               >
                 {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
@@ -286,10 +350,24 @@ const ResetPasswordForm = ({ onSubmit, loading, error, onBack }) => {
       />
 
       <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-        <Button onClick={onBack} disabled={loading}>
+        <Button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onBack();
+          }}
+          disabled={loading}
+        >
           Quay lại
         </Button>
-        <Button type="submit" variant="contained" disabled={loading}>
+        <Button 
+          type="submit" 
+          variant="contained" 
+          disabled={loading}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSubmit(e);
+          }}
+        >
           {loading ? <CircularProgress size={24} /> : "Đặt lại mật khẩu"}
         </Button>
       </Box>
@@ -365,10 +443,18 @@ const ForgotPasswordFlow = ({ onClose }) => {
   };
 
   return (
-    <Card sx={{ maxWidth: 400, mx: "auto", p: 3, boxShadow: 3 }}>
-      <CardContent>
+    <Container maxWidth="sm" onClick={(e) => e.stopPropagation()}>
+      <Box
+        sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center',
+          p: 3
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {success ? (
-          <Box sx={{ textAlign: 'center' }}>
+          <Box sx={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
             <Typography variant="h6" color="primary" gutterBottom>
               Đặt lại mật khẩu thành công!
             </Typography>
@@ -379,7 +465,10 @@ const ForgotPasswordFlow = ({ onClose }) => {
               fullWidth 
               variant="contained" 
               sx={{ mt: 2 }}
-              onClick={onClose}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
             >
               Quay lại đăng nhập
             </Button>
@@ -406,8 +495,8 @@ const ForgotPasswordFlow = ({ onClose }) => {
             onBack={() => setStep(2)}
           />
         )}
-      </CardContent>
-    </Card>
+      </Box>
+    </Container>
   );
 };
 
