@@ -18,6 +18,11 @@ const Header = () => {
     }
   };
 
+  const handleForgotPassword = () => {
+    handleClose(); // Đóng dialog đăng nhập
+    navigate('/forgot-password'); // Chuyển hướng đến trang quên mật khẩu
+  };
+
   useEffect(() => {
     if (showLoginForm) {
       document.addEventListener("mousedown", handleClickOutside);

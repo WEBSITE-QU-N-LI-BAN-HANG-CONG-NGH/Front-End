@@ -51,6 +51,7 @@ export default function AuthModal({ handleClose, open }) {
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
       disableAutoFocus
+      disableBackdropClick
     >
       <Box sx={style} onClick={handleModalClick}>
         {showForgotPassword ? (

@@ -81,6 +81,9 @@ const EmailForm = ({ onSubmit, loading, error }) => {
         error={!!validationError}
         helperText={validationError}
         disabled={loading}
+        inputProps={{ 
+          onClick: e => e.stopPropagation()  // Thêm dòng này
+        }}
       />
 
       <Button

@@ -21,23 +21,57 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { login, getUser, register, logout } from "../../State/Auth/Action";
-import ForgotPasswordFlow from "../../components/features/auth/ForgotPasswordFlow";
+import ForgotPasswordContent from "./ForgotPasswordContent";
 
 // Main component that contains both forms
 const AuthForms = ({ handleClose }) => {
   const [showLoginForm, setShowLoginForm] = useState(true);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   
   const toggleForm = () => {
     setShowLoginForm(!showLoginForm);
   };
   
+  const handleForgotPasswordOpen = () => {
+    setShowForgotPassword(true);
+  };
+  
+  const handleForgotPasswordClose = () => {
+    setShowForgotPassword(false);
+  };
+  
+  const handleModalClick = (e) => {
+    // Ngăn sự kiện click từ việc lan tỏa
+    e.stopPropagation();
+  };
+  
   return (
-    <div>
+    <div onClick={handleModalClick}>
       {showLoginForm ? (
-        <LoginForm handleClose={handleClose} toggleForm={toggleForm} />
+        <LoginForm 
+          handleClose={handleClose} 
+          toggleForm={toggleForm} 
+          onForgotPasswordClick={handleForgotPasswordOpen}
+        />
       ) : (
-        <RegisterForm handleClose={handleClose} toggleForm={toggleForm} />
+        <RegisterForm 
+          handleClose={handleClose} 
+          toggleForm={toggleForm}
+        />
       )}
+      
+      {/* Dialog hiển thị luồng quên mật khẩu */}
+      <Dialog 
+        open={showForgotPassword} 
+        onClose={handleForgotPasswordClose}
+        maxWidth="sm"
+        fullWidth
+        onClick={handleModalClick}
+      >
+        <DialogContent onClick={handleModalClick}>
+          <ForgotPasswordContent onBackToLogin={handleForgotPasswordClose} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -47,7 +81,7 @@ AuthForms.propTypes = {
 };
 
 // LoginForm Component
-function LoginForm({ handleClose, toggleForm }) {
+function LoginForm({ handleClose, toggleForm, onForgotPasswordClick }) {
   const dispatch = useDispatch();
   const jwt = localStorage.getItem("jwt");
   const auth = useSelector((store) => store.auth);
@@ -56,7 +90,6 @@ function LoginForm({ handleClose, toggleForm }) {
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   useEffect(() => {
     if(jwt) {
@@ -94,51 +127,54 @@ function LoginForm({ handleClose, toggleForm }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     if (validateForm()) {
       dispatch(login(formData));
     }
   };
 
-  const handleTogglePassword = () => {
+  const handleTogglePassword = (e) => {
+    e.stopPropagation();
     setShowPassword(!showPassword);
   };
 
-  const handleForgotPasswordOpen = (e) => {
-    e.stopPropagation(); // Ngăn sự kiện bubble lên
-    setShowForgotPassword(true);
+  const handleForgotPasswordClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onForgotPasswordClick) {
+      onForgotPasswordClick();
+    }
   };
 
-  const handleForgotPasswordClose = () => {
-    setShowForgotPassword(false);
-  };
-
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = (e) => {
+    e.stopPropagation();
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
 
-  const handleGitHubLogin = () => {
+  const handleGitHubLogin = (e) => {
+    e.stopPropagation();
     window.location.href = 'http://localhost:8080/oauth2/authorization/github';
   };
 
-  // Ngăn chặn sự kiện click từ Dialog lan tỏa ra ngoài
-  const handleDialogClick = (e) => {
-    e.stopPropagation();
-  };
-
   return (
-    <Card sx={{ maxWidth: 400, mx: "auto", p: 3, boxShadow: 3 }}>
-      <Typography variant="h5" gutterBottom>
+    <Card sx={{ maxWidth: 400, mx: "auto", p: 3, boxShadow: 3 }} onClick={(e) => e.stopPropagation()}>
+      <Typography variant="h5" gutterBottom onClick={(e) => e.stopPropagation()}>
         Welcome Back
       </Typography>
-      <Typography variant="body2" color="textSecondary">
+      <Typography variant="body2" color="textSecondary" onClick={(e) => e.stopPropagation()}>
         Sign in to your account
       </Typography>
 
-      <CardContent className="space-y-4">
-        <div className="space-y-4">
-          <div className="border shadow-md rounded-md border-gray-300">
-            <Button variant="outline" className="w-full border" onClick={handleGoogleLogin}>
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+      <CardContent className="space-y-4" onClick={(e) => e.stopPropagation()}>
+        <div className="space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div className="border shadow-md rounded-md border-gray-300" onClick={(e) => e.stopPropagation()}>
+            <Button 
+              variant="outline" 
+              className="w-full border" 
+              onClick={handleGoogleLogin}
+              fullWidth
+            >
+              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" onClick={(e) => e.stopPropagation()}>
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                   fill="#4285F4"
@@ -160,14 +196,21 @@ function LoginForm({ handleClose, toggleForm }) {
             </Button>
           </div>
 
-          <div className="border shadow-md rounded-md border-gray-300">
-            <Button fullWidth className="border" variant="" onClick={handleGitHubLogin} startIcon={<Github />} sx={{borderColor: "black"}}>
+          <div className="border shadow-md rounded-md border-gray-300" onClick={(e) => e.stopPropagation()}>
+            <Button 
+              fullWidth 
+              className="border" 
+              variant="" 
+              onClick={handleGitHubLogin}
+              startIcon={<Github />}
+              sx={{borderColor: "black"}}
+            >
               GitHub
             </Button>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
           <TextField
             fullWidth
             required
@@ -175,9 +218,19 @@ function LoginForm({ handleClose, toggleForm }) {
             type="email"
             margin="normal"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) => {
+              e.stopPropagation();
+              setFormData({ ...formData, email: e.target.value });
+            }}
             error={!!errors.email}
             helperText={errors.email}
+            onClick={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
+            inputProps={{ 
+              onClick: e => e.stopPropagation(),
+              onFocus: e => e.stopPropagation(),
+              onMouseDown: e => e.stopPropagation()
+            }}
           />
           
           <TextField
@@ -187,15 +240,26 @@ function LoginForm({ handleClose, toggleForm }) {
             type={showPassword ? "text" : "password"}
             margin="normal"
             value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            onChange={(e) => {
+              e.stopPropagation();
+              setFormData({ ...formData, password: e.target.value });
+            }}
             error={!!errors.password}
             helperText={errors.password}
+            onClick={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
+            inputProps={{ 
+              onClick: e => e.stopPropagation(),
+              onFocus: e => e.stopPropagation(),
+              onMouseDown: e => e.stopPropagation()
+            }}
             InputProps={{
               endAdornment: (
-                <InputAdornment position="end">
+                <InputAdornment position="end" onClick={(e) => e.stopPropagation()}>
                   <IconButton
                     aria-label="toggle password visibility"
                     onClick={handleTogglePassword}
+                    onMouseDown={(e) => e.stopPropagation()}
                     edge="end"
                   >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -205,51 +269,49 @@ function LoginForm({ handleClose, toggleForm }) {
             }}
           />
 
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 3 }}>
+          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }} onClick={(e) => e.stopPropagation()}>
+            <Button 
+              onClick={handleForgotPasswordClick}
+              sx={{ textTransform: 'none' }}
+              color="primary"
+            >
+              Quên mật khẩu?
+            </Button>
+          </Box>
+
+          <Button 
+            type="submit" 
+            fullWidth 
+            variant="contained" 
+            sx={{ mt: 3 }}
+            onClick={(e) => e.stopPropagation()}
+          >
             Sign In
           </Button>
         </form>
 
-        <Typography variant="body2" align="center" sx={{ mt: 2 }}>
-          <Box component="span">
+        <Typography variant="body2" align="center" sx={{ mt: 2 }} onClick={(e) => e.stopPropagation()}>
+          <Box component="span" onClick={(e) => e.stopPropagation()}>
             Don't have an account?{" "}
-            <Button onClick={toggleForm} className="text-primary font-bold">
+            <Button 
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleForm();
+              }} 
+              className="text-primary font-bold"
+            >
               Sign Up Now
             </Button>
           </Box>
         </Typography>
-        
-        {/* Nút Quên mật khẩu được đặt dưới dòng đăng ký */}
-        <Typography variant="body2" align="center">
-          <Button 
-            onClick={handleForgotPasswordOpen}
-            sx={{ p: 0, textTransform: 'none' }}
-            color="primary"
-          >
-            Quên mật khẩu?
-          </Button>
-        </Typography>
       </CardContent>
-
-      {/* Dialog hiển thị luồng quên mật khẩu */}
-      <Dialog 
-        open={showForgotPassword} 
-        onClose={handleForgotPasswordClose}
-        maxWidth="sm"
-        fullWidth
-        onClick={handleDialogClick}
-      >
-        <DialogContent>
-          <ForgotPasswordFlow onClose={handleForgotPasswordClose} />
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }
-
 LoginForm.propTypes = {
   handleClose: PropTypes.func.isRequired,
   toggleForm: PropTypes.func.isRequired,
+  onForgotPasswordClick: PropTypes.func
 };
 
 // RegisterForm Component
@@ -272,14 +334,17 @@ function RegisterForm({ handleClose, toggleForm }) {
   }, [auth.jwt, handleClose]);
 
   const handleMenu = (event) => {
+    event.stopPropagation();
     setAnchorEl(event.currentTarget);
   };
 
-  const handleCloseMenu = () => {
+  const handleCloseMenu = (event) => {
+    if (event) event.stopPropagation();
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = (event) => {
+    event.stopPropagation();
     dispatch(logout());
     handleCloseMenu();
   };
@@ -311,6 +376,7 @@ function RegisterForm({ handleClose, toggleForm }) {
 
   // Handle input changes
   const handleChange = (e) => {
+    e.stopPropagation();
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
@@ -327,11 +393,13 @@ function RegisterForm({ handleClose, toggleForm }) {
   };
 
   // Toggle password visibility
-  const handleTogglePassword = () => {
+  const handleTogglePassword = (e) => {
+    e.stopPropagation();
     setShowPassword(!showPassword);
   };
 
-  const handleToggleConfirmPassword = () => {
+  const handleToggleConfirmPassword = (e) => {
+    e.stopPropagation();
     setShowConfirmPassword(!showConfirmPassword);
   };
 
@@ -376,6 +444,7 @@ function RegisterForm({ handleClose, toggleForm }) {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (validateForm()) {
       setIsSubmitting(true);
@@ -390,36 +459,50 @@ function RegisterForm({ handleClose, toggleForm }) {
   };
 
   // Handle social sign-ups
-  const handleGoogleSignUp = () => {
+  const handleGoogleSignUp = (e) => {
+    e.stopPropagation();
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
 
-  const handleGitHubSignUp = () => {
+  const handleGitHubSignUp = (e) => {
+    e.stopPropagation();
     window.location.href = 'http://localhost:8080/oauth2/authorization/github';
   };
 
   return (
-    <Card sx={{ width: "100%", mx: "auto", boxShadow: 0 }}>
-      <CardContent sx={{ p: 2 }}>
-        <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
+    <Card sx={{ width: "100%", mx: "auto", boxShadow: 0 }} onClick={(e) => e.stopPropagation()}>
+      <CardContent sx={{ p: 2 }} onClick={(e) => e.stopPropagation()}>
+        <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold" onClick={(e) => e.stopPropagation()}>
           Create an Account
         </Typography>
 
-        <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
+        <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }} onClick={(e) => e.stopPropagation()}>
           Sign up to get started with our service
         </Typography>
 
         {/* Social Sign-up Buttons */}
-        <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-          <div className="flex w-full flex-col space-y-4">
-            <div className="border shadow-md rounded-md border-gray-300">
-              <Button variant="" fullWidth startIcon={<Google />} onClick={handleGoogleSignUp} sx={{ py: 1 }}>
+        <Stack direction="row" spacing={2} sx={{ mb: 3 }} onClick={(e) => e.stopPropagation()}>
+          <div className="flex w-full flex-col space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="border shadow-md rounded-md border-gray-300" onClick={(e) => e.stopPropagation()}>
+              <Button 
+                variant="" 
+                fullWidth 
+                startIcon={<Google />} 
+                onClick={handleGoogleSignUp} 
+                sx={{ py: 1 }}
+              >
                 Google
               </Button>
             </div>
 
-            <div className="border shadow-md rounded-md border-gray-300">
-              <Button variant="" fullWidth startIcon={<Github />} onClick={handleGitHubSignUp} sx={{ py: 1 }}>
+            <div className="border shadow-md rounded-md border-gray-300" onClick={(e) => e.stopPropagation()}>
+              <Button 
+                variant="" 
+                fullWidth 
+                startIcon={<Github />} 
+                onClick={handleGitHubSignUp} 
+                sx={{ py: 1 }}
+              >
                 GitHub
               </Button>
             </div>
@@ -427,7 +510,7 @@ function RegisterForm({ handleClose, toggleForm }) {
         </Stack>
 
         {/* Divider */}
-        <Box sx={{ position: "relative", my: 3 }}>
+        <Box sx={{ position: "relative", my: 3 }} onClick={(e) => e.stopPropagation()}>
           <Divider />
           <Typography
             variant="body2"
@@ -440,14 +523,15 @@ function RegisterForm({ handleClose, toggleForm }) {
               px: 1,
               color: "text.secondary",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             OR
           </Typography>
         </Box>
 
         {/* Sign-up Form */}
-        <form onSubmit={handleSubmit}>
-          <Stack spacing={2.5}>
+        <form onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
+          <Stack spacing={2.5} onClick={(e) => e.stopPropagation()}>
             {/* First Name Field */}
             <TextField
               label="First Name"
@@ -459,6 +543,13 @@ function RegisterForm({ handleClose, toggleForm }) {
               error={!!errors.firstName}
               helperText={errors.firstName}
               placeholder="John"
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              inputProps={{ 
+                onClick: e => e.stopPropagation(),
+                onFocus: e => e.stopPropagation(),
+                onMouseDown: e => e.stopPropagation()
+              }}
             />
 
             {/* Last Name */}
@@ -472,6 +563,13 @@ function RegisterForm({ handleClose, toggleForm }) {
               error={!!errors.lastName}
               helperText={errors.lastName}
               placeholder="Doe"
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              inputProps={{ 
+                onClick: e => e.stopPropagation(),
+                onFocus: e => e.stopPropagation(),
+                onMouseDown: e => e.stopPropagation()
+              }}
             />
 
             {/* Email Field */}
@@ -486,6 +584,13 @@ function RegisterForm({ handleClose, toggleForm }) {
               error={!!errors.email}
               helperText={errors.email}
               placeholder="you@example.com"
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              inputProps={{ 
+                onClick: e => e.stopPropagation(),
+                onFocus: e => e.stopPropagation(),
+                onMouseDown: e => e.stopPropagation()
+              }}
             />
 
             {/* Password Field */}
@@ -499,10 +604,22 @@ function RegisterForm({ handleClose, toggleForm }) {
               onChange={handleChange}
               error={!!errors.password}
               helperText={errors.password}
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              inputProps={{ 
+                onClick: e => e.stopPropagation(),
+                onFocus: e => e.stopPropagation(),
+                onMouseDown: e => e.stopPropagation()
+              }}
               InputProps={{
                 endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton aria-label="toggle password visibility" onClick={handleTogglePassword} edge="end">
+                  <InputAdornment position="end" onClick={(e) => e.stopPropagation()}>
+                    <IconButton 
+                      aria-label="toggle password visibility" 
+                      onClick={handleTogglePassword} 
+                      onMouseDown={(e) => e.stopPropagation()}
+                      edge="end"
+                    >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
@@ -521,12 +638,20 @@ function RegisterForm({ handleClose, toggleForm }) {
               onChange={handleChange}
               error={!!errors.confirmPassword}
               helperText={errors.confirmPassword}
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              inputProps={{ 
+                onClick: e => e.stopPropagation(),
+                onFocus: e => e.stopPropagation(),
+                onMouseDown: e => e.stopPropagation()
+              }}
               InputProps={{
                 endAdornment: (
-                  <InputAdornment position="end">
+                  <InputAdornment position="end" onClick={(e) => e.stopPropagation()}>
                     <IconButton
                       aria-label="toggle confirm password visibility"
                       onClick={handleToggleConfirmPassword}
+                      onMouseDown={(e) => e.stopPropagation()}
                       edge="end"
                     >
                       {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
@@ -544,6 +669,7 @@ function RegisterForm({ handleClose, toggleForm }) {
               fullWidth
               disabled={isSubmitting}
               sx={{ py: 1.5, mt: 1 }}
+              onClick={(e) => e.stopPropagation()}
             >
               {isSubmitting ? "Creating Account..." : "Sign Up"}
             </Button>
@@ -551,10 +677,16 @@ function RegisterForm({ handleClose, toggleForm }) {
         </form>
 
         {/* Sign In Link */}
-        <Typography variant="body2" align="center" sx={{ mt: 3 }}>
-          <Box component="span">
+        <Typography variant="body2" align="center" sx={{ mt: 3 }} onClick={(e) => e.stopPropagation()}>
+          <Box component="span" onClick={(e) => e.stopPropagation()}>
             Already have an account?{" "}
-            <Button onClick={toggleForm} className="text-primary font-bold">
+            <Button 
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleForm();
+              }} 
+              className="text-primary font-bold"
+            >
               Sign In Now
             </Button>
           </Box>
