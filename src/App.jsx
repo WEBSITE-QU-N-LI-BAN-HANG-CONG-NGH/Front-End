@@ -1,3 +1,4 @@
+// src/App.jsx - Thêm route cho trang quên mật khẩu
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Home from './pages/Home/Home';
@@ -10,6 +11,7 @@ import ContactedUs from './pages/Contact/ContactedUs';
 import Review from './pages/Review/Review';
 import AppLayout from './components/layout/AppLayout';
 import { FilterProvider } from './components/features/catalog/FilterContext';
+import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage'; // Import trang quên mật khẩu mới
 
 function App() {
   return (
@@ -32,6 +34,8 @@ function App() {
             <Route path="information/contact-us" element={<ContactUs />} />
             <Route path="information/contact-us/done" element={<ContactedUs />} />
             <Route path="review" element={<Review />} />
+            {/* Thêm route mới cho trang quên mật khẩu */}
+            <Route path="forgot-password" element={<ForgotPasswordPage />} />
           </Route>
         </Routes>
       </FilterProvider>

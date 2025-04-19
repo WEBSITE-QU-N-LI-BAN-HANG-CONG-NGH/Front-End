@@ -1,9 +1,12 @@
+// src/pages/Auth/AuthModal.jsx
 import { Modal, Box } from '@mui/material';
 import PropTypes from 'prop-types';
 import RegisterForm from './RegisterForm';
 import { useLocation } from 'react-router-dom';
 import LoginForm from './LoginForm';
-import React from 'react'
+import React, { useState } from 'react';
+import ForgotPasswordContent from './ForgotPasswordContent';
+
 const style = {
   position: 'absolute',
   top: '50%',
@@ -23,6 +26,23 @@ const style = {
 export default function AuthModal({ handleClose, open }) {
   const location = useLocation();
   const isSignUp = location.pathname === '/sign-up';
+  // State để quản lý việc hiển thị form quên mật khẩu
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  // Hàm để chuyển đổi giữa form đăng nhập và form quên mật khẩu
+  const handleToggleForgotPassword = () => {
+    setShowForgotPassword(!showForgotPassword);
+  };
+
+  // Hàm để quay lại form đăng nhập từ form quên mật khẩu
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false);
+  };
+
+  const handleModalClick = (e) => {
+    // Ngăn sự kiện click từ việc lan tỏa
+    e.stopPropagation();
+  };
 
   return (
     <Modal
@@ -32,14 +52,22 @@ export default function AuthModal({ handleClose, open }) {
       aria-describedby="modal-modal-description"
       disableAutoFocus
     >
-      <Box sx={style}>
-        {isSignUp ? <RegisterForm handleClose={handleClose} /> : <LoginForm handleClose={handleClose} />}
+      <Box sx={style} onClick={handleModalClick}>
+        {showForgotPassword ? (
+          // Hiển thị form quên mật khẩu
+          <ForgotPasswordContent onBackToLogin={handleBackToLogin} />
+        ) : (
+          // Hiển thị form đăng nhập hoặc đăng ký
+          isSignUp ? (
+            <RegisterForm handleClose={handleClose} />
+          ) : (
+            <LoginForm 
+              handleClose={handleClose} 
+              onForgotPasswordClick={handleToggleForgotPassword} 
+            />
+          )
+        )}
       </Box>
     </Modal>
   );
 }
-
-AuthModal.propTypes = {
-  handleClose: PropTypes.func.isRequired,
-  open: PropTypes.bool.isRequired,
-};
