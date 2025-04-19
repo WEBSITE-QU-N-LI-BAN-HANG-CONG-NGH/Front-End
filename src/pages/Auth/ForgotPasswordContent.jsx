@@ -84,12 +84,12 @@ const ForgotPasswordContent = ({ onBackToLogin }) => {
   };
 
   return (
-    <Box sx={{ p: 1 }}>
+    <Box sx={{ p: 1 }} onClick={e => e.stopPropagation()}>
       {success ? (
         <SuccessView />
       ) : (
         <>
-          <Typography variant="h5" component="h2" gutterBottom>
+          <Typography variant="h5" component="h2" gutterBottom onClick={e => e.stopPropagation()}>
             {step === 1 ? 'Quên mật khẩu' : 
              step === 2 ? 'Xác nhận mã OTP' : 'Đặt lại mật khẩu'}
           </Typography>
@@ -129,14 +129,14 @@ const ForgotPasswordContent = ({ onBackToLogin }) => {
 
 // Component hiển thị khi đặt lại mật khẩu thành công
 const SuccessView = () => (
-  <Box sx={{ textAlign: 'center', py: 2 }}>
-    <Typography variant="h6" color="primary" gutterBottom>
+  <Box sx={{ textAlign: 'center', py: 2 }} onClick={e => e.stopPropagation()}>
+    <Typography variant="h6" color="primary" gutterBottom onClick={e => e.stopPropagation()}>
       Đặt lại mật khẩu thành công!
     </Typography>
-    <Typography variant="body1" paragraph>
+    <Typography variant="body1" paragraph onClick={e => e.stopPropagation()}>
       Mật khẩu của bạn đã được cập nhật.
     </Typography>
-    <Typography variant="body2" color="text.secondary">
+    <Typography variant="body2" color="text.secondary" onClick={e => e.stopPropagation()}>
       Bạn có thể đăng nhập với mật khẩu mới.
     </Typography>
   </Box>
@@ -178,12 +178,12 @@ const EmailForm = ({ onSubmit, loading, error, onBack }) => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} onClick={e => e.stopPropagation()}>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" color="text.secondary" paragraph onClick={e => e.stopPropagation()}>
         Vui lòng nhập địa chỉ email của bạn để nhận mã xác thực.
       </Typography>
       
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2 }} onClick={e => e.stopPropagation()}>
           {error}
         </Alert>
       )}
@@ -204,10 +204,14 @@ const EmailForm = ({ onSubmit, loading, error, onBack }) => {
         error={!!validationError}
         helperText={validationError}
         disabled={loading}
-        inputProps={{ onClick: e => e.stopPropagation() }}
+        inputProps={{ 
+          onClick: e => e.stopPropagation(),
+          onFocus: e => e.stopPropagation(),
+          onMouseDown: e => e.stopPropagation()
+        }}
       />
       
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }} onClick={e => e.stopPropagation()}>
         <Button 
           color="inherit"
           onClick={(e) => {
@@ -270,12 +274,12 @@ const OtpForm = ({ onSubmit, loading, error, email, onBack }) => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} onClick={e => e.stopPropagation()}>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" color="text.secondary" paragraph onClick={e => e.stopPropagation()}>
         Chúng tôi đã gửi mã xác thực đến {email}. Vui lòng kiểm tra email và nhập mã 6 chữ số.
       </Typography>
       
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2 }} onClick={e => e.stopPropagation()}>
           {error}
         </Alert>
       )}
@@ -297,12 +301,13 @@ const OtpForm = ({ onSubmit, loading, error, email, onBack }) => {
         inputProps={{ 
           maxLength: 6, 
           onClick: e => e.stopPropagation(),
-          onFocus: e => e.stopPropagation() 
+          onFocus: e => e.stopPropagation(),
+          onMouseDown: e => e.stopPropagation()
         }}
         disabled={loading}
       />
       
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }} onClick={e => e.stopPropagation()}>
         <Button 
           color="inherit"
           onClick={(e) => {
@@ -395,12 +400,12 @@ const ResetPasswordForm = ({ onSubmit, loading, error, onBack }) => {
 
   return (
     <Box component="form" onSubmit={handleSubmit} onClick={e => e.stopPropagation()}>
-      <Typography variant="body2" color="text.secondary" paragraph>
+      <Typography variant="body2" color="text.secondary" paragraph onClick={e => e.stopPropagation()}>
         Vui lòng nhập mật khẩu mới cho tài khoản của bạn.
       </Typography>
       
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2 }} onClick={e => e.stopPropagation()}>
           {error}
         </Alert>
       )}
@@ -423,11 +428,12 @@ const ResetPasswordForm = ({ onSubmit, loading, error, onBack }) => {
         disabled={loading}
         inputProps={{ 
           onClick: e => e.stopPropagation(),
-          onFocus: e => e.stopPropagation() 
+          onFocus: e => e.stopPropagation(),
+          onMouseDown: e => e.stopPropagation()
         }}
         InputProps={{
           endAdornment: (
-            <InputAdornment position="end">
+            <InputAdornment position="end" onClick={e => e.stopPropagation()}>
               <IconButton
                 aria-label="toggle password visibility"
                 onClick={(e) => {
@@ -461,11 +467,12 @@ const ResetPasswordForm = ({ onSubmit, loading, error, onBack }) => {
         disabled={loading}
         inputProps={{ 
           onClick: e => e.stopPropagation(),
-          onFocus: e => e.stopPropagation() 
+          onFocus: e => e.stopPropagation(),
+          onMouseDown: e => e.stopPropagation()
         }}
         InputProps={{
           endAdornment: (
-            <InputAdornment position="end">
+            <InputAdornment position="end" onClick={e => e.stopPropagation()}>
               <IconButton
                 aria-label="toggle confirm password visibility"
                 onClick={(e) => {
@@ -482,7 +489,7 @@ const ResetPasswordForm = ({ onSubmit, loading, error, onBack }) => {
         }}
       />
       
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }} onClick={e => e.stopPropagation()}>
         <Button 
           color="inherit"
           onClick={(e) => {
