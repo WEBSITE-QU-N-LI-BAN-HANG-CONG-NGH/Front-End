@@ -1,6 +1,5 @@
 "use client"
-import React from 'react'
-import { useEffect, useState } from "react"
+import React, { useState, useEffect } from "react"
 import PropTypes from "prop-types"
 import GitHub from "@mui/icons-material/GitHub"
 import Google from "@mui/icons-material/Google"
@@ -18,31 +17,29 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  CircularProgress,
+  Alert
 } from "@mui/material"
 import Visibility from "@mui/icons-material/Visibility"
 import VisibilityOff from "@mui/icons-material/VisibilityOff"
 import { useDispatch, useSelector } from "react-redux"
 import { getUser, register, logout } from "../../State/Auth/Action"
 import { useNavigate } from "react-router-dom"
+import { API_BASE_URL } from "../../services/api"
 
 function RegisterForm({ handleClose }) {
   const dispatch = useDispatch()
-  const jwt = localStorage.getItem('jwt')
-  const { auth } = useSelector(store => store)
+  const auth = useSelector((store) => store.auth)
+  const { isLoading, error, jwt } = auth
   const [anchorEl, setAnchorEl] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
-    if(jwt) {
-      dispatch(getUser(jwt))
-    }
-  }, [jwt, auth.jwt])
-
-  useEffect(() => {
-    if(auth.jwt) {
+    if (jwt) {
+      console.log("JWT đã được phát hiện, đóng form đăng ký")
       handleClose()
     }
-  }, [auth.jwt, handleClose])
+  }, [jwt, handleClose])
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget)
@@ -67,7 +64,7 @@ function RegisterForm({ handleClose }) {
   })
 
   // Error state
-  const [errors, setErrors] = useState({
+  const [validationErrors, setValidationErrors] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -91,9 +88,9 @@ function RegisterForm({ handleClose }) {
     }));
 
     // Clear error when user types
-    if (errors[name]) {
-      setErrors({
-        ...errors,
+    if (validationErrors[name]) {
+      setValidationErrors({
+        ...validationErrors,
         [name]: null,
       })
     }
@@ -108,43 +105,54 @@ function RegisterForm({ handleClose }) {
     setShowConfirmPassword(!showConfirmPassword)
   }
 
-
   // Validate form
   const validateForm = () => {
-    const newErrors = {}
+    let isValid = true
+    let newErrors = {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    }
 
     // Validate full name
     if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required"
+      newErrors.firstName = "Tên không được để trống"
+      isValid = false
     }
 
     if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required"
+      newErrors.lastName = "Họ không được để trống"
+      isValid = false
     }
 
     // Validate email
     if (!formData.email) {
-      newErrors.email = "Email is required"
+      newErrors.email = "Email không được để trống"
+      isValid = false
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid"
+      newErrors.email = "Email không hợp lệ"
+      isValid = false
     }
 
     // Validate password
     if (!formData.password) {
-      newErrors.password = "Password is required"
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters"
+      newErrors.password = "Mật khẩu không được để trống"
+      isValid = false
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự"
+      isValid = false
     }
 
     // Validate confirm password
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password"
-    } else if (formData.confirmPassword !== formData.password) {
-      newErrors.confirmPassword = "Passwords do not match"
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp"
+      isValid = false
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    setValidationErrors(newErrors)
+    return isValid
   }
 
   // Handle form submission
@@ -152,45 +160,63 @@ function RegisterForm({ handleClose }) {
     e.preventDefault()
 
     if (validateForm()) {
-      setIsSubmitting(true)
-
+      console.log("Đang gửi yêu cầu đăng ký với:", formData)
+      
+      // Loại bỏ confirmPassword vì backend không cần
       const { confirmPassword, ...userData } = formData;
       dispatch(register(userData))
-
-      setTimeout(() => {
-        setIsSubmitting(false)
-      }, 100)
+    } else {
+      console.log("Form không hợp lệ, không thể đăng ký")
     }
   }
 
   // Handle social sign-ups
   const handleGoogleSignUp = () => {
-    console.log("Google sign-up clicked - redirecting to Google OAuth2 endpoint");
-    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    console.log("Bắt đầu đăng ký với Google");
+    // Khởi tạo tham số trạng thái và URL chuyển hướng
+    const redirectUri = encodeURIComponent(`${window.location.origin}/oauth2/redirect/google`);
+    
+    // Xây dựng URL đầy đủ
+    const googleAuthUrl = `${API_BASE_URL}/oauth2/authorization/google?redirect_uri=${redirectUri}`;
+    
+    console.log("Chuyển hướng đến:", googleAuthUrl);
+    window.location.href = googleAuthUrl;
   }
 
   const handleGitHubSignUp = () => {
-    console.log("GitHub sign-up clicked")
-    // Implement GitHub sign-up logic
-    window.location.href = 'http://localhost:8080/oauth2/authorization/github';
+    console.log("Bắt đầu đăng ký với GitHub");
+    // Khởi tạo tham số trạng thái và URL chuyển hướng
+    const redirectUri = encodeURIComponent(`${window.location.origin}/oauth2/redirect/github`);
+    
+    // Xây dựng URL đầy đủ
+    const githubAuthUrl = `${API_BASE_URL}/oauth2/authorization/github?redirect_uri=${redirectUri}`;
+    
+    console.log("Chuyển hướng đến:", githubAuthUrl);
+    window.location.href = githubAuthUrl;
   }
 
   const handleSignInClick = (e) => {
     e.preventDefault();
+    navigate('/login');
     handleClose();
-    navigate('/sign-in');
   };
 
   return (
     <Card sx={{ width: "100%", mx: "auto", boxShadow: 0 }}>
       <CardContent sx={{ p: 2 }}>
         <Typography variant="h5" component="h1" gutterBottom align="center" fontWeight="bold">
-          Create an Account
+          Tạo tài khoản mới
         </Typography>
 
         <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-          Sign up to get started with our service
+          Điền thông tin bên dưới để đăng ký
         </Typography>
+
+        {error && (
+          <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
         {/* Social Sign-up Buttons */}
         <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
@@ -233,55 +259,58 @@ function RegisterForm({ handleClose }) {
           <Stack spacing={2.5}>
             {/* Full Name Field */}
             <TextField
-              label="First Name"
+              label="Tên"
               variant="outlined"
               fullWidth
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
-              error={!!errors.firstName}
-              helperText={errors.firstName}
+              error={!!validationErrors.firstName}
+              helperText={validationErrors.firstName}
               placeholder="John"
+              disabled={isLoading}
             />
 
             {/* last name */}
             <TextField
-              label="Last Name"
+              label="Họ"
               variant="outlined"
               fullWidth
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              error={!!errors.lastName}
-              helperText={errors.lastName}
+              error={!!validationErrors.lastName}
+              helperText={validationErrors.lastName}
               placeholder="Doe"
+              disabled={isLoading}
             />
 
             {/* Email Field */}
             <TextField
-              label="Email Address"
+              label="Email"
               variant="outlined"
               fullWidth
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              error={!!errors.email}
-              helperText={errors.email}
+              error={!!validationErrors.email}
+              helperText={validationErrors.email}
               placeholder="you@example.com"
+              disabled={isLoading}
             />
 
             {/* Password Field */}
             <TextField
-              label="Password"
+              label="Mật khẩu"
               variant="outlined"
               fullWidth
               type={showPassword ? "text" : "password"}
               name="password"
               value={formData.password}
               onChange={handleChange}
-              error={!!errors.password}
-              helperText={errors.password}
+              error={!!validationErrors.password}
+              helperText={validationErrors.password}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -291,19 +320,20 @@ function RegisterForm({ handleClose }) {
                   </InputAdornment>
                 ),
               }}
+              disabled={isLoading}
             />
 
             {/* Confirm Password Field */}
             <TextField
-              label="Confirm Password"
+              label="Xác nhận mật khẩu"
               variant="outlined"
               fullWidth
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              error={!!errors.confirmPassword}
-              helperText={errors.confirmPassword}
+              error={!!validationErrors.confirmPassword}
+              helperText={validationErrors.confirmPassword}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -317,6 +347,7 @@ function RegisterForm({ handleClose }) {
                   </InputAdornment>
                 ),
               }}
+              disabled={isLoading}
             />
 
             {/* Submit Button */}
@@ -325,10 +356,10 @@ function RegisterForm({ handleClose }) {
               variant="contained"
               color="primary"
               fullWidth
-              disabled={isSubmitting}
+              disabled={isLoading}
               sx={{ py: 1.5, mt: 1 }}
             >
-              {isSubmitting ? "Creating Account..." : "Sign Up"}
+              {isLoading ? <CircularProgress size={24} /> : "Đăng ký"}
             </Button>
           </Stack>
         </form>
@@ -336,9 +367,9 @@ function RegisterForm({ handleClose }) {
         {/* Sign In Link */}
         <Typography variant="body2" align="center" sx={{ mt: 3 }}>
           <Box component="span">
-            Already have an account?{" "}
-            <Button onClick={handleSignInClick} className="text-primary font-bold">
-              Sign In Now
+            Đã có tài khoản?{" "}
+            <Button onClick={handleSignInClick} className="text-primary font-bold" disabled={isLoading}>
+              Đăng nhập
             </Button>
           </Box>
         </Typography>

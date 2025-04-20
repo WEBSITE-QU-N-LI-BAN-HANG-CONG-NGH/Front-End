@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import Home from './pages/Home/Home';
 import UserAccount from './pages/UserAccount/UserAccount';
 import Cart from './pages/Cart/Cart';
@@ -11,13 +12,32 @@ import Review from './pages/Review/Review';
 import AppLayout from './components/layout/AppLayout';
 import { FilterProvider } from './components/features/catalog/FilterContext';
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
-import Checkout from './pages/Checkout/Checkout'; // Import trang Checkout
+import Checkout from './pages/Checkout/Checkout';
+import OAuthRedirect from './pages/Auth/OAuthRedirect';
+import { checkAuthStatus } from './State/Auth/Action';
+import { isOAuthCallback, getCodeFromUrl } from './services/util';
 
 function App() {
+  const dispatch = useDispatch();
+  
+  // Kiểm tra trạng thái đăng nhập khi ứng dụng khởi động
+  useEffect(() => {
+    // Nếu URL hiện tại không phải là URL callback OAuth, 
+    // kiểm tra trạng thái đăng nhập
+    if (!isOAuthCallback()) {
+      dispatch(checkAuthStatus());
+    }
+  }, [dispatch]);
+  
   return (
     <div className="App">
       <FilterProvider>
         <Routes>
+          {/* Route OAuth redirect - xử lý callback từ OAuth providers */}
+          <Route path="/oauth2/redirect" element={<OAuthRedirect />} />
+          <Route path="/oauth2/redirect/google" element={<OAuthRedirect />} />
+          <Route path="/oauth2/redirect/github" element={<OAuthRedirect />} />
+          
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Home />} />
             <Route path="laptops" element={<Catalog category="laptops" />} />
@@ -35,7 +55,10 @@ function App() {
             <Route path="information/contact-us/done" element={<ContactedUs />} />
             <Route path="review" element={<Review />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="checkout" element={<Checkout />} /> {/* Thêm route cho trang Checkout */}
+            <Route path="checkout" element={<Checkout />} />
+            <Route path="profile" element={<UserAccount />} />
+            <Route path="login" element={<Home />} />
+            <Route path="sign-up" element={<Home />} />
           </Route>
         </Routes>
       </FilterProvider>

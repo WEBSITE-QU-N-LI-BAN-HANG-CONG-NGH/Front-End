@@ -1,46 +1,65 @@
 import axios from "axios"
-import { GET_USER_FAILURE, GET_USER_REQUEST, GET_USER_SUCCESS, LOGIN_FAILURE, LOGIN_REQUEST, LOGIN_SUCCESS, REGISTER_FAILURE, REGISTER_REQUEST, REGISTER_SUCCESS } from "./ActionType";
+import { GET_USER_FAILURE, GET_USER_REQUEST, GET_USER_SUCCESS, LOGIN_FAILURE, LOGIN_REQUEST, LOGIN_SUCCESS, LOGOUT, REGISTER_FAILURE, REGISTER_REQUEST, REGISTER_SUCCESS } from "./ActionType";
 import { API_BASE_URL } from "../../config/ApiConfig";
+import { authService } from "../../services/auth.service";
+import { getTokenFromLocalStorage, extractTokensFromResponse, clearAllTokens } from "../../services/util";
 
 const registerRequest = () => ({type:REGISTER_REQUEST});
-const registerSuccess = (user) => ({type:REGISTER_SUCCESS, payload:user});
+const registerSuccess = (token) => ({type:REGISTER_SUCCESS, payload:token});
 const registerFailure = (error) => ({type:REGISTER_FAILURE, payload:error});
 
 export const register = (userData) => async (dispatch) => {
     dispatch(registerRequest());
 
     try {
-        const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
-        const user = response.data;
-        if(user.jwt) {
-            localStorage.setItem('jwt', user.jwt);
-            dispatch(registerSuccess(user.jwt));
-            dispatch(getUser(user.jwt));
-            console.log("User register successfully:", user);
+        console.log("Đang đăng ký với dữ liệu:", userData);
+        const response = await authService.register(userData);
+        console.log("Phản hồi đăng ký:", response.data);
+        
+        // Xử lý token từ phản hồi
+        const { accessToken } = extractTokensFromResponse(response);
+        
+        if(accessToken) {
+            dispatch(registerSuccess(accessToken));
+            dispatch(getUser());
+            console.log("Đăng ký thành công với token");
+        } else {
+            console.warn("Đăng ký thành công nhưng không có token trong phản hồi");
+            // Một số API có thể trả về thành công mà không có token (ví dụ: cần xác minh email)
+            dispatch(registerSuccess(null));
         }
     } catch(error) {
+        console.error("Lỗi đăng ký:", error);
         const errorMessage = error.response?.data?.message || error.message;
         dispatch(registerFailure(errorMessage));
     }
 }
 
-const loginRequest = () => ({type:LOGIN_REQUEST});
-const loginSuccess = (user) => ({type:LOGIN_SUCCESS, payload:user});
-const loginFailure = (error) => ({type:LOGIN_FAILURE, payload:error});
+export const loginRequest = () => ({type:LOGIN_REQUEST});
+export const loginSuccess = (token) => ({type:LOGIN_SUCCESS, payload:token});
+export const loginFailure = (error) => ({type:LOGIN_FAILURE, payload:error});
 
 export const login = (userData) => async (dispatch) => {
     dispatch(loginRequest());
 
     try {
-        const response = await axios.post(`${API_BASE_URL}/auth/login`, userData);
-        const user = response.data;
-        if(user.jwt) {
-            localStorage.setItem('jwt', user.jwt);
-            dispatch(loginSuccess(user.jwt));
-            dispatch(getUser(user.jwt));
-            console.log("User logged in successfully:", user);
+        console.log("Đang đăng nhập với dữ liệu:", userData);
+        const response = await authService.login(userData);
+        console.log("Phản hồi đăng nhập:", response.data);
+        
+        // Xử lý token từ phản hồi
+        const { accessToken } = extractTokensFromResponse(response);
+        
+        if(accessToken) {
+            dispatch(loginSuccess(accessToken));
+            dispatch(getUser());
+            console.log("Đăng nhập thành công với token");
+        } else {
+            console.error("Đăng nhập thành công nhưng không có token trong phản hồi");
+            dispatch(loginFailure("Đăng nhập thành công nhưng không nhận được token"));
         }
     } catch(error) {
+        console.error("Lỗi đăng nhập:", error);
         const errorMessage = error.response?.data?.message || error.message;
         dispatch(loginFailure(errorMessage));
     }
@@ -50,80 +69,78 @@ const getUserRequest = () => ({type:GET_USER_REQUEST});
 const getUserSuccess = (user) => ({type:GET_USER_SUCCESS, payload:user});
 const getUserFailure = (error) => ({type:GET_USER_FAILURE, payload:error});
 
-export const getUser = (jwt) => async (dispatch) => {
+export const getUser = () => async (dispatch) => {
+    const jwt = getTokenFromLocalStorage();
+    
     if (!jwt) {
-        console.warn("No JWT provided to getUser");
+        console.warn("Không có JWT để lấy thông tin người dùng");
         return;
     }
     
     dispatch(getUserRequest());
-    console.log("Fetching user with JWT:", jwt);
+    console.log("Đang lấy thông tin người dùng");
     
     try {
-        // Kiểm tra xem JWT có bắt đầu bằng "Bearer " không
-        // Nếu không, thêm tiền tố "Bearer " vào
-        const authToken = jwt.startsWith("Bearer ") ? jwt : `Bearer ${jwt}`;
-        console.log("Using auth token:", authToken);
-        
-        console.log("Making request to:", `${API_BASE_URL}/api/user/profile`);
-        console.log("Headers:", {
-            "Authorization": authToken
-        });
-        
-        const response = await axios.get(`${API_BASE_URL}/api/user/profile`, {
-            headers: {
-                "Authorization": authToken
-            }
-        });
-        
-        console.log("Response received:", response);
+        const response = await authService.getUserProfile();
+        console.log("Phản hồi thông tin người dùng:", response.data);
         
         if (response.status === 200) {
-            const user = response.data;
-            console.log("User data fetched successfully:", user);
-            dispatch(getUserSuccess(user));
+            let userData = response.data;
+            
+            // Kiểm tra nếu dữ liệu người dùng nằm trong thuộc tính data
+            if (!userData.id && !userData.email && response.data.data) {
+                userData = response.data.data;
+            }
+            
+            dispatch(getUserSuccess(userData));
         } else {
-            console.error("Unexpected response status:", response.status);
-            dispatch(getUserFailure("Unexpected response from server"));
+            dispatch(getUserFailure("Phản hồi không mong đợi từ server"));
         }
     } catch(error) {
-        console.error("Error object:", error);
+        console.error("Lỗi lấy thông tin người dùng:", error);
         
-        let errorMessage = "Unknown error";
+        let errorMessage = "Lỗi không xác định";
         if (error.response) {
-            console.error("Error response:", error.response);
-            errorMessage = error.response.data?.message || error.response.data?.error || `Error ${error.response.status}: ${error.response.statusText}`;
+            errorMessage = error.response.data?.message || error.response.data?.error || `Lỗi ${error.response.status}: ${error.response.statusText}`;
         } else if (error.request) {
-            console.error("Error request (no response received):", error.request);
-            errorMessage = "Network error - no response received from server";
+            errorMessage = "Lỗi mạng - không nhận được phản hồi từ server";
         } else {
-            console.error("Error setting up request:", error.message);
             errorMessage = error.message;
         }
         
-        console.error("Error fetching user:", errorMessage);
-        
-        // Nếu lỗi là do token không hợp lệ hoặc hết hạn, xóa token khỏi localStorage
-        if (error.response?.status === 401 || error.response?.status === 403) {
-            console.warn("Authentication error, clearing JWT token");
-            localStorage.removeItem('jwt');
-            errorMessage = "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
-        }
-        
+        // Nếu lỗi trả về 401 hoặc 403, interceptor trong api.js sẽ xử lý refresh token hoặc logout
         dispatch(getUserFailure(errorMessage));
     }
 }
 
 const LOGOUT_REQUEST = () => ({type: 'LOGOUT_REQUEST'});
-const LOGOUT_SUCCESS = () => ({type: 'LOGOUT'});
+const LOGOUT_SUCCESS = () => ({type: LOGOUT});
 
 export const logout = () => async (dispatch) => {
     try {
         dispatch(LOGOUT_REQUEST());
-        localStorage.removeItem('jwt');
+        await authService.logout();
+        clearAllTokens();
         dispatch(LOGOUT_SUCCESS());
         window.location.href = '/';
     } catch (error) {
-        console.error("Logout error:", error);
+        console.error("Lỗi đăng xuất:", error);
+        clearAllTokens();
+        // Vẫn đăng xuất ở phía client ngay cả khi có lỗi từ server
+        dispatch(LOGOUT_SUCCESS());
+        window.location.href = '/';
+    }
+}
+
+// Hàm kiểm tra trạng thái đăng nhập khi ứng dụng khởi động
+export const checkAuthStatus = () => async (dispatch) => {
+    const jwt = getTokenFromLocalStorage();
+    
+    if (jwt) {
+        console.log("Tìm thấy token đã lưu, khôi phục phiên đăng nhập");
+        dispatch(loginSuccess(jwt));
+        dispatch(getUser());
+    } else {
+        console.log("Không tìm thấy token đã lưu, người dùng chưa đăng nhập");
     }
 }

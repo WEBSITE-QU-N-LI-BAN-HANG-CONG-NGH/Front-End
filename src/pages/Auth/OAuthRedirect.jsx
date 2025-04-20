@@ -1,87 +1,113 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { getUser } from '../../State/Auth/Action';
-import React from 'react'
+import { CircularProgress, Typography, Box, Alert } from '@mui/material';
+import { loginSuccess, getUser } from '../../State/Auth/Action';
+import { authService } from '../../services/auth.service';
+import { getCodeFromUrl, saveTokenToLocalStorage, saveRefreshTokenToCookie } from '../../services/util';
+
 const OAuthRedirect = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useDispatch();
-  const auth = useSelector(state => state.auth);
-  const [isProcessing, setIsProcessing] = useState(true);
+  const [status, setStatus] = useState('loading'); // loading, success, error
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Lấy token từ query parameters
-    const params = new URLSearchParams(location.search);
-    const token = params.get('token');
-
-    if (token) {
-      console.log('OAuthRedirect - Token found:', token);
-      // Lưu token vào localStorage
-      localStorage.setItem('jwt', token);
-      console.log('OAuthRedirect - Token saved to localStorage');
-      
-      // Hiển thị token đã được lưu trong localStorage
-      const savedToken = localStorage.getItem('jwt');
-      console.log('OAuthRedirect - Verified token in localStorage:', savedToken === token);
-      
+    const handleOAuth = async () => {
       try {
-        // Lấy thông tin người dùng từ token
-        console.log('OAuthRedirect - Dispatching getUser action with token');
-        dispatch(getUser(token));
+        const code = getCodeFromUrl();
+        if (!code) {
+          setStatus('error');
+          setError('Không tìm thấy mã OAuth trong URL');
+          return;
+        }
+
+        // Xác định provider từ đường dẫn
+        const path = location.pathname;
+        let provider = 'unknown';
+        if (path.includes('google')) {
+          provider = 'google';
+        } else if (path.includes('github')) {
+          provider = 'github';
+        }
+
+        console.log(`Đang xử lý đăng nhập ${provider} với code: ${code}`);
+        
+        // Gọi API xử lý OAuth
+        const result = await authService.handleOAuthLogin(code, provider);
+        
+        if (result.success) {
+          // Xử lý thành công
+          const { accessToken } = result.data;
+          if (accessToken) {
+            dispatch(loginSuccess(accessToken));
+            dispatch(getUser());
+            setStatus('success');
+            
+            // Chuyển hướng đến trang chủ sau 2 giây
+            setTimeout(() => {
+              navigate('/');
+            }, 2000);
+          } else {
+            throw new Error('Không nhận được token từ server');
+          }
+        } else {
+          throw new Error(result.error || 'Đăng nhập không thành công');
+        }
       } catch (error) {
-        console.error('OAuthRedirect - Error dispatching getUser:', error);
-        setError('Lỗi khi dispatch getUser: ' + error.message);
-        setIsProcessing(false);
+        console.error('Lỗi khi xử lý đăng nhập OAuth:', error);
+        setStatus('error');
+        setError(error.message || 'Đã xảy ra lỗi khi đăng nhập');
+        
+        // Chuyển hướng đến trang đăng nhập sau 3 giây
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
       }
-    } else {
-      console.error('OAuthRedirect - No token found in URL');
-      setError('Không tìm thấy token xác thực. Vui lòng thử đăng nhập lại.');
-      setIsProcessing(false);
-    }
-  }, [location, dispatch]);
+    };
 
-  // Theo dõi trạng thái auth để xử lý chuyển hướng
-  useEffect(() => {
-    if (!isProcessing) return;
-
-    if (auth.error) {
-      console.error('OAuthRedirect - Auth error:', auth.error);
-      setError('Lỗi xác thực: ' + auth.error);
-      setIsProcessing(false);
-    }
-
-    if (auth.user) {
-      console.log('OAuthRedirect - User loaded, redirecting to home');
-      // Chuyển hướng đến trang chủ
-      setTimeout(() => {
-        navigate('/');
-        setIsProcessing(false);
-      }, 1000);
-    }
-  }, [auth, navigate, isProcessing]);
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <p className="text-red-500 text-lg mb-4">{error}</p>
-        <button 
-          onClick={() => navigate('/sign-in')} 
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-        >
-          Quay lại đăng nhập
-        </button>
-      </div>
-    );
-  }
+    handleOAuth();
+  }, [dispatch, navigate, location.pathname]);
 
   return (
-    <div className="flex flex-col justify-center items-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-      <p className="text-lg">Đang xử lý đăng nhập...</p>
-      {auth.isLoading && <p className="text-sm text-gray-500 mt-2">Đang lấy thông tin người dùng...</p>}
-    </div>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '80vh',
+        padding: 3,
+      }}
+    >
+      {status === 'loading' && (
+        <>
+          <CircularProgress size={60} thickness={4} />
+          <Typography variant="h6" sx={{ mt: 4 }}>
+            Đang xử lý đăng nhập...
+          </Typography>
+        </>
+      )}
+
+      {status === 'success' && (
+        <Alert
+          severity="success"
+          sx={{ width: '100%', maxWidth: 500, marginTop: 2 }}
+        >
+          Đăng nhập thành công! Đang chuyển hướng đến trang chủ...
+        </Alert>
+      )}
+
+      {status === 'error' && (
+        <Alert
+          severity="error"
+          sx={{ width: '100%', maxWidth: 500, marginTop: 2 }}
+        >
+          {error}. Đang chuyển hướng về trang đăng nhập...
+        </Alert>
+      )}
+    </Box>
   );
 };
 

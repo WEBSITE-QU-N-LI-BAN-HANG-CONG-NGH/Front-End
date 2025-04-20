@@ -3,20 +3,36 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import AuthForms from '../../pages/Auth/AuthForm';
 import { getCart } from '../../State/Cart/Action';
+import { logout, getUser } from '../../State/Auth/Action';
+import { Menu, MenuItem, Avatar, CircularProgress } from '@mui/material';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 const Header = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [showLoginForm, setShowLoginForm] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
   const modalRef = useRef(null);
   
   // Lấy thông tin giỏ hàng từ Redux store
   const cart = useSelector(state => state.cart?.cart);
+  // Lấy thông tin người dùng từ Redux store
+  const auth = useSelector(state => state.auth);
+  const { user, isLoading, jwt } = auth;
   
-  // Lấy thông tin giỏ hàng khi component được tạo
+  // Kiểm tra đã đăng nhập chưa
+  const isAuthenticated = !!jwt;
+  
+  // Lấy thông tin giỏ hàng và người dùng khi component được tạo
   useEffect(() => {
     dispatch(getCart());
-  }, [dispatch]);
+    
+    // Nếu có JWT token nhưng chưa có thông tin user, gọi API để lấy thông tin
+    if (jwt && !user) {
+      console.log("Có JWT nhưng chưa có thông tin người dùng, đang lấy thông tin...");
+      dispatch(getUser());
+    }
+  }, [dispatch, jwt, user]);
   
   const handleButtonClick = () => {
     setShowLoginForm(true);
@@ -35,6 +51,27 @@ const Header = () => {
   const handleCartClick = () => {
     navigate('/cart');
   };
+  
+  // Xử lý đăng xuất
+  const handleLogout = () => {
+    console.log("Đang đăng xuất...");
+    dispatch(logout());
+    handleUserMenuClose();
+  };
+  
+  // Xử lý menu người dùng
+  const handleUserMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  
+  const handleUserMenuClose = () => {
+    setAnchorEl(null);
+  };
+  
+  const handleProfileClick = () => {
+    navigate('/profile');
+    handleUserMenuClose();
+  };
 
   useEffect(() => {
     if (showLoginForm) {
@@ -49,6 +86,84 @@ const Header = () => {
   
   // Tính tổng số lượng sản phẩm trong giỏ hàng
   const totalItems = cart?.totalItems || 0;
+  
+  // Format tên hiển thị của người dùng
+  const getDisplayName = () => {
+    if (!user) return '';
+    
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    } else if (user.firstName) {
+      return user.firstName;
+    } else if (user.lastName) {
+      return user.lastName;
+    } else if (user.email) {
+      // Nếu không có tên, hiển thị email nhưng che bớt
+      const emailParts = user.email.split('@');
+      if (emailParts.length === 2) {
+        return emailParts[0].length > 3 
+          ? `${emailParts[0].substring(0, 3)}...@${emailParts[1]}`
+          : user.email;
+      }
+      return user.email;
+    }
+    
+    return 'Người dùng';
+  };
+  
+  // Xác định có hiển thị avatar hay không
+  const renderUserDisplay = () => {
+    if (isLoading) {
+      return <CircularProgress size={24} color="primary" />;
+    }
+    
+    if (isAuthenticated && user) {
+      return (
+        <div className="flex items-center">
+          <button
+            onClick={handleUserMenuOpen}
+            className="flex items-center space-x-2 focus:outline-none px-3 py-1 rounded-full hover:bg-blue-50 transition duration-300"
+          >
+            {user.profileImage ? (
+              <Avatar 
+                src={user.profileImage} 
+                alt={getDisplayName()} 
+                className="w-8 h-8"
+              />
+            ) : (
+              <AccountCircleIcon className="w-8 h-8 text-blue-600" />
+            )}
+            <span className="text-sm hidden md:inline ml-2 text-blue-600 font-medium">{getDisplayName()}</span>
+          </button>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleUserMenuClose}
+            PaperProps={{
+              elevation: 3,
+              sx: {
+                overflow: 'visible',
+                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.2))',
+                mt: 1.5,
+              },
+            }}
+          >
+            <MenuItem onClick={handleProfileClick}>Thông tin cá nhân</MenuItem>
+            <MenuItem onClick={handleLogout}>Đăng xuất</MenuItem>
+          </Menu>
+        </div>
+      );
+    } else {
+      return (
+        <button
+          className="py-2 px-6 text-blue-600 cursor-pointer border-2 border-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-colors duration-300"
+          onClick={handleButtonClick}
+        >
+          Đăng nhập
+        </button>
+      );
+    }
+  };
 
   return (
     <>
@@ -152,12 +267,7 @@ const Header = () => {
           </div>
 
           <div>
-            <button
-              className="py-2 px-6 text-blue-600 cursor-pointer border-2 border-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-colors"
-              onClick={handleButtonClick}
-            >
-              Đăng nhập
-            </button>
+            {renderUserDisplay()}
             {showLoginForm && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40">
                 <div

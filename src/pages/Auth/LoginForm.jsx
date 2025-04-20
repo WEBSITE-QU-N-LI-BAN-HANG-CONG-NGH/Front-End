@@ -11,63 +11,74 @@ import {
   Typography,
   Box,
   IconButton,
-  InputAdornment
+  InputAdornment,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useDispatch, useSelector } from "react-redux";
 import { getUser, login } from "../../State/Auth/Action";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../services/api";
 
 function LoginForm({ handleClose, onForgotPasswordClick }) {
   const dispatch = useDispatch();
-  const jwt = localStorage.getItem("jwt");
   const auth = useSelector((store) => store.auth);
+  const { isLoading, error, jwt } = auth;
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-
-  useEffect(() => {
-    if(jwt) {
-      dispatch(getUser(jwt));
-    }
-  }, [jwt, auth.jwt, dispatch]);
-
-  useEffect(() => {
-    if(auth.jwt) {
-      handleClose();
-    }
-  }, [auth.jwt, handleClose]);
-
-  const [errors, setErrors] = useState({
+  const [validationErrors, setValidationErrors] = useState({
     email: "",
     password: "",
   });
+
+  // Kiểm tra nếu đã đăng nhập thì đóng form
+  useEffect(() => {
+    if(jwt) {
+      console.log("JWT đã được phát hiện, đóng form đăng nhập");
+      handleClose();
+    }
+  }, [jwt, handleClose]);
 
   const validateForm = () => {
     let newErrors = { email: "", password: "" };
     let isValid = true;
 
-    if (!formData.email.includes("@")) {
-      newErrors.email = "Please enter a valid email address";
+    // Kiểm tra email
+    if (!formData.email) {
+      newErrors.email = "Email không được để trống";
+      isValid = false;
+    } else if (!formData.email.includes("@")) {
+      newErrors.email = "Email không hợp lệ";
       isValid = false;
     }
-    if (formData.password.length < 1) {
-      newErrors.password = "Password is required";
+    
+    // Kiểm tra password
+    if (!formData.password) {
+      newErrors.password = "Mật khẩu không được để trống";
+      isValid = false;
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
       isValid = false;
     }
 
-    setErrors(newErrors);
+    setValidationErrors(newErrors);
     return isValid;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
+      console.log("Đang gửi yêu cầu đăng nhập với:", formData);
       dispatch(login(formData));
+    } else {
+      console.log("Form không hợp lệ, không thể đăng nhập");
     }
   };
 
@@ -90,22 +101,44 @@ function LoginForm({ handleClose, onForgotPasswordClick }) {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    console.log("Bắt đầu đăng nhập với Google");
+    // Khởi tạo tham số trạng thái và URL chuyển hướng
+    const redirectUri = encodeURIComponent(`${window.location.origin}/oauth2/redirect/google`);
+    
+    // Xây dựng URL đầy đủ (Lưu ý: Đường dẫn này phải khớp với cấu hình Spring Security OAuth2)
+    const googleAuthUrl = `${API_BASE_URL}/oauth2/authorization/google?redirect_uri=${redirectUri}`;
+    
+    console.log("Chuyển hướng đến:", googleAuthUrl);
+    window.location.href = googleAuthUrl;
   };
 
   const handleGitHubLogin = () => {
-    window.location.href = 'http://localhost:8080/oauth2/authorization/github';
+    console.log("Bắt đầu đăng nhập với GitHub");
+    // Khởi tạo tham số trạng thái và URL chuyển hướng
+    const redirectUri = encodeURIComponent(`${window.location.origin}/oauth2/redirect/github`);
+    
+    // Xây dựng URL đầy đủ (Lưu ý: Đường dẫn này phải khớp với cấu hình Spring Security OAuth2)
+    const githubAuthUrl = `${API_BASE_URL}/oauth2/authorization/github?redirect_uri=${redirectUri}`;
+    
+    console.log("Chuyển hướng đến:", githubAuthUrl);
+    window.location.href = githubAuthUrl;
   };
 
   return (
     <Card sx={{ width: "100%", mx: "auto", boxShadow: 0 }}>
       <CardContent sx={{ p: 2 }}>
         <Typography variant="h5" gutterBottom>
-          Welcome Back
+          Chào mừng trở lại
         </Typography>
         <Typography variant="body2" color="textSecondary">
-          Sign in to your account
+          Đăng nhập vào tài khoản của bạn
         </Typography>
+
+        {error && (
+          <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
         <div className="space-y-4 mt-4">
           <div className="border shadow-md rounded-md border-gray-300">
@@ -143,21 +176,23 @@ function LoginForm({ handleClose, onForgotPasswordClick }) {
             margin="normal"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            error={!!errors.email}
-            helperText={errors.email}
+            error={!!validationErrors.email}
+            helperText={validationErrors.email}
+            disabled={isLoading}
           />
           
           <TextField
             fullWidth
             required
-            label="Password"
+            label="Mật khẩu"
             type={showPassword ? "text" : "password"}
             name="password"
             margin="normal"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            error={!!errors.password}
-            helperText={errors.password}
+            error={!!validationErrors.password}
+            helperText={validationErrors.password}
+            disabled={isLoading}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -178,6 +213,7 @@ function LoginForm({ handleClose, onForgotPasswordClick }) {
               onClick={handleForgotPasswordClick}
               sx={{ textTransform: 'none' }}
               color="primary"
+              disabled={isLoading}
             >
               Quên mật khẩu?
             </Button>
@@ -188,19 +224,21 @@ function LoginForm({ handleClose, onForgotPasswordClick }) {
             fullWidth 
             variant="contained" 
             sx={{ mt: 3 }}
+            disabled={isLoading}
           >
-            Sign In
+            {isLoading ? <CircularProgress size={24} /> : "Đăng nhập"}
           </Button>
         </form>
 
         <Typography variant="body2" align="center" sx={{ mt: 2 }}>
           <Box component="span">
-            Don't have an account?{" "}
+            Chưa có tài khoản?{" "}
             <Button 
               onClick={handleSignUpClick} 
               className="text-primary font-bold"
+              disabled={isLoading}
             >
-              Sign Up Now
+              Đăng ký ngay
             </Button>
           </Box>
         </Typography>
