@@ -1,5 +1,8 @@
 import { current } from "@reduxjs/toolkit";
 import React from "react";
+import { useDispatch } from "react-redux";
+import { addItemToCart } from "../../../State/Cart/Action";
+import { useNavigate } from "react-router-dom";
 
 const ProductCardList = ({
       image,
@@ -12,7 +15,31 @@ const ProductCardList = ({
       cpu,
       featured,
       ioport,
+      productId
  }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // Handler để thêm vào giỏ hàng
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    
+    const cartData = {
+      productId: productId || 1,
+      quantity: 1
+    };
+    
+    dispatch(addItemToCart(cartData))
+      .then(() => {
+        // Hiển thị thông báo thành công nếu cần
+        alert("Đã thêm sản phẩm vào giỏ hàng!");
+      })
+      .catch(error => {
+        console.error("Error adding to cart:", error);
+        alert("Có lỗi xảy ra khi thêm vào giỏ hàng");
+      });
+  };
+
   return (
     <article className="pt-2.5 pr-6 pb-9 pl-14 mt-5 bg-white shadow-sm max-md:px-5 max-md:max-w-full">
       <div className="flex gap-5 max-md:flex-col">
@@ -80,7 +107,10 @@ const ProductCardList = ({
             </div>
 
             <div className="flex flex-wrap gap-5 justify-between mt-14 w-full max-md:mt-10 max-md:mr-1.5 max-md:max-w-full">
-              <button className="gap-2.5 self-stretch px-5 py-2 text-sm font-semibold text-blue-600 border-2 border-solid border-[color:var(--Color---3,#0156FF)] rounded-[50px] w-[150px]">
+              <button 
+                className="gap-2.5 self-stretch px-5 py-2 text-sm font-semibold text-blue-600 border-2 border-solid border-[color:var(--Color---3,#0156FF)] rounded-[50px] w-[150px] hover:bg-blue-600 hover:text-white transition-all duration-300"
+                onClick={handleAddToCart}
+              >
                 Add To Cart
               </button>
             </div>
