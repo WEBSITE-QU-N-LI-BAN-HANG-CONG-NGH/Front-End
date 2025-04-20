@@ -91,11 +91,11 @@ function LoginForm({ handleClose, toggleForm, onForgotPasswordClick }) {
   });
   const [showPassword, setShowPassword] = useState(false);
 
-  useEffect(() => {
-    if(jwt) {
-      dispatch(getUser(jwt))
-    }
-  }, [jwt, auth.jwt, dispatch])
+  // useEffect(() => {
+  //   if(jwt) {
+  //     dispatch(getUser(jwt))
+  //   }
+  // }, [jwt, auth.jwt, dispatch])
 
   useEffect(() => {
     if(auth.jwt) {

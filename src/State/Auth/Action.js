@@ -37,7 +37,7 @@ export const login = (userData) => async (dispatch) => {
         if(user && user.accessToken) {
             localStorage.setItem('jwt', user.accessToken);
             dispatch(loginSuccess(user.accessToken));
-            dispatch(getUser(user.accessToken));
+            // dispatch(getUser(user.accessToken));
             console.log("Đăng nhập thành công:", user);
             return true;
         }
