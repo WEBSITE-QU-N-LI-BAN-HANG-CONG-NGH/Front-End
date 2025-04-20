@@ -1,12 +1,15 @@
-// src/components/layout/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
 import AuthForms from '../../pages/Auth/AuthForm';
+import { useSimpleCart } from '../../hooks/useSimpleCart';
 
 const Header = () => {
   const navigate = useNavigate();
   const [showLoginForm, setShowLoginForm] = useState(false);
   const modalRef = useRef(null);
+  
+  // Sử dụng hook giỏ hàng
+  const { cart } = useSimpleCart();
 
   const handleButtonClick = () => {
     setShowLoginForm(true);
@@ -21,6 +24,10 @@ const Header = () => {
   const handleForgotPassword = () => {
     handleClose(); // Đóng dialog đăng nhập
     navigate('/forgot-password'); // Chuyển hướng đến trang quên mật khẩu
+  };
+  
+  const handleCartClick = () => {
+    navigate('/cart');
   };
 
   useEffect(() => {
@@ -118,10 +125,10 @@ const Header = () => {
             />
           </div>
 
-          <Link
-            to="/cart"
-            className="relative inline-block"
+          <div
+            className="relative inline-block cursor-pointer"
             aria-label="Shopping Cart"
+            onClick={handleCartClick}
           >
             <img
               src="/CartIcon.png"
@@ -131,9 +138,9 @@ const Header = () => {
             <span
               className="absolute bottom-3 left-3 text-white bg-blue-600 rounded-full text-xs px-1.5 py-0.5"
             >
-              0
+              {cart?.totalItems || 0}
             </span>
-          </Link>
+          </div>
 
           <div>
             <button
