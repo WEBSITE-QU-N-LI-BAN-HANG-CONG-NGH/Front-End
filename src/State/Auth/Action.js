@@ -68,12 +68,12 @@ export const getUser = (jwt) => async (dispatch) => {
         const authToken = jwt.startsWith("Bearer ") ? jwt : `Bearer ${jwt}`;
         console.log("Using auth token:", authToken);
         
-        console.log("Making request to:", `${API_BASE_URL}/api/user/profile`);
+        console.log("Making request to:", `${API_BASE_URL}/users/profile`);
         console.log("Headers:", {
             "Authorization": authToken
         });
         
-        const response = await axios.get(`${API_BASE_URL}/api/user/profile`, {
+        const response = await axios.get(`${API_BASE_URL}/users/profile`, {
             headers: {
                 "Authorization": authToken
             }
