@@ -12,16 +12,16 @@ export const register = (userData) => async (dispatch) => {
     try {
         const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
         const user = response.data;
-        if(user.jwt) {
-            localStorage.setItem('jwt', user.jwt);
-            dispatch(registerSuccess(user.jwt));
-            dispatch(getUser(user.jwt));
-            console.log("User register successfully:", user);
+        if(user && user.success) {
+            console.log("Đăng ký thành công:", user);
+            return true;
         }
     } catch(error) {
+        console.error("Lỗi đăng ký:", error);
         const errorMessage = error.response?.data?.message || error.message;
         dispatch(registerFailure(errorMessage));
     }
+    return false;
 }
 
 const loginRequest = () => ({type:LOGIN_REQUEST});
@@ -33,17 +33,20 @@ export const login = (userData) => async (dispatch) => {
 
     try {
         const response = await axios.post(`${API_BASE_URL}/auth/login`, userData);
-        const user = response.data;
-        if(user.jwt) {
-            localStorage.setItem('jwt', user.jwt);
-            dispatch(loginSuccess(user.jwt));
-            dispatch(getUser(user.jwt));
-            console.log("User logged in successfully:", user);
+        const user = response.data.data;
+        if(user && user.accessToken) {
+            localStorage.setItem('jwt', user.accessToken);
+            dispatch(loginSuccess(user.accessToken));
+            dispatch(getUser(user.accessToken));
+            console.log("Đăng nhập thành công:", user);
+            return true;
         }
     } catch(error) {
+        console.error("Lỗi đăng nhập:", error);
         const errorMessage = error.response?.data?.message || error.message;
         dispatch(loginFailure(errorMessage));
     }
+    return false;
 }
 
 const getUserRequest = () => ({type:GET_USER_REQUEST});
@@ -52,7 +55,7 @@ const getUserFailure = (error) => ({type:GET_USER_FAILURE, payload:error});
 
 export const getUser = (jwt) => async (dispatch) => {
     if (!jwt) {
-        console.warn("No JWT provided to getUser");
+        console.warn("Không có JWT để lấy thông tin người dùng");
         return;
     }
     
@@ -76,10 +79,10 @@ export const getUser = (jwt) => async (dispatch) => {
             }
         });
         
-        console.log("Response received:", response);
+        console.log("Received user data:", response);
         
         if (response.status === 200) {
-            const user = response.data;
+            const user = response.data.data || response.data;
             console.log("User data fetched successfully:", user);
             dispatch(getUserSuccess(user));
         } else {
@@ -127,3 +130,16 @@ export const logout = () => async (dispatch) => {
         console.error("Logout error:", error);
     }
 }
+
+export const verifyOtp = (email, otp) => async () => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/auth/register/verify`, {
+            email,
+            otp
+        });
+        return response.data.success || response.data.data;
+    } catch (error) {
+        console.error("Lỗi xác thực OTP:", error);
+        throw new Error(error.response?.data?.message || "Xác thực OTP thất bại");
+    }
+};

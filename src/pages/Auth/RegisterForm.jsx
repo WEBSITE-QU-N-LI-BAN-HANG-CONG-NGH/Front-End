@@ -32,6 +32,14 @@ function RegisterForm({ handleClose }) {
   const [anchorEl, setAnchorEl] = useState(null)
   const navigate = useNavigate()
 
+  // Thêm state để theo dõi trạng thái OTP
+  const [otpSent, setOtpSent] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [verifying, setVerifying] = useState(false);
+
+
   useEffect(() => {
     if(jwt) {
       dispatch(getUser(jwt))
@@ -154,12 +162,21 @@ function RegisterForm({ handleClose }) {
     if (validateForm()) {
       setIsSubmitting(true)
 
-      const { confirmPassword, ...userData } = formData;
-      dispatch(register(userData))
-
-      setTimeout(() => {
-        setIsSubmitting(false)
-      }, 100)
+      try {
+        const { confirmPassword, ...userData } = formData;
+        // Đăng ký bằng Redux action
+        const success = await dispatch(register(userData));
+        
+        if (success) {
+          // Lưu email đã đăng ký để xác thực OTP
+          setRegisteredEmail(userData.email);
+          setOtpSent(true);
+        }
+      } catch (error) {
+        console.error("Lỗi đăng ký:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   }
 
@@ -179,6 +196,32 @@ function RegisterForm({ handleClose }) {
     e.preventDefault();
     handleClose();
     navigate('/sign-in');
+  };
+
+  // Thêm xử lý xác thực OTP
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    
+    if (!otp) {
+      setOtpError("Vui lòng nhập mã OTP");
+      return;
+    }
+    
+    setVerifying(true);
+    try {
+      const verified = await dispatch(verifyOtp(registeredEmail, otp));
+      if (verified) {
+        alert("Xác thực thành công! Vui lòng đăng nhập");
+        handleClose(); // Đóng form
+        navigate('/'); // Hoặc chuyển đến trang đăng nhập
+      } else {
+        setOtpError("Xác thực thất bại. Vui lòng kiểm tra lại mã OTP");
+      }
+    } catch (error) {
+      setOtpError(error.message || "Xác thực thất bại");
+    } finally {
+      setVerifying(false);
+    }
   };
 
   return (

@@ -13,6 +13,8 @@ import { FilterProvider } from './components/features/catalog/FilterContext';
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
 import Checkout from './pages/Checkout/Checkout'; // Import trang Checkout
 
+import OAuthRedirect from './pages/Auth/OAuthRedirect';
+
 function App() {
   return (
     <div className="App">
@@ -36,6 +38,7 @@ function App() {
             <Route path="review" element={<Review />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             <Route path="checkout" element={<Checkout />} /> {/* Thêm route cho trang Checkout */}
+            <Route path="oauth2/redirect" element={<OAuthRedirect />} />
           </Route>
         </Routes>
       </FilterProvider>

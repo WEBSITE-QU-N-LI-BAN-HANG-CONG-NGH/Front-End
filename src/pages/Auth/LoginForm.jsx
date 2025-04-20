@@ -97,6 +97,14 @@ function LoginForm({ handleClose, onForgotPasswordClick }) {
     window.location.href = 'http://localhost:8080/oauth2/authorization/github';
   };
 
+  useEffect(() => {
+    // Nếu đã đăng nhập thành công
+    if (auth.jwt) {
+      handleClose(); // Đóng form
+      navigate('/'); // Chuyển hướng tới trang chủ
+    }
+  }, [auth.jwt, handleClose, navigate]);
+
   return (
     <Card sx={{ width: "100%", mx: "auto", boxShadow: 0 }}>
       <CardContent sx={{ p: 2 }}>
