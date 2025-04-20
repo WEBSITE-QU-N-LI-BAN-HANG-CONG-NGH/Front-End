@@ -37,6 +37,10 @@ function App() {
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             <Route path="checkout" element={<Checkout />} /> {/* Thêm route cho trang Checkout */}
           </Route>
+
+           {/* Admin Routes */}
+           <Route path="/admin/*" element={<AdminRoutes />} />
+           
         </Routes>
       </FilterProvider>
     </div>
