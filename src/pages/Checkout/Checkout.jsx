@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
+import AddressSelection from "../../components/checkout/AddressSelection";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const Checkout = () => {
   
   const [step, setStep] = useState(initialStep);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState(null);
 
   // Lấy giỏ hàng từ local storage hoặc Redux store
   const cartFromStore = useSelector(state => state.cart?.cart);
@@ -163,6 +165,26 @@ const Checkout = () => {
     }, 1500);
   };
 
+  // Hàm xử lý khi chọn địa chỉ giao hàng
+  const handleAddressSelect = (address) => {
+    setSelectedAddress(address);
+    setShippingInfo({
+      fullName: `${address.firstName} ${address.lastName}`,
+      phone: address.mobile,
+      email: "",
+      address: address.streetAddress,
+      city: address.city,
+      district: address.state,
+      note: ""
+    });
+  };
+
+  // Hàm xử lý khi tiếp tục từ bước chọn địa chỉ
+  const handleAddressSubmit = (address) => {
+    handleAddressSelect(address);
+    handleNextStep();
+  };
+
   // Format số tiền
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -286,150 +308,22 @@ const Checkout = () => {
     );
   };
   
-  // Component hiển thị form thông tin giao hàng
-  const ShippingStep = () => (
+  // Component hiển thị form chọn địa chỉ giao hàng
+  const AddressStep = () => (
     <div>
       <h2 className="text-xl font-bold mb-6">Thông tin giao hàng</h2>
       
-      <form className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="fullName" className="text-sm font-medium">
-            Họ Tên *
-          </label>
-          <input
-            type="text"
-            id="fullName"
-            name="fullName"
-            value={shippingInfo.fullName}
-            onChange={handleShippingChange}
-            placeholder="Nguyễn Văn A"
-            className="p-3 rounded border"
-            required
-          />
-        </div>
-        
-        <div className="flex flex-col gap-2">
-          <label htmlFor="phone" className="text-sm font-medium">
-            Số điện thoại *
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={shippingInfo.phone}
-            onChange={handleShippingChange}
-            placeholder="0912 345 678"
-            className="p-3 rounded border"
-            required
-          />
-        </div>
-        
-        <div className="flex flex-col gap-2">
-          <label htmlFor="email" className="text-sm font-medium">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={shippingInfo.email}
-            onChange={handleShippingChange}
-            placeholder="example@gmail.com"
-            className="p-3 rounded border"
-          />
-        </div>
-        
-        <div className="flex flex-col gap-2">
-          <label htmlFor="address" className="text-sm font-medium">
-            Địa chỉ *
-          </label>
-          <input
-            type="text"
-            id="address"
-            name="address"
-            value={shippingInfo.address}
-            onChange={handleShippingChange}
-            placeholder="Số nhà, tên đường"
-            className="p-3 rounded border"
-            required
-          />
-        </div>
-        
-        <div className="flex flex-col gap-2">
-          <label htmlFor="city" className="text-sm font-medium">
-            Tỉnh/Thành phố *
-          </label>
-          <select
-            id="city"
-            name="city"
-            value={shippingInfo.city}
-            onChange={handleShippingChange}
-            className="p-3 rounded border"
-            required
-          >
-            <option value="">Chọn Tỉnh/Thành phố</option>
-            <option value="HCM">Hồ Chí Minh</option>
-            <option value="HN">Hà Nội</option>
-            <option value="DN">Đà Nẵng</option>
-          </select>
-        </div>
-        
-        <div className="flex flex-col gap-2">
-          <label htmlFor="district" className="text-sm font-medium">
-            Quận/Huyện *
-          </label>
-          <select
-            id="district"
-            name="district"
-            value={shippingInfo.district}
-            onChange={handleShippingChange}
-            className="p-3 rounded border"
-            required
-          >
-            <option value="">Chọn Quận/Huyện</option>
-            <option value="Q1">Quận 1</option>
-            <option value="Q2">Quận 2</option>
-            <option value="Q3">Quận 3</option>
-          </select>
-        </div>
-        
-        <div className="flex flex-col gap-2 md:col-span-2">
-          <label htmlFor="note" className="text-sm font-medium">
-            Ghi chú
-          </label>
-          <textarea
-            id="note"
-            name="note"
-            value={shippingInfo.note}
-            onChange={handleShippingChange}
-            placeholder="Ghi chú về đơn hàng, ví dụ: thời gian hay chỉ dẫn địa điểm giao hàng chi tiết hơn."
-            className="p-3 rounded border h-[100px]"
-          />
-        </div>
-      </form>
+      <AddressSelection 
+        onAddressSelect={handleAddressSelect}
+        onProceed={handleAddressSubmit}
+      />
       
-      <div className="p-6 mb-6 border border-gray-300">
-        <p className="text-base font-medium">Tổng tiền: 
-          <span className="text-2xl font-semibold text-red-600 ml-2">
-            {cart ? formatCurrency(cart.totalDiscountedPrice || cart.totalPrice) : "0đ"}
-          </span>
-        </p>
-      </div>
-      
-      <div className="flex justify-between">
+      <div className="flex justify-between mt-6">
         <button 
           className="py-4 px-8 text-base font-semibold text-gray-600 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
           onClick={handlePrevStep}
         >
           QUAY LẠI
-        </button>
-        
-        <button 
-          className="py-4 px-8 text-base font-semibold text-white bg-rose-600 rounded hover:bg-rose-700 transition-colors"
-          onClick={handleNextStep}
-          disabled={!shippingInfo.fullName || !shippingInfo.phone || !shippingInfo.address || !shippingInfo.city || !shippingInfo.district}
-        >
-          TIẾP TỤC
         </button>
       </div>
     </div>
@@ -555,8 +449,8 @@ const Checkout = () => {
           <div className="bg-gray-50 p-6 rounded border border-gray-300 mb-6 text-left">
             <h3 className="text-lg font-medium mb-4">Thông tin đơn hàng #{currentOrderId}</h3>
             
-            <p className="mb-2"><strong>Ngày đặt hàng:</strong> {new Date().toLocaleDateString('vi-VN')}</p>
-            <p className="mb-2"><strong>Phương thức thanh toán:</strong> {paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : paymentMethod === "BANKING" ? "Chuyển khoản ngân hàng" : "Thanh toán VNPAY"}</p>
+            <p className="mb-2"><strong>Ngày đặt hàng:</strong> {new Date().toLocaleDateString('vi-VN')}</p><p className="mb-2"><strong>Phương thức thanh toán:</strong> {paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : paymentMethod === "BANKING" ? "Chuyển khoản ngân hàng" : "Thanh toán VNPAY"}</p>
+            <p className="mb-2"><strong>Địa chỉ giao hàng:</strong> {selectedAddress ? `${selectedAddress.streetAddress}, ${selectedAddress.city}, ${selectedAddress.state}` : "Không có thông tin"}</p>
             <p className="mb-2"><strong>Tổng tiền:</strong> {cart ? formatCurrency(cart.totalDiscountedPrice || cart.totalPrice) : "0đ"}</p>
           </div>
           
@@ -599,12 +493,17 @@ const Checkout = () => {
     <div className="bg-white min-h-screen">
       <div className="max-w-5xl mx-auto py-8 px-4">
         <BreadcrumbNav />
-        <h1 className="text-3xl font-bold text-center mb-8">Thanh Toán</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">{
+          step === 1 ? "Giỏ hàng" : 
+          step === 2 ? "Thông tin đặt hàng" : 
+          step === 3 ? "Thanh Toán" : 
+          "Hoàn tất đơn hàng"
+        }</h1>
         
         <CheckoutProgress />
         
         {step === 1 && <CartStep />}
-        {step === 2 && <ShippingStep />}
+        {step === 2 && <AddressStep />}
         {step === 3 && <PaymentStep />}
         {step === 4 && <CompleteStep />}
       </div>
