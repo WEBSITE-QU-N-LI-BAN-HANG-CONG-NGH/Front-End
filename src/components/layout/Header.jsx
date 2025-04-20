@@ -1,16 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; 
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import AuthForms from '../../pages/Auth/AuthForm';
-import { useSimpleCart } from '../../hooks/useSimpleCart';
+import { getCart } from '../../State/Cart/Action';
 
 const Header = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [showLoginForm, setShowLoginForm] = useState(false);
   const modalRef = useRef(null);
   
-  // Sử dụng hook giỏ hàng
-  const { cart } = useSimpleCart();
-
+  // Lấy thông tin giỏ hàng từ Redux store
+  const cart = useSelector(state => state.cart?.cart);
+  
+  // Lấy thông tin giỏ hàng khi component được tạo
+  useEffect(() => {
+    dispatch(getCart());
+  }, [dispatch]);
+  
   const handleButtonClick = () => {
     setShowLoginForm(true);
   };
@@ -20,12 +27,11 @@ const Header = () => {
       setShowLoginForm(false);
     }
   };
-
-  const handleForgotPassword = () => {
-    handleClose(); // Đóng dialog đăng nhập
-    navigate('/forgot-password'); // Chuyển hướng đến trang quên mật khẩu
-  };
   
+  const handleClose = () => {
+    setShowLoginForm(false);
+  };
+
   const handleCartClick = () => {
     navigate('/cart');
   };
@@ -40,6 +46,9 @@ const Header = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showLoginForm]);
+  
+  // Tính tổng số lượng sản phẩm trong giỏ hàng
+  const totalItems = cart?.totalItems || 0;
 
   return (
     <>
@@ -138,7 +147,7 @@ const Header = () => {
             <span
               className="absolute bottom-3 left-3 text-white bg-blue-600 rounded-full text-xs px-1.5 py-0.5"
             >
-              {cart?.totalItems || 0}
+              {totalItems}
             </span>
           </div>
 
@@ -155,7 +164,7 @@ const Header = () => {
                   ref={modalRef}
                   className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white p-20 rounded-lg shadow-lg"
                 >
-                  <AuthForms handleClose={() => setShowLoginForm(false)} />
+                  <AuthForms handleClose={handleClose} />
                 </div>
               </div>
             )}

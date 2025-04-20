@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
-import { useSimpleCart } from "../../hooks/useSimpleCart";
+import { getCart, removeItemToCart, updateItemToCart } from "../../State/Cart/Action";
 
 const CartItem = ({ item, removeFromCart, updateQuantity, formatCurrency }) => {
   return (
@@ -85,7 +86,92 @@ const CartSummary = ({ totalPrice, checkout, formatCurrency }) => {
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { cart, removeFromCart, updateQuantity, checkout, formatCurrency, isLoading } = useSimpleCart();
+  const dispatch = useDispatch();
+  const cartState = useSelector((state) => state.cart);
+  const isLoading = cartState.loading;
+  
+  // Format tiền theo định dạng Việt Nam
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+      minimumFractionDigits: 0
+    }).format(amount || 0);
+  };
+  
+  // Lấy thông tin giỏ hàng khi component được tạo
+  useEffect(() => {
+    dispatch(getCart());
+  }, [dispatch]);
+  
+  // Xử lý xóa sản phẩm khỏi giỏ hàng
+  const handleRemoveFromCart = (itemId) => {
+    dispatch(removeItemToCart(itemId))
+      .then(() => {
+        // Thông báo xóa thành công nếu cần
+        console.log("Đã xóa sản phẩm khỏi giỏ hàng");
+      })
+      .catch(error => {
+        console.error("Lỗi khi xóa sản phẩm:", error);
+      });
+  };
+  
+  // Xử lý cập nhật số lượng sản phẩm
+  const handleUpdateQuantity = (itemId, quantity) => {
+    if (quantity < 1) return;
+    
+    dispatch(updateItemToCart({ itemId, quantity }))
+      .then(() => {
+        console.log("Đã cập nhật số lượng sản phẩm");
+      })
+      .catch(error => {
+        console.error("Lỗi khi cập nhật số lượng:", error);
+      });
+  };
+  
+  // Xử lý chuyển đến trang thanh toán
+  const handleCheckout = () => {
+    navigate('/checkout');
+  };
+  
+  // Xử lý nếu không có giỏ hàng hoặc giỏ hàng trống
+  const handleEmptyCart = () => {
+    return (
+      <div className="w-full py-10 text-center">
+        <p className="text-lg mb-6">Giỏ hàng của bạn đang trống</p>
+        <button 
+          className="py-3 px-6 text-base font-semibold text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
+          onClick={() => navigate('/')}
+        >
+          TIẾP TỤC MUA SẮM
+        </button>
+      </div>
+    );
+  };
+  
+  // Lấy dữ liệu giỏ hàng từ Redux store hoặc localStorage
+  const getCartData = () => {
+    // Nếu có dữ liệu trong Redux store
+    if (cartState.cart && cartState.cart.cartItems) {
+      return cartState.cart;
+    }
+    
+    // Nếu không, thử lấy từ localStorage
+    try {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        return JSON.parse(savedCart);
+      }
+    } catch (error) {
+      console.error("Lỗi khi đọc giỏ hàng từ localStorage:", error);
+    }
+    
+    // Nếu không có dữ liệu, trả về giỏ hàng trống
+    return { cartItems: [], totalItems: 0, totalPrice: 0 };
+  };
+  
+  const cart = getCartData();
+  const hasItems = cart.cartItems && cart.cartItems.length > 0;
   
   return (
     <main className="flex flex-col pt-3 bg-white min-h-screen">
@@ -125,30 +211,22 @@ const Cart = () => {
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             <p className="mt-4">Đang tải giỏ hàng...</p>
           </div>
-        ) : !cart || !cart.items || cart.items.length === 0 ? (
-          <div className="w-full py-10 text-center">
-            <p className="text-lg mb-6">Giỏ hàng của bạn đang trống</p>
-            <button 
-              className="py-3 px-6 text-base font-semibold text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors"
-              onClick={() => navigate('/')}
-            >
-              TIẾP TỤC MUA SẮM
-            </button>
-          </div>
+        ) : !hasItems ? (
+          handleEmptyCart()
         ) : (
           <div className="w-full">
-            {cart.items.map((item) => (
+            {cart.cartItems.map((item) => (
               <CartItem 
                 key={item.id} 
                 item={item} 
-                removeFromCart={removeFromCart} 
-                updateQuantity={updateQuantity}
+                removeFromCart={handleRemoveFromCart} 
+                updateQuantity={handleUpdateQuantity}
                 formatCurrency={formatCurrency}
               />
             ))}
             <CartSummary 
-              totalPrice={cart.totalDiscountedPrice || cart.totalPrice} 
-              checkout={checkout}
+              totalPrice={cart.totalPrice} 
+              checkout={handleCheckout}
               formatCurrency={formatCurrency}
             />
           </div>
