@@ -6,7 +6,7 @@ import ProductManagement from '../pages/ProductManagement';
 import OrderManagement from '../pages/OrderManagement';
 import UserManagement from '../pages/UserManagement';
 import AdminLogin from '../pages/AdminLogin';
-import AdminRouteGuard from './AdminRouteGuard';
+// import AdminRouteGuard from './AdminRouteGuard';
 
 const AdminRoutes = () => {
   return (
@@ -16,9 +16,9 @@ const AdminRoutes = () => {
       <Route 
         path="/admin" 
         element={
-          <AdminRouteGuard>
+        //   <AdminRouteGuard>
             <AdminLayout />
-          </AdminRouteGuard>
+        //   {/* </AdminRouteGuard> */}
         }
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />

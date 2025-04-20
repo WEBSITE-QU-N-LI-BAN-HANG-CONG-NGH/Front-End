@@ -13,11 +13,16 @@ import { FilterProvider } from './components/features/catalog/FilterContext';
 import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
 import Checkout from './pages/Checkout/Checkout'; // Import trang Checkout
 
+// Import Admin Routes
+import AdminRoutes from './admin/routes/AdminRoutes';
+
 function App() {
   return (
     <div className="App">
       <FilterProvider>
         <Routes>
+
+          {/* Client Routes */}
           <Route path="/" element={<AppLayout />}>
             <Route index element={<Home />} />
             <Route path="laptops" element={<Catalog category="laptops" />} />
@@ -40,7 +45,9 @@ function App() {
 
            {/* Admin Routes */}
            <Route path="/admin/*" element={<AdminRoutes />} />
-           
+           {/* Catch-all route */}
+          {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+
         </Routes>
       </FilterProvider>
     </div>
