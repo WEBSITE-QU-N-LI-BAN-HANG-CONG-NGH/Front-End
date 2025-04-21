@@ -1,11 +1,11 @@
-// src/pages/Auth/ForgotPasswordPage.jsx
+// src/pages/Auth/ForgotPassword.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Container, Paper, Typography, Box } from '@mui/material';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 
-const ForgotPasswordPage = () => {
+const ForgotPassword = () => {
   const navigate = useNavigate();
   const [step, setStep] = React.useState(1);
   const [email, setEmail] = React.useState("");
@@ -451,4 +451,4 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
-export default ForgotPasswordPage;
+export default ForgotPassword;

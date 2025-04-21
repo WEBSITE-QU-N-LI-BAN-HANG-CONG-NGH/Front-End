@@ -3,6 +3,9 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import Github from "@mui/icons-material/GitHub";
 import Google from "@mui/icons-material/Google";
+import { useForm } from 'react-hook-form'; // ** Import useForm **
+import { zodResolver } from '@hookform/resolvers/zod'; // ** Import Zod resolver **
+import * as z from 'zod'; // ** Import Zod **
 import {
   Button,
   TextField,
@@ -18,70 +21,51 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useDispatch, useSelector } from "react-redux";
-import { getUser, login } from "../../State/Auth/Action";
+import { login } from "../../State/Auth/Action"; // Chỉ cần login ở đây
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../../services/api";
+import { API_BASE_URL } from "../../config/ApiConfig";
+
+// ** Định nghĩa validation schema bằng Zod **
+const loginSchema = z.object({
+  email: z.string()
+    .min(1, { message: "Email không được để trống" }) // Thêm kiểm tra rỗng
+    .email({ message: "Email không hợp lệ" }),
+  password: z.string()
+    .min(6, { message: "Mật khẩu phải có ít nhất 6 ký tự" })
+});
 
 function LoginForm({ handleClose, onForgotPasswordClick }) {
   const dispatch = useDispatch();
-  const auth = useSelector((store) => store.auth);
-  const { isLoading, error, jwt } = auth;
-  
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
   const navigate = useNavigate();
+  const auth = useSelector((store) => store.auth);
+  const { isLoading, error, jwt } = auth; // Lấy các state cần thiết từ Redux
+
   const [showPassword, setShowPassword] = useState(false);
-  const [validationErrors, setValidationErrors] = useState({
-    email: "",
-    password: "",
+
+  // ** Khởi tạo react-hook-form **
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(loginSchema), // Sử dụng Zod resolver
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
   // Kiểm tra nếu đã đăng nhập thì đóng form
   useEffect(() => {
-    if(jwt) {
+    if (jwt) {
       console.log("JWT đã được phát hiện, đóng form đăng nhập");
       handleClose();
     }
   }, [jwt, handleClose]);
 
-  const validateForm = () => {
-    let newErrors = { email: "", password: "" };
-    let isValid = true;
-
-    // Kiểm tra email
-    if (!formData.email) {
-      newErrors.email = "Email không được để trống";
-      isValid = false;
-    } else if (!formData.email.includes("@")) {
-      newErrors.email = "Email không hợp lệ";
-      isValid = false;
-    }
-    
-    // Kiểm tra password
-    if (!formData.password) {
-      newErrors.password = "Mật khẩu không được để trống";
-      isValid = false;
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-      isValid = false;
-    }
-
-    setValidationErrors(newErrors);
-    return isValid;
+  // ** Hàm xử lý khi submit form (đã được validate bởi react-hook-form) **
+  const onSubmit = (data) => {
+    console.log("Đang gửi yêu cầu đăng nhập với:", data);
+    dispatch(login(data)); // Gửi dữ liệu đã được validate
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      console.log("Đang gửi yêu cầu đăng nhập với:", formData);
-      dispatch(login(formData));
-    } else {
-      console.log("Form không hợp lệ, không thể đăng nhập");
-    }
-  };
-
+  // --- Các hàm xử lý sự kiện khác ---
   const handleSignUpClick = (e) => {
     e.preventDefault();
     handleClose();
@@ -90,7 +74,6 @@ function LoginForm({ handleClose, onForgotPasswordClick }) {
 
   const handleForgotPasswordClick = (e) => {
     e.preventDefault();
-    // Gọi hàm từ prop để chuyển đến form quên mật khẩu
     if (onForgotPasswordClick) {
       onForgotPasswordClick();
     }
@@ -102,28 +85,21 @@ function LoginForm({ handleClose, onForgotPasswordClick }) {
 
   const handleGoogleLogin = () => {
     console.log("Bắt đầu đăng nhập với Google");
-    // Khởi tạo tham số trạng thái và URL chuyển hướng
-    const redirectUri = encodeURIComponent(`${window.location.origin}/oauth2/redirect/google`);
-    
-    // Xây dựng URL đầy đủ (Lưu ý: Đường dẫn này phải khớp với cấu hình Spring Security OAuth2)
-    const googleAuthUrl = `${API_BASE_URL}/oauth2/authorization/google?redirect_uri=${redirectUri}`;
-    
+
+    const googleAuthUrl = `${API_BASE_URL}/oauth2/authorization/google`;
     console.log("Chuyển hướng đến:", googleAuthUrl);
     window.location.href = googleAuthUrl;
   };
 
   const handleGitHubLogin = () => {
     console.log("Bắt đầu đăng nhập với GitHub");
-    // Khởi tạo tham số trạng thái và URL chuyển hướng
-    const redirectUri = encodeURIComponent(`${window.location.origin}/oauth2/redirect/github`);
-    
-    // Xây dựng URL đầy đủ (Lưu ý: Đường dẫn này phải khớp với cấu hình Spring Security OAuth2)
-    const githubAuthUrl = `${API_BASE_URL}/oauth2/authorization/github?redirect_uri=${redirectUri}`;
-    
+
+    const githubAuthUrl = `${API_BASE_URL}/oauth2/authorization/github`;
     console.log("Chuyển hướng đến:", githubAuthUrl);
     window.location.href = githubAuthUrl;
   };
 
+  // --- Render Component ---
   return (
     <Card sx={{ width: "100%", mx: "auto", boxShadow: 0 }}>
       <CardContent sx={{ p: 2 }}>
@@ -134,65 +110,70 @@ function LoginForm({ handleClose, onForgotPasswordClick }) {
           Đăng nhập vào tài khoản của bạn
         </Typography>
 
+        {/* Hiển thị lỗi chung từ Redux */}
         {error && (
           <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
             {error}
           </Alert>
         )}
 
+        {/* Social Login Buttons */}
         <div className="space-y-4 mt-4">
           <div className="border shadow-md rounded-md border-gray-300">
-            <Button 
-              variant="outline" 
-              className="w-full border" 
+            <Button
+              variant="outlined" // Sử dụng outlined để có border
+              className="w-full" // Loại bỏ border mặc định nếu cần
               onClick={handleGoogleLogin}
               fullWidth
+              disabled={isLoading} // Disable khi đang loading
+              startIcon={<Google />} // Thêm startIcon cho nhất quán
+              sx={{ justifyContent: 'center' }} // Căn giữa nội dung nút
             >
-              <Google className="mr-2" />
               Google
             </Button>
           </div>
 
           <div className="border shadow-md rounded-md border-gray-300 mt-2">
-            <Button 
-              fullWidth 
-              className="border" 
-              variant="" 
+            <Button
+              fullWidth
+              variant="outlined" // Sử dụng outlined
               onClick={handleGitHubLogin}
               startIcon={<Github />}
+              disabled={isLoading} // Disable khi đang loading
+              sx={{ justifyContent: 'center' }} // Căn giữa
             >
               GitHub
             </Button>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ marginTop: '16px' }}>
+        {/* Form Đăng nhập */}
+        {/* Sử dụng handleSubmit từ react-hook-form */}
+        <form onSubmit={handleSubmit(onSubmit)} style={{ marginTop: '16px' }}>
           <TextField
             fullWidth
-            required
+            // required // Không cần thiết vì Zod đã handle
             label="Email"
             type="email"
-            name="email"
             margin="normal"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            error={!!validationErrors.email}
-            helperText={validationErrors.email}
+            {...register("email")} // ** Đăng ký field với react-hook-form **
+            error={!!errors.email} // ** Lấy lỗi từ react-hook-form **
+            helperText={errors.email?.message} // ** Hiển thị message lỗi từ Zod/react-hook-form **
             disabled={isLoading}
+            autoComplete="email" // Thêm autocomplete
           />
-          
+
           <TextField
             fullWidth
-            required
+            // required // Không cần thiết
             label="Mật khẩu"
             type={showPassword ? "text" : "password"}
-            name="password"
             margin="normal"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            error={!!validationErrors.password}
-            helperText={validationErrors.password}
+            {...register("password")} // ** Đăng ký field **
+            error={!!errors.password} // ** Lấy lỗi **
+            helperText={errors.password?.message} // ** Hiển thị message lỗi **
             disabled={isLoading}
+            autoComplete="current-password" // Thêm autocomplete
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
@@ -208,8 +189,9 @@ function LoginForm({ handleClose, onForgotPasswordClick }) {
             }}
           />
 
+          {/* Forgot Password Button */}
           <Box sx={{ mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button 
+            <Button
               onClick={handleForgotPasswordClick}
               sx={{ textTransform: 'none' }}
               color="primary"
@@ -219,24 +201,29 @@ function LoginForm({ handleClose, onForgotPasswordClick }) {
             </Button>
           </Box>
 
-          <Button 
-            type="submit" 
-            fullWidth 
-            variant="contained" 
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
             sx={{ mt: 3 }}
-            disabled={isLoading}
+            disabled={isLoading} // Disable khi đang loading
           >
-            {isLoading ? <CircularProgress size={24} /> : "Đăng nhập"}
+            {/* Hiển thị CircularProgress khi isLoading */}
+            {isLoading ? <CircularProgress size={24} color="inherit" /> : "Đăng nhập"}
           </Button>
         </form>
 
+        {/* Sign Up Link */}
         <Typography variant="body2" align="center" sx={{ mt: 2 }}>
           <Box component="span">
             Chưa có tài khoản?{" "}
-            <Button 
-              onClick={handleSignUpClick} 
-              className="text-primary font-bold"
+            <Button
+              onClick={handleSignUpClick}
+              className="text-primary font-bold" // Giữ nguyên class nếu bạn dùng Tailwind
+              color="primary" // Hoặc dùng màu primary của MUI
               disabled={isLoading}
+              sx={{ textTransform: 'none', fontWeight: 'bold' }} // Style tương tự
             >
               Đăng ký ngay
             </Button>

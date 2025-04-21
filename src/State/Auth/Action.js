@@ -14,20 +14,9 @@ export const register = (userData) => async (dispatch) => {
     try {
         console.log("Đang đăng ký với dữ liệu:", userData);
         const response = await authService.register(userData);
-        console.log("Phản hồi đăng ký:", response.data);
+
+        console.log("Message từ phản hồi đăng ký:", response);
         
-        // Xử lý token từ phản hồi
-        const { accessToken } = extractTokensFromResponse(response);
-        
-        if(accessToken) {
-            dispatch(registerSuccess(accessToken));
-            dispatch(getUser());
-            console.log("Đăng ký thành công với token");
-        } else {
-            console.warn("Đăng ký thành công nhưng không có token trong phản hồi");
-            // Một số API có thể trả về thành công mà không có token (ví dụ: cần xác minh email)
-            dispatch(registerSuccess(null));
-        }
     } catch(error) {
         console.error("Lỗi đăng ký:", error);
         const errorMessage = error.response?.data?.message || error.message;
@@ -132,15 +121,18 @@ export const logout = () => async (dispatch) => {
     }
 }
 
-// Hàm kiểm tra trạng thái đăng nhập khi ứng dụng khởi động
+// Action kiểm tra trạng thái đăng nhập khi ứng dụng khởi động
 export const checkAuthStatus = () => async (dispatch) => {
-    const jwt = getTokenFromLocalStorage();
-    
+    const jwt = getTokenFromLocalStorage(); // Dùng helper function
+
     if (jwt) {
         console.log("Tìm thấy token đã lưu, khôi phục phiên đăng nhập");
-        dispatch(loginSuccess(jwt));
-        dispatch(getUser());
+        dispatch(loginSuccess(jwt)); // Cập nhật token vào state
+        dispatch(getUser()); // Lấy thông tin user
     } else {
-        console.log("Không tìm thấy token đã lưu, người dùng chưa đăng nhập");
+        console.log("Không tìm thấy token đã lưu.");
+        // Có thể dispatch action logout hoặc không làm gì cả
+        // dispatch({ type: LOGOUT });
     }
-}
+};
+

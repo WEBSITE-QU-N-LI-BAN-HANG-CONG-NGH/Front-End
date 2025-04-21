@@ -21,7 +21,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import PropTypes from "prop-types";
 import { useDispatch, useSelector } from "react-redux";
 import { login, getUser, register, logout } from "../../State/Auth/Action";
-import ForgotPasswordContent from "./ForgotPasswordContent";
+import ForgotPassword from "./ForgotPassword";
 
 // Main component that contains both forms
 const AuthForms = ({ handleClose }) => {
@@ -69,7 +69,7 @@ const AuthForms = ({ handleClose }) => {
         onClick={handleModalClick}
       >
         <DialogContent onClick={handleModalClick}>
-          <ForgotPasswordContent onBackToLogin={handleForgotPasswordClose} />
+          <ForgotPassword onBackToLogin={handleForgotPasswordClose} />
         </DialogContent>
       </Dialog>
     </div>

@@ -12,7 +12,7 @@ export const saveRefreshTokenToCookie = (refreshToken, days = 7) => {
         console.log("Lưu refresh token vào cookie");
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + days);
-        document.cookie = `refreshToken=${refreshToken}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Strict`;
+        document.cookie = `refreshToken=${refreshToken}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Strict; HttpOnly`;
     } catch (error) {
         console.error("Lỗi khi lưu refresh token vào cookie:", error);
     }

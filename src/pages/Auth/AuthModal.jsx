@@ -1,48 +1,52 @@
 // src/pages/Auth/AuthModal.jsx
 import { Modal, Box } from '@mui/material';
 import PropTypes from 'prop-types';
-import RegisterForm from './RegisterForm';
-import { useLocation } from 'react-router-dom';
-import LoginForm from './LoginForm';
+import RegisterForm from './RegisterForm'; // ** Đảm bảo import đúng file này **
+import { useLocation, useNavigate } from 'react-router-dom'; // Thêm useNavigate
+import LoginForm from './LoginForm';       // ** Đảm bảo import đúng file này **
 import React, { useState } from 'react';
-import ForgotPasswordContent from './ForgotPasswordContent';
+import ForgotPassword from './ForgotPassword';
 
-const style = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '500px',
-  maxWidth: '95%',
-  bgcolor: 'background.paper',
-  boxShadow: 24,
-  p: 4,
-  maxHeight: '90vh',
-  overflowY: 'auto',
-  borderRadius: '8px',
-  outline: 'none'
-};
+// ... style
 
 export default function AuthModal({ handleClose, open }) {
   const location = useLocation();
-  const isSignUp = location.pathname === '/sign-up';
-  // State để quản lý việc hiển thị form quên mật khẩu
+  const navigate = useNavigate(); // Thêm hook navigate
+
+  // Xác định xem nên hiển thị form nào dựa trên URL hiện tại
+  // Hoặc bạn có thể truyền prop `initialView` vào modal
+  const isSignUpView = location.pathname.includes('/sign-up');
+
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-  // Hàm để chuyển đổi giữa form đăng nhập và form quên mật khẩu
   const handleToggleForgotPassword = () => {
     setShowForgotPassword(!showForgotPassword);
   };
 
-  // Hàm để quay lại form đăng nhập từ form quên mật khẩu
   const handleBackToLogin = () => {
     setShowForgotPassword(false);
+    // Nếu đang ở /sign-up mà quay lại từ forgot password, chuyển về login view
+    if (isSignUpView) {
+        navigate('/login'); // Hoặc path đăng nhập của bạn
+    }
   };
 
   const handleModalClick = (e) => {
-    // Ngăn sự kiện click từ việc lan tỏa
     e.stopPropagation();
   };
+
+  // Hàm để chuyển đổi giữa Login và Register view ngay trong modal
+  // Bạn có thể gọi hàm này từ nút "Đăng ký ngay" / "Đăng nhập" trong các form con
+  const toggleAuthView = () => {
+      if (isSignUpView) {
+          navigate('/login'); // Chuyển URL sang login
+      } else {
+          navigate('/sign-up'); // Chuyển URL sang sign-up
+      }
+      // Không cần state nội bộ để quản lý showLoginForm/showRegisterForm nữa
+      // vì ta dựa vào URL
+  };
+
 
   return (
     <Modal
@@ -51,20 +55,25 @@ export default function AuthModal({ handleClose, open }) {
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
       disableAutoFocus
-      disableBackdropClick
+      // disableBackdropClick // Có thể cho phép đóng khi click ra ngoài
     >
       <Box sx={style} onClick={handleModalClick}>
         {showForgotPassword ? (
-          // Hiển thị form quên mật khẩu
-          <ForgotPasswordContent onBackToLogin={handleBackToLogin} />
+          <ForgotPassword onBackToLogin={handleBackToLogin} />
         ) : (
-          // Hiển thị form đăng nhập hoặc đăng ký
-          isSignUp ? (
-            <RegisterForm handleClose={handleClose} />
+          // Hiển thị form dựa trên URL
+          isSignUpView ? (
+            <RegisterForm
+                handleClose={handleClose}
+                // Có thể truyền toggleAuthView nếu cần nút "Đăng nhập" trong RegisterForm
+                // onSwitchToLogin={toggleAuthView}
+            />
           ) : (
-            <LoginForm 
-              handleClose={handleClose} 
-              onForgotPasswordClick={handleToggleForgotPassword} 
+            <LoginForm
+              handleClose={handleClose}
+              onForgotPasswordClick={handleToggleForgotPassword}
+              // Có thể truyền toggleAuthView nếu cần nút "Đăng ký ngay" trong LoginForm
+              // onSwitchToRegister={toggleAuthView}
             />
           )
         )}
@@ -72,3 +81,8 @@ export default function AuthModal({ handleClose, open }) {
     </Modal>
   );
 }
+
+AuthModal.propTypes = {
+  handleClose: PropTypes.func.isRequired,
+  open: PropTypes.bool.isRequired,
+};
