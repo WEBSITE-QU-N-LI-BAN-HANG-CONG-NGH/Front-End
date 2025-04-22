@@ -17,21 +17,19 @@ export const authService = {
     register: async (userData) => {
         try {
             console.log("Đang gửi yêu cầu đăng ký:", userData);
-            const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);  
+            const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
             /*
                 "email": "sangshin0987@gmail.com",
                 "firstName": "Tu",
                 "lastName": "Ma Y",
                 "password": "123456789"
             */
-            console.log("Phản hồi từ đăng ký:", response.message);
-
-            return response.message;
-        } catch (error) {
-            console.error("Lỗi đăng ký:", error);
-            console.error("Dữ liệu lỗi:", error.response?.data);
-            throw error;
-        }
+                console.log("Initiate registration response:", response.data);
+                return response.data; // Thường chỉ là message { message: "OTP sent..." }
+            } catch (error) {
+                console.error("Initiate registration error:", error.response?.data || error.message);
+                throw error;
+            }
     },
 
 
@@ -124,11 +122,11 @@ export const authService = {
     },
 
     // Thêm các phương thức cho chức năng quên mật khẩu
-    requestPasswordReset: (email) =>
-        axios.post(`${API_BASE_URL}/auth/forgot-password`, { email }),
+    resendOtp: (email) =>
+        axios.post(`${API_BASE_URL}/auth/register/resend-otp`, { email }),
 
     verifyOtp: (email, otp) =>
-        axios.post(`${API_BASE_URL}/auth/verify-otp`, { email, otp }),
+        axios.post(`${API_BASE_URL}/auth/register/verify`, { email, otp }),
 
     resetPassword: (email, newPassword, otp) =>
         axios.post(`${API_BASE_URL}/auth/register/forgot-password`, {

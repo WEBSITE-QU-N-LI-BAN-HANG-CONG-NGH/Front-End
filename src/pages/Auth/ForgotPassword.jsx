@@ -128,8 +128,8 @@ function ForgotPassword({ onBackToLogin }) {
         clearMessages();
 
         try {
-            // Assuming your authService.requestPasswordReset sends the OTP
-            const response = await authService.requestPasswordReset(email);
+            // Assuming your authService.resendOtp sends the OTP
+            const response = await authService.resendOtp(email);
             setMessage(response.data?.message || "OTP sent to your email address. Please check your inbox (and spam folder).");
             setStep(2); // Move to the next step
         } catch (error) {
@@ -163,7 +163,8 @@ function ForgotPassword({ onBackToLogin }) {
             setNewPassword("");
             setConfirmPassword("");
             // Maybe call onBackToLogin after a delay?
-            // setTimeout(onBackToLogin, 3000);
+            setTimeout(onBackToLogin, 2000);
+
         } catch (error) {
             console.error("Error resetting password:", error);
             setApiError(error.response?.data?.message || "Failed to reset password. The OTP might be incorrect or expired.");
@@ -204,7 +205,7 @@ function ForgotPassword({ onBackToLogin }) {
                 <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
                     {step === 1
                         ? "Enter your email address and we'll send you an OTP to reset your password."
-                        : `An OTP has been sent to ${email}. Enter the OTP and your new password below.`}
+                        : `An OTP has been sent to ${email}. Please check your inbox (and spam folder).`}
                 </Typography>
 
                 {/* --- Display Messages/Errors --- */}
