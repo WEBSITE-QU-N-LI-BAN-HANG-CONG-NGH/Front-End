@@ -37,8 +37,9 @@ const AuthForms = ({ handleClose }) => {
   };
   
   const handleForgotPasswordClose = () => {
+    console.log("handleForgotPasswordClose called"); // Thêm log
     setShowForgotPassword(false);
-  };
+};
   
   const handleModalClick = (e) => {
     // Ngăn sự kiện click từ việc lan tỏa
@@ -61,14 +62,18 @@ const AuthForms = ({ handleClose }) => {
       )}
       
       {/* Dialog hiển thị luồng quên mật khẩu */}
-      <Dialog 
-        open={showForgotPassword} 
-        onClose={handleForgotPasswordClose}
+     <Dialog
+        open={showForgotPassword}
+        onClose={(event, reason) => {
+          console.log('Dialog onClose triggered. Reason:', reason); // Xem lý do là gì (e.g., backdropClick)
+          handleForgotPasswordClose();
+        }}// Closes the dialog on backdrop click or ESC
         maxWidth="sm"
         fullWidth
-        onClick={handleModalClick}
+        onClick={handleModalClick} // Prevent clicks inside dialog from closing it (if onClose is triggered by propagation)
       >
-        <DialogContent onClick={handleModalClick}>
+        <DialogContent onClick={handleModalClick}> {/* Prevent content clicks from closing */}
+          {/* Pass the function to close the dialog as onBackToLogin */}
           <ForgotPassword onBackToLogin={handleForgotPasswordClose} />
         </DialogContent>
       </Dialog>

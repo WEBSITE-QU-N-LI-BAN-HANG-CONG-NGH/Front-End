@@ -39,6 +39,11 @@ function App() {
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="checkout" element={<Checkout />} /> {/* Thêm route cho trang Checkout */}
             <Route path="oauth2/redirect" element={<OAuthRedirect />} />
+            
+            <Route path="sign-up" element={<Home />} />
+            <Route path="sign-in" element={<Home />} />
+            <Route path="forgot-password" element={<Home />} />
+
           </Route>
         </Routes>
       </FilterProvider>
