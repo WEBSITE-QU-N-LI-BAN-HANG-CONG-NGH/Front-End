@@ -348,18 +348,7 @@ const Checkout = () => {
           <label htmlFor="cod" className="text-base font-medium">Thanh toán khi nhận hàng (COD)</label>
         </div>
         
-        <div className="flex items-center p-4 border border-gray-300 rounded mb-4">
-          <input
-            type="radio"
-            id="banking"
-            name="paymentMethod"
-            value="BANKING"
-            checked={paymentMethod === "BANKING"}
-            onChange={() => setPaymentMethod("BANKING")}
-            className="mr-2"
-          />
-          <label htmlFor="banking" className="text-base font-medium">Chuyển khoản ngân hàng</label>
-        </div>
+        {/* Phần thanh toán bằng chuyển khoản ngân hàng đã được xóa */}
         
         <div className="flex items-center p-4 border border-gray-300 rounded mb-4">
           <input
