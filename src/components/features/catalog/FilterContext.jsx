@@ -7,164 +7,167 @@ export const FilterContext = createContext();
 export const FilterProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Khởi tạo state cho các bộ lọc
+
+  // ----- Sửa đổi State -----
+  // Khởi tạo state CHỈ cho các bộ lọc CHI TIẾT (nằm trong query string)
   const [activeFilters, setActiveFilters] = useState({
-    category: [],
+    // KHÔNG có 'category' ở đây
     color: [],
     size: [],
     price: null,
     discount: null
+    // Thêm các bộ lọc query string khác nếu có (ví dụ: sort, stock)
   });
-  
-  // Phân tích tham số URL khi component được tạo
+  // --------------------------
+
+  // ----- Sửa đổi useEffect đọc URL -----
+  // Phân tích CHỈ query string khi nó thay đổi
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     
-    // Trích xuất các tham số từ URL
-    const categoryParam = params.get('category');
     const colorParam = params.get('color');
     const sizeParam = params.get('size');
     const priceParam = params.get('price');
+    const discountParam = params.get('discount');
     
-    // Thiết lập các bộ lọc dựa trên tham số URL
+    console.log("URL params detected:", { 
+      color: colorParam, 
+      size: sizeParam, 
+      price: priceParam, 
+      discount: discountParam 
+    });
+    
     const initialFilters = {
-      category: categoryParam ? categoryParam.split(',') : [],
       color: colorParam ? colorParam.split(',') : [],
       size: sizeParam ? sizeParam.split(',') : [],
       price: priceParam || null,
-      discount: null
+      discount: discountParam || null,
     };
     
-    setActiveFilters(initialFilters);
-  }, [location.pathname]);
-  
-  // Cập nhật bộ lọc và URL
+    console.log("Setting filters from URL:", initialFilters);
+    
+    if (JSON.stringify(activeFilters) !== JSON.stringify(initialFilters)) {
+      setActiveFilters(initialFilters);
+    }
+  }, [location.search]);
+  // ------------------------------------
+
+  // ----- Sửa đổi updateFilters -----
   const updateFilters = (filterType, value, isActive) => {
-    setActiveFilters(prev => {
-      const newFilters = { ...prev };
-      
-      // Xử lý các bộ lọc dạng mảng (category, color, size)
-      if (Array.isArray(newFilters[filterType])) {
-        if (isActive) {
-          // Thêm vào nếu chưa có
-          if (!newFilters[filterType].includes(value)) {
-            newFilters[filterType] = [...newFilters[filterType], value];
-          }
-        } else {
-          // Xóa nếu có
-          newFilters[filterType] = newFilters[filterType].filter(item => item !== value);
+    // Validate filterType first 
+    if (filterType === 'category') {
+      console.warn("FilterContext doesn't manage 'category'. It's part of the URL path.");
+      return;
+    }
+  
+    // Create a copy of current filters
+    const newFilters = { ...activeFilters };
+    
+    // Handle array-type filters (like color)
+    if (Array.isArray(newFilters[filterType])) {
+      if (isActive) {
+        // Add value if not already present
+        if (!newFilters[filterType].includes(value)) {
+          newFilters[filterType] = [...newFilters[filterType], value];
         }
-      } 
-      // Xử lý các bộ lọc dạng đơn giá trị (price, discount)
-      else {
-        newFilters[filterType] = isActive ? value : null;
-      }
-      
-      // Cập nhật URL
-      const params = new URLSearchParams();
-      
-      if (newFilters.category.length > 0) {
-        params.set('category', newFilters.category.join(','));
-      }
-      
-      if (newFilters.color.length > 0) {
-        params.set('color', newFilters.color.join(','));
-      }
-      
-      if (newFilters.size.length > 0) {
-        params.set('size', newFilters.size.join(','));
-      }
-      
-      if (newFilters.price) {
-        params.set('price', newFilters.price);
-      }
-      
-      // Lấy đường dẫn cơ sở (không có tham số truy vấn)
-      const basePath = location.pathname.split('?')[0];
-      
-      // Tạo URL mới với tham số truy vấn
-      const queryString = params.toString();
-      const newUrl = queryString ? `${basePath}?${queryString}` : basePath;
-      
-      // Cập nhật URL mà không tải lại trang
-      navigate(newUrl, { replace: true });
-      
-      return newFilters;
-    });
-  };
-  
-  // Xóa một bộ lọc cụ thể
-  const removeFilter = (filterType, value) => {
-    setActiveFilters(prev => {
-      const newFilters = { ...prev };
-      
-      if (Array.isArray(newFilters[filterType])) {
-        newFilters[filterType] = newFilters[filterType].filter(item => item !== value);
       } else {
-        newFilters[filterType] = null;
+        // Remove value
+        newFilters[filterType] = newFilters[filterType].filter(item => item !== value);
       }
-      
-      // Cập nhật URL sau khi xóa bộ lọc
-      const params = new URLSearchParams();
-      
-      if (newFilters.category.length > 0) {
-        params.set('category', newFilters.category.join(','));
-      }
-      
-      if (newFilters.color.length > 0) {
-        params.set('color', newFilters.color.join(','));
-      }
-      
-      if (newFilters.size.length > 0) {
-        params.set('size', newFilters.size.join(','));
-      }
-      
-      if (newFilters.price) {
-        params.set('price', newFilters.price);
-      }
-      
-      // Lấy đường dẫn cơ sở
-      const basePath = location.pathname.split('?')[0];
-      
-      // Tạo URL mới
-      const queryString = params.toString();
-      const newUrl = queryString ? `${basePath}?${queryString}` : basePath;
-      
-      // Cập nhật URL
-      navigate(newUrl, { replace: true });
-      
-      return newFilters;
-    });
+    } else {
+      // Handle single-value filters (like price)
+      newFilters[filterType] = isActive ? value : null;
+    }
+    
+    // Update state
+    setActiveFilters(newFilters);
+    
+    // Update URL query string
+    const params = new URLSearchParams(location.search);
+    
+    // Clear existing filter params to prevent duplicates
+    Object.keys(newFilters).forEach(key => params.delete(key));
+    
+    // Add updated filter values to URL
+    if (newFilters.color.length > 0) params.set('color', newFilters.color.join(','));
+    if (newFilters.size.length > 0) params.set('size', newFilters.size.join(','));
+    if (newFilters.price) params.set('price', newFilters.price);
+    if (newFilters.discount) params.set('discount', newFilters.discount);
+    
+    // Keep current path but update query string
+    const currentPathname = location.pathname;
+    const queryString = params.toString();
+    const newUrl = `${currentPathname}${queryString ? `?${queryString}` : ''}`;
+    
+    // Update URL, replace history entry
+    navigate(newUrl, { replace: true });
+  }
+  // ----------------------------
+
+  // ----- Sửa đổi removeFilter -----
+  // Xóa một bộ lọc CHI TIẾT cụ thể
+  const removeFilter = (filterType, value) => {
+    if (filterType === 'category') {
+        console.warn("FilterContext không quản lý 'category'.");
+        return;
+    }
+    // Gọi updateFilters với isActive = false để tái sử dụng logic cập nhật URL
+    updateFilters(filterType, value, false);
   };
-  
-  // Xóa tất cả bộ lọc
+  // ---------------------------
+
+  // ----- Sửa đổi clearAllFilters -----
+  // Xóa tất cả bộ lọc CHI TIẾT
   const clearAllFilters = () => {
-    setActiveFilters({
-      category: [],
+    // Reset state về rỗng (chỉ các filter chi tiết)
+    const clearedFilters = {
       color: [],
       size: [],
       price: null,
-      discount: null
-    });
-    
-    // Đặt lại URL về đường dẫn cơ sở
-    const basePath = location.pathname.split('?')[0];
-    navigate(basePath, { replace: true });
+      discount: null,
+      // Reset các filter chi tiết khác nếu có
+    };
+    setActiveFilters(clearedFilters);
+
+    // --- Cập nhật URL QUERY STRING ---
+    const params = new URLSearchParams(location.search);
+    // Xóa các key của bộ lọc chi tiết khỏi query params
+    Object.keys(clearedFilters).forEach(key => params.delete(key));
+
+    const currentPathname = location.pathname;
+    const queryString = params.toString(); // Có thể vẫn còn totalItem/totalPage
+    const newUrl = `${currentPathname}${queryString ? `?${queryString}` : ''}`;
+
+    // Cập nhật URL, tùy chọn reset về trang 1
+    // Ví dụ reset về trang 1: (Tương tự như trong updateFilters)
+    // const pathSegments = currentPathname.split('/');
+    // const pageIndex = pathSegments.findIndex(seg => /^\d+$/.test(seg));
+    // let basePath = currentPathname;
+    // if (pageIndex > -1) {
+    //     basePath = pathSegments.slice(0, pageIndex).join('/');
+    // }
+    // const urlWithPage1 = `${basePath}/1${queryString ? `?${queryString}` : ''}`;
+    // navigate(urlWithPage1, { replace: true });
+
+    // Nếu giữ nguyên trang hiện tại:
+    navigate(newUrl, { replace: true });
+    // -------------------------------
   };
-  
-  // Đếm số lượng bộ lọc đang active
+  // ---------------------------
+
+  // ----- Sửa đổi getActiveFilterCount -----
+  // Đếm số lượng bộ lọc CHI TIẾT đang active
   const getActiveFilterCount = () => {
     let count = 0;
-    
-    count += activeFilters.category.length;
+    // Chỉ đếm các bộ lọc chi tiết
     count += activeFilters.color.length;
     count += activeFilters.size.length;
     count += activeFilters.price ? 1 : 0;
     count += activeFilters.discount ? 1 : 0;
-    
+    // Đếm các bộ lọc chi tiết khác nếu có
     return count;
   };
+  // ---------------------------------
 
   const value = {
     activeFilters,
@@ -181,15 +184,14 @@ export const FilterProvider = ({ children }) => {
   );
 };
 
-// Custom hook để sử dụng FilterContext
+// Custom hook để sử dụng FilterContext (Giữ nguyên)
 export const useFilter = () => {
   const context = useContext(FilterContext);
   if (!context) {
     console.warn("useFilter must be used within a FilterProvider");
     // Trả về một triển khai giả để tránh lỗi
     return {
-      activeFilters: {
-        category: [],
+      activeFilters: { // Trả về cấu trúc state đã sửa
         color: [],
         size: [],
         price: null,

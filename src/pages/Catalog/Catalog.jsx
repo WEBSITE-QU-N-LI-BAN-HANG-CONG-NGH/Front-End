@@ -97,67 +97,74 @@ const Catalog = ({ category: categoryProp }) => { // Nhận categoryProp từ Ro
   // --- Hàm Lọc phía Client (Memoized) ---
   // Áp dụng các bộ lọc từ activeFilters (color, size, price) lên baseProductData
   const applyClientSideFilters = useMemo(() => (products) => {
-    let filtered = [...products]; // Bắt đầu với dữ liệu gốc từ API
-
-    // -- Lọc theo các tiêu chí trong activeFilters --
-
-    // 1. Lọc theo màu sắc (từ activeFilters)
+    let filtered = [...products]; // Start with base data from API
+    
+    // Filter by color
     if (activeFilters.color.length > 0) {
-        filtered = filtered.filter(product =>
-            activeFilters.color.some(colorFilter => product.color?.toLowerCase() === colorFilter.toLowerCase())
-        );
+      console.log("Applying color filter:", activeFilters.color);
+      filtered = filtered.filter(product => {
+        // Check if product has color property and it matches any selected color
+        // Added fallback for products that might have uppercase colors or different formats
+        return activeFilters.color.some(colorFilter => {
+          const productColor = product.color?.toLowerCase?.();
+          const filterColor = colorFilter.toLowerCase();
+          return productColor === filterColor;
+        });
+      });
     }
-
-    // 2. Lọc theo kích thước (từ activeFilters)
+    
+    // Filter by size
     if (activeFilters.size.length > 0) {
-        filtered = filtered.filter(product =>
-            Array.isArray(product.sizes) && product.sizes.some(productSize =>
-                activeFilters.size.includes(productSize)
-            )
-        );
+      console.log("Applying size filter:", activeFilters.size);
+      filtered = filtered.filter(product => {
+        // Handle different data structures for sizes
+        if (Array.isArray(product.sizes)) {
+          return product.sizes.some(productSize => 
+            activeFilters.size.includes(productSize)
+          );
+        } else if (typeof product.size === 'string') {
+          return activeFilters.size.includes(product.size);
+        }
+        return false;
+      });
     }
-
-    // 3. Lọc theo khoảng giá (từ activeFilters)
+    
+    // Filter by price range
     if (activeFilters.price) {
-        const [minStr, maxStr] = activeFilters.price.split('-');
-        const min = parseInt(minStr, 10);
-        const max = parseInt(maxStr, 10);
-        if (!isNaN(min) && !isNaN(max)) {
-            filtered = filtered.filter(product => {
-                const productPrice = product.discountedPrice;
-                return typeof productPrice === 'number' && productPrice >= min && productPrice <= max;
-            });
-        }
+      console.log("Applying price filter:", activeFilters.price);
+      const [minStr, maxStr] = activeFilters.price.split('-');
+      const min = parseInt(minStr, 10);
+      const max = parseInt(maxStr, 10);
+      
+      if (!isNaN(min) && !isNaN(max)) {
+        filtered = filtered.filter(product => {
+          // Use discountedPrice for price filtering, fallback to price
+          const productPrice = product.discountedPrice || product.price;
+          return typeof productPrice === 'number' && 
+                 productPrice >= min && 
+                 productPrice <= max;
+        });
+      }
     }
-
-    // 4. Lọc theo giảm giá (từ activeFilters - nếu có)
+    
+    // Filter by discount percentage
     if (activeFilters.discount) {
-        const minDiscountValue = parseInt(activeFilters.discount, 10);
-        if (!isNaN(minDiscountValue)) {
-            filtered = filtered.filter(product => {
-                // Logic tính % giảm giá: ((originalPrice - discountedPrice) / originalPrice) * 100
-                // Cẩn thận chia cho 0 nếu originalPrice = 0
-                if (product.price && product.price > 0 && product.discountedPrice < product.price) {
-                   const discountPercent = ((product.price - product.discountedPrice) / product.price) * 100;
-                   // So sánh với minDiscountValue (ví dụ: 10 cho 10%)
-                   // Backend của bạn có thể đã có trường discountPercentage sẵn
-                   return discountPercent >= minDiscountValue;
-                }
-                return false; // Không có giảm giá hoặc giá gốc = 0
-            });
-        }
+      console.log("Applying discount filter:", activeFilters.discount);
+      const minDiscountValue = parseInt(activeFilters.discount, 10);
+      
+      if (!isNaN(minDiscountValue)) {
+        filtered = filtered.filter(product => {
+          if (product.price > 0 && product.discountedPrice < product.price) {
+            const discountPercent = ((product.price - product.discountedPrice) / product.price) * 100;
+            return discountPercent >= minDiscountValue;
+          }
+          return false;
+        });
+      }
     }
-
-    // 5. Sắp xếp (Client-side) - Nếu cần
-    // if (activeFilters.sort === 'price_asc') {
-    //     filtered.sort((a, b) => a.discountedPrice - b.discountedPrice);
-    // } else if (activeFilters.sort === 'price_desc') {
-    //     filtered.sort((a, b) => b.discountedPrice - a.discountedPrice);
-    // }
-    // ... các loại sort khác ...
-
+    
     return filtered;
-  }, [activeFilters]); // Chỉ phụ thuộc vào activeFilters
+  }, [activeFilters]);// Chỉ phụ thuộc vào activeFilters
 
   // --- Tính toán danh sách sản phẩm cuối cùng sau khi lọc client-side (Memoized) ---
   const filteredProducts = useMemo(() => {
@@ -272,7 +279,7 @@ const Catalog = ({ category: categoryProp }) => { // Nhận categoryProp từ Ro
         {!loading && !filteredProducts.length && messageType !== 'error' && <div className="text-center p-4">Không tìm thấy sản phẩm nào phù hợp.</div>}
 
         <div className="flex gap-5 max-md:flex-col">
-          <FilterSidebar /> {/* Vẫn hoạt động để cập nhật activeFilters và URL query */}
+          <FilterSidebar topCategory={categoryProp} /> 
           <section className="ml-5 w-[83%] max-md:ml-0 max-md:w-full">
             <div className="flex flex-col w-full max-md:mt-3 max-md:max-w-full">
               <Filter /> {/* Hiển thị các bộ lọc đang active */}
