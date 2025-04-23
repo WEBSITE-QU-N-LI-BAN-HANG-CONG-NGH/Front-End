@@ -519,13 +519,20 @@ function RegisterForm({ handleClose, toggleForm }) {
         console.log("OTP verification response:", response);
         
         // If successful, show message and prepare for auto-login or redirect
-        setStatusMessage("Account verified successfully! You can now log in.");
+        setStatusMessage("Account verified successfully! Login in progress............");
         setMessageType("success");
-        
-        // Optionally auto-login the user or redirect to login
+
+        const tmpFormData = {
+          email: formData.email,
+          password: formData.password
+        };
+
+
         setTimeout(() => {
-          toggleForm(); // Switch to login form
+          dispatch(login(tmpFormData));
         }, 2000);
+
+
       } catch (error) {
         console.error("OTP verification error:", error);
         setStatusMessage(error.response?.data?.message || "Failed to verify OTP. Please try again.");

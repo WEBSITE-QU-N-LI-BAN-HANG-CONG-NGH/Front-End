@@ -1,27 +1,28 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useFilter } from "../../../components/features/catalog/FilterContext";
 import { useLocation, useNavigate } from "react-router-dom";
+import { productService } from "../../../services/product.service";
+
 
 // Category filter data
-const categories = [
-  { name: "CUSTOM PCS", count: 15 },
-  { name: "MSI ALL-IN-ONE PCS", count: 45 },
-  { name: "HP/COMPAQ PCS", count: 24 }
-];
+useEffect(() => {
+  const categories = productService.getSecondCategory()
+}, [])
 
 // Price filter data
 const priceRanges = [
-  { range: "$159 To $399", value: "159-399", count: 19 },
-  { range: "$399 To $999", value: "399-999", count: 21 },
-  { range: "$999 To $1999", value: "999-1999", count: 9 },
-  { range: "$1999 To $2999", value: "1999-2999", count: 6 },
-  { range: "$3999 To $4999", value: "3999-4999", count: 3 }
+  { range: "50.000 To 200.000", value: "50000-199999" },
+  { range: "100.000 To 500.000", value: "200000-499999" },
+  { range: "500.000 To 2.000.000", value: "500000-1999999" },
+  { range: "2.000.000 To 10.000.000", value: "2000000-9999999" },
+  { range: "10.000.000 To 50.000.000", value: "10000000-49999999" },
+  { range: "50.000.000 To 100.000.000", value: "50000000-99999999" }
 ];
 
 // Color filter data
 const colors = [
   { name: "White", value: "white" },
-  { name: "Beige", value: "beige" },
+  { name: "Black", value: "black" },
   { name: "Blue", value: "blue" },
   { name: "Brown", value: "brown" },
   { name: "Green", value: "green" },
@@ -29,15 +30,9 @@ const colors = [
   { name: "Yellow", value: "yellow" }
 ];
 
-// Size filter data
-const sizes = [
-  { name: "S", value: "S" },
-  { name: "M", value: "M" },
-  { name: "L", value: "L" }
-];
 
 const FilterSidebar = () => {
-  const { activeFilters, updateFilters, clearAllFilters, getActiveFilterCount } = useFilter();
+  const { activeFilters, updateFilters, clearAllFilters } = useFilter();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -58,11 +53,6 @@ const FilterSidebar = () => {
     });
   };
 
-  // Handle apply filters button
-  const handleApplyFilters = () => {
-    // Không cần làm gì vì updateFilters đã cập nhật URL rồi
-    console.log("Applying filters:", activeFilters);
-  };
   
   // Xử lý xóa tất cả bộ lọc
   const handleClearAll = () => {
@@ -117,11 +107,6 @@ const FilterSidebar = () => {
                     </div>
                   ))}
                 </div>
-                <div className="text-right">
-                  {categories.map((category) => (
-                    <div key={`count-${category.name}`}>{category.count}</div>
-                  ))}
-                </div>
               </div>
             )}
           </section>
@@ -156,7 +141,6 @@ const FilterSidebar = () => {
                         />
                         <label htmlFor={`price-${priceRange.value}`}>{priceRange.range}</label>
                       </div>
-                      <span>{priceRange.count}</span>
                     </div>
                   ))}
                 </div>
@@ -196,54 +180,8 @@ const FilterSidebar = () => {
             )}
           </section>
 
-          {/* Size Section */}
-          <section className="px-4 py-5 w-full text-black max-w-[234px]">
-            <div 
-              className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap cursor-pointer"
-              onClick={() => toggleSection('size')}
-            >
-              <h3 className="my-auto">Size</h3>
-              <img
-                src={expandedSections.size ? "/UpArrow.svg" : "/DownArrow.svg"}
-                alt="Toggle size"
-                className="object-contain shrink-0 w-4 aspect-square"
-              />
-            </div>
-            
-            {expandedSections.size && (
-              <div className="mt-4 text-sm leading-7">
-                {sizes.map((size) => (
-                  <div key={size.value} className="flex items-center mt-1">
-                    <input
-                      type="checkbox"
-                      id={`size-${size.value}`}
-                      checked={activeFilters.size.includes(size.value)}
-                      onChange={(e) => updateFilters('size', size.value, e.target.checked)}
-                      className="mr-2"
-                    />
-                    <label htmlFor={`size-${size.value}`}>{size.name}</label>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
 
-          <section className="px-4 py-5 w-full text-sm font-semibold rounded-none max-w-[234px]">
-            <div className="flex gap-5 justify-between text-black">
-              <h3>Filter Name</h3>
-              <img
-                src="/DownArrow.svg"
-                alt="Toggle filter"
-                className="object-contain shrink-0 w-4 aspect-square"
-              />
-            </div>
-            <button 
-              className="px-11 py-2 mt-4 cursor-pointer w-full text-center text-white bg-blue-600 rounded-[50px] max-md:px-5 hover:bg-blue-700 transition-colors"
-              onClick={handleApplyFilters}
-            >
-              Apply Filters ({getActiveFilterCount()})
-            </button>
-          </section>
+          
         </section>
       </div>
     </aside>

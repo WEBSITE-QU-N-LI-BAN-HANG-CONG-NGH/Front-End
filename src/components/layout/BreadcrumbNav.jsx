@@ -6,10 +6,10 @@ const BreadcrumbNav = () => {
   const pathSegments = location.pathname.split('/').filter(segment => segment !== '');
   
   const breadcrumbMap = {
-    'laptops': 'Laptops',
+    'laptop': 'Laptop',
     'desktop-computers': 'Máy tính bàn',
     'accessories': 'Phụ kiện',
-    'phones': 'Điện thoại',
+    'phone': 'Điện thoại',
     'computer-parts': 'Linh kiện máy tính',
     'other-products': 'Sản phẩm khác',
     'our-deals': 'Khuyến mãi',

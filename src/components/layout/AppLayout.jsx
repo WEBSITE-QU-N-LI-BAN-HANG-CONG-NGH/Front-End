@@ -8,10 +8,10 @@ const AppLayout = () => {
     return (
         <div className="flex flex-col bg-white min-h-screen">
             <Header />
-            <main className="flex-grow">
+            <main className="flex-grow pr-22">
                 <Outlet />
             </main>
-            <Features />
+            <Features  />
             <Footer />
         </div>
     );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
 import ProductControls from "../../components/features/catalog/ProductControls";
@@ -7,146 +7,300 @@ import Filter from "../../components/features/catalog/Filter";
 import ProductCard from "../../components/features/product/ProductCard";
 import Pagination from "../../components/common/Pagination";
 import { useFilter } from "../../components/features/catalog/FilterContext";
+import { productService } from "../../services/product.service";
 
-const Catalog = ({ category }) => {
-  const { page = "1" } = useParams();
+// --- Hàm định dạng giá ---
+const formatPrice = (price) => {
+    if (typeof price !== 'number') return "N/A";
+    return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+};
+
+// --- Component Catalog ---
+const Catalog = ({ category: categoryProp }) => { // Nhận categoryProp từ Router
+  // Lấy các tham số từ URL path
+  const { secondLevelCategory: secondLevelCategoryProp, page: pageFromParams = "1" } = useParams();
+  const currentPage = parseInt(pageFromParams, 10) || 1;
+
   const navigate = useNavigate();
   const location = useLocation();
-  const currentPage = parseInt(page, 10) || 1;
   const itemsPerPage = 10;
-  
-  // Sử dụng hook useFilter
+
+  // --- State ---
+  // State lưu trữ dữ liệu gốc lấy từ API dựa trên category
+  const [baseProductData, setBaseProductData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+  // Lấy bộ lọc đang active từ Context (color, size, price,...)
   const { activeFilters } = useFilter();
-  
-  // Tạo dữ liệu mẫu
-  const allProducts = [
-    // Thay thế bằng danh sách sản phẩm của bạn
-  ];
-  
-  // Lọc sản phẩm theo category và các bộ lọc khác
-  const applyFilters = (products) => {
-    let filtered = [...products];
-    
-    // Lọc theo category từ URL
-    if (category) {
-      filtered = filtered.filter(product => product.category === category);
-    }
-    
-    // Lọc theo category từ FilterContext
-    if (activeFilters.category.length > 0) {
-      filtered = filtered.filter(product => 
-        activeFilters.category.includes(product.category)
-      );
-    }
-    
-    // Lọc theo color nếu có
-    if (activeFilters.color.length > 0) {
-      filtered = filtered.filter(product => 
-        activeFilters.color.includes(product.color)
-      );
-    }
-    
-    // Lọc theo size nếu có
-    if (activeFilters.size.length > 0) {
-      filtered = filtered.filter(product => 
-        activeFilters.size.includes(product.size)
-      );
-    }
-    
-    // Lọc theo price nếu có
-    if (activeFilters.price) {
-      const [min, max] = activeFilters.price.split('-').map(p => parseInt(p));
-      filtered = filtered.filter(product => {
-        const productPrice = parseInt(product.price.replace(/\D/g, ''));
-        return productPrice >= min && productPrice <= max;
-      });
-    }
-    
-    return filtered;
-  };
-  
-  // Tên hiển thị cho mỗi danh mục
-  const categoryTitle = {
-    "laptops": "Laptops",
+
+  // --- Fetch dữ liệu gốc từ Backend dựa trên Category ---
+  useEffect(() => {
+    const fetchBaseProducts = async () => {
+      setLoading(true);
+      setStatusMessage("Đang tải sản phẩm...");
+      setMessageType("info");
+      setBaseProductData([]); // Reset data cũ
+
+      try {
+        let response;
+        // Quyết định gọi API nào dựa trên props categoryProp và secondLevelCategoryProp
+        if (categoryProp && categoryProp !== 'all' && secondLevelCategoryProp) {
+          console.log(`Fetching by top: ${categoryProp}, second: ${secondLevelCategoryProp}`);
+          response = await productService.getProductByTopCategoryAndSecondCategory(categoryProp, secondLevelCategoryProp);
+        } else if (categoryProp && categoryProp !== 'all') {
+          console.log(`Fetching by top: ${categoryProp}`);
+          response = await productService.getProductByTopCategory(categoryProp);
+        } else {
+          // Mặc định hoặc khi categoryProp là 'all'
+          console.log("Fetching all products");
+          response = await productService.getAllProducts();
+        }
+
+        console.log("Base products fetched:", response.data);
+        setBaseProductData(Array.isArray(response.data) ? response.data : []);
+        setStatusMessage("");
+        setMessageType("");
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu sản phẩm gốc:", error);
+        setStatusMessage(error.response?.data?.message || "Tải sản phẩm thất bại. Vui lòng thử lại.");
+        setMessageType("error");
+        setBaseProductData([]); // Đặt lại thành rỗng khi có lỗi
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBaseProducts();
+  // Chạy lại khi category hoặc secondLevelCategory thay đổi (thay đổi URL)
+  }, [categoryProp, secondLevelCategoryProp]);
+
+  // --- Mapping tên danh mục (Giữ nguyên) ---
+  const categoryTitleMap = {
+    "laptop": "Laptop",
     "desktops": "Máy tính bàn",
-    "phones": "Điện thoại",
+    "phone": "Điện thoại",
     "components": "Linh kiện máy tính",
     "accessories": "Phụ kiện",
     "others": "Sản phẩm khác",
-    "deals": "Khuyến mãi"
+    "deals": "Khuyến mãi",
+    "all": "Tất cả sản phẩm" // Thêm 'all'
   };
-  
-  // Áp dụng tất cả các bộ lọc
-  const filteredProducts = applyFilters(allProducts);
-  
-  // Tính tổng số trang
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const secondLevelCategoryTitleMap = {
+      "acer": "Acer",
+      "dell": "Dell",
+      "apple": "Apple",
+      "asus": "Asus",
+      // ...
+  };
 
-  // Lấy sản phẩm cho trang hiện tại
-  const getCurrentProducts = () => {
+  // --- Hàm Lọc phía Client (Memoized) ---
+  // Áp dụng các bộ lọc từ activeFilters (color, size, price) lên baseProductData
+  const applyClientSideFilters = useMemo(() => (products) => {
+    let filtered = [...products]; // Bắt đầu với dữ liệu gốc từ API
+
+    // -- Lọc theo các tiêu chí trong activeFilters --
+
+    // 1. Lọc theo màu sắc (từ activeFilters)
+    if (activeFilters.color.length > 0) {
+        filtered = filtered.filter(product =>
+            activeFilters.color.some(colorFilter => product.color?.toLowerCase() === colorFilter.toLowerCase())
+        );
+    }
+
+    // 2. Lọc theo kích thước (từ activeFilters)
+    if (activeFilters.size.length > 0) {
+        filtered = filtered.filter(product =>
+            Array.isArray(product.sizes) && product.sizes.some(productSize =>
+                activeFilters.size.includes(productSize)
+            )
+        );
+    }
+
+    // 3. Lọc theo khoảng giá (từ activeFilters)
+    if (activeFilters.price) {
+        const [minStr, maxStr] = activeFilters.price.split('-');
+        const min = parseInt(minStr, 10);
+        const max = parseInt(maxStr, 10);
+        if (!isNaN(min) && !isNaN(max)) {
+            filtered = filtered.filter(product => {
+                const productPrice = product.discountedPrice;
+                return typeof productPrice === 'number' && productPrice >= min && productPrice <= max;
+            });
+        }
+    }
+
+    // 4. Lọc theo giảm giá (từ activeFilters - nếu có)
+    if (activeFilters.discount) {
+        const minDiscountValue = parseInt(activeFilters.discount, 10);
+        if (!isNaN(minDiscountValue)) {
+            filtered = filtered.filter(product => {
+                // Logic tính % giảm giá: ((originalPrice - discountedPrice) / originalPrice) * 100
+                // Cẩn thận chia cho 0 nếu originalPrice = 0
+                if (product.price && product.price > 0 && product.discountedPrice < product.price) {
+                   const discountPercent = ((product.price - product.discountedPrice) / product.price) * 100;
+                   // So sánh với minDiscountValue (ví dụ: 10 cho 10%)
+                   // Backend của bạn có thể đã có trường discountPercentage sẵn
+                   return discountPercent >= minDiscountValue;
+                }
+                return false; // Không có giảm giá hoặc giá gốc = 0
+            });
+        }
+    }
+
+    // 5. Sắp xếp (Client-side) - Nếu cần
+    // if (activeFilters.sort === 'price_asc') {
+    //     filtered.sort((a, b) => a.discountedPrice - b.discountedPrice);
+    // } else if (activeFilters.sort === 'price_desc') {
+    //     filtered.sort((a, b) => b.discountedPrice - a.discountedPrice);
+    // }
+    // ... các loại sort khác ...
+
+    return filtered;
+  }, [activeFilters]); // Chỉ phụ thuộc vào activeFilters
+
+  // --- Tính toán danh sách sản phẩm cuối cùng sau khi lọc client-side (Memoized) ---
+  const filteredProducts = useMemo(() => {
+      // Chỉ lọc khi không còn loading và đã có dữ liệu gốc
+      if (!loading && baseProductData.length > 0) {
+          return applyClientSideFilters(baseProductData);
+      }
+      return []; // Trả về mảng rỗng nếu đang tải hoặc không có dữ liệu gốc
+  }, [loading, baseProductData, applyClientSideFilters]);
+
+  // --- Tính toán phân trang dựa trên dữ liệu đã lọc client-side (Memoized) ---
+  const totalPages = useMemo(() => {
+    return Math.ceil(filteredProducts.length / itemsPerPage);
+  }, [filteredProducts.length, itemsPerPage]);
+
+  const currentProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
+    // Cắt mảng filteredProducts để lấy sản phẩm cho trang hiện tại
     return filteredProducts.slice(startIndex, endIndex);
-  };
+  }, [filteredProducts, currentPage, itemsPerPage]);
 
-  const [currentProducts, setCurrentProducts] = useState(getCurrentProducts());
 
-  // Cập nhật sản phẩm hiển thị khi trang hoặc bộ lọc thay đổi
-  useEffect(() => {
-    // Kiểm tra trang hợp lệ
-    if (currentPage < 1 || (totalPages > 0 && currentPage > totalPages)) {
-      // Chuyển hướng về trang 1 nếu trang không hợp lệ
-      const params = new URLSearchParams(location.search);
-      navigate(`/product/all/1${params.toString() ? `?${params.toString()}` : ''}`, { replace: true });
-      return;
+  // --- Effect: Xử lý trang không hợp lệ và cuộn lên đầu ---
+   useEffect(() => {
+     // Chỉ kiểm tra sau khi fetch xong và đã tính toán xong totalPages
+     if (!loading && filteredProducts.length > 0) {
+         if (totalPages > 0 && currentPage > totalPages) {
+             console.log(`Trang ${currentPage} vượt quá giới hạn (Tổng: ${totalPages}). Chuyển hướng đến trang ${totalPages}.`);
+             handlePageChange(totalPages, true); // Chuyển hướng đến trang cuối
+         } else if (currentPage < 1) {
+             console.log(`Trang ${currentPage} không hợp lệ. Chuyển hướng đến trang 1.`);
+             handlePageChange(1, true); // Chuyển hướng đến trang 1
+         }
+     }
+     // Cuộn lên đầu trang khi trang thay đổi hoặc khi dữ liệu/bộ lọc thay đổi
+     window.scrollTo(0, 0);
+   // Chạy khi trang thay đổi, hoặc khi totalPages thay đổi (do lọc client-side), hoặc khi loading xong
+   }, [currentPage, totalPages, loading, filteredProducts.length]); // Thêm filteredProducts.length để đảm bảo chạy sau khi lọc xong
+
+
+  // --- Effect: Cập nhật URL với totalItem và totalPage (Dựa trên lọc client-side) ---
+   useEffect(() => {
+       // Chỉ cập nhật URL sau khi đã tải xong và đã lọc xong
+       if (!loading) {
+           const params = new URLSearchParams(location.search);
+           const currentTotalItem = params.get('totalItem');
+           const currentTotalPage = params.get('totalPage');
+           const newTotalItem = filteredProducts.length.toString();
+           // Tính totalPages dựa trên filteredProducts
+           const newTotalPage = Math.ceil(filteredProducts.length / itemsPerPage).toString();
+
+           // Chỉ cập nhật nếu giá trị thực sự thay đổi
+           if (currentTotalItem !== newTotalItem || currentTotalPage !== newTotalPage) {
+               params.set('totalItem', newTotalItem);
+               params.set('totalPage', newTotalPage);
+               navigate(`${location.pathname}?${params.toString()}`, { replace: true, state: location.state });
+           }
+       }
+   }, [filteredProducts.length, itemsPerPage, loading, navigate, location.pathname, location.search, location.state]);
+
+
+  // --- Hàm xử lý chuyển trang ---
+  const handlePageChange = (newPage, replace = false) => {
+    // Tính totalPages dựa trên filteredProducts mới nhất
+    const currentTotalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+    if (newPage < 1 || (currentTotalPages > 0 && newPage > currentTotalPages) || newPage === currentPage) {
+      return; // Không làm gì nếu trang không hợp lệ hoặc là trang hiện tại
     }
-    
-    // Cập nhật sản phẩm hiển thị
-    setCurrentProducts(getCurrentProducts());
-    // Cuộn lên đầu trang
-    window.scrollTo(0, 0);
-  }, [currentPage, category, activeFilters]);
 
-  // Cập nhật URL khi chuyển trang
-  const handlePageChange = (newPage) => {
-    const params = new URLSearchParams(location.search);
-    const basePath = "/product/all";
+    const params = new URLSearchParams(location.search); // Giữ lại query filter
+
+    // Xây dựng basePath dựa trên category và secondLevelCategory
+    let basePathSegments = [];
+     if (categoryProp && categoryProp !== 'all') {
+        basePathSegments.push(categoryProp);
+        if (secondLevelCategoryProp) {
+            basePathSegments.push(secondLevelCategoryProp);
+        }
+    } else {
+        basePathSegments.push('product', 'all');
+    }
+    const basePath = `/${basePathSegments.join('/')}`;
     const queryString = params.toString();
-    
-    navigate(`${basePath}/${newPage}${queryString ? `?${queryString}` : ''}`, { replace: true });
+
+    // Navigate chỉ thay đổi phần page của URL path
+    navigate(`${basePath}/${newPage}${queryString ? `?${queryString}` : ''}`, { replace: replace, state: location.state });
   };
 
+  // --- Xác định tiêu đề trang (Giữ nguyên) ---
+  const pageTitle = secondLevelCategoryProp
+      ? `${categoryTitleMap[categoryProp] || categoryProp} - ${secondLevelCategoryTitleMap[secondLevelCategoryProp] || secondLevelCategoryProp}`
+      : (categoryTitleMap[categoryProp] || "Tất cả sản phẩm");
+
+
+  // --- Render component ---
   return (
     <div className="flex overflow-hidden flex-col pt-3 bg-white">
       <div className="flex flex-col self-center mt-4 w-full max-w-[1407px] max-md:max-w-full">
-        <img
-          src="/BannerPlaceholder.png"
-          alt="Banner"
-          className="object-contain w-full aspect-[13.51] max-md:max-w-full"
-        />
+        <img /* Banner */ />
         <BreadcrumbNav />
+        {/* Hiển thị tổng số sản phẩm sau khi lọc client-side */}
         <h1 className="self-start mt-5 mb-5 text-3xl font-semibold text-center text-black max-md:ml-2">
-          {categoryTitle[category] || "Tất cả sản phẩm"} ({filteredProducts.length})
+          {pageTitle} ({filteredProducts.length})
         </h1>
-        <div className="flex gap-5 max-md:flex-col">
-          <FilterSidebar />
 
+        {/* Thông báo */}
+        {loading && <div className="text-center p-4">{statusMessage || "Đang tải..."}</div>}
+        {!loading && messageType === 'error' && <div className="text-center p-4 text-red-600">{statusMessage}</div>}
+        {/* Hiển thị khi không tải, không lỗi, nhưng không có sản phẩm nào sau khi lọc */}
+        {!loading && !filteredProducts.length && messageType !== 'error' && <div className="text-center p-4">Không tìm thấy sản phẩm nào phù hợp.</div>}
+
+        <div className="flex gap-5 max-md:flex-col">
+          <FilterSidebar /> {/* Vẫn hoạt động để cập nhật activeFilters và URL query */}
           <section className="ml-5 w-[83%] max-md:ml-0 max-md:w-full">
             <div className="flex flex-col w-full max-md:mt-3 max-md:max-w-full">
-              <Filter />
+              <Filter /> {/* Hiển thị các bộ lọc đang active */}
+              {/* Hiển thị số lượng trên trang hiện tại và tổng số sau khi lọc */}
               <ProductControls shown={currentProducts.length} total={filteredProducts.length} />
-
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
-                {currentProducts.map((product, index) => (
-                  <ProductCard key={`product-${product.id}-${index}`} {...product} />
+                {/* Map qua currentProducts (đã được lọc và phân trang client-side) */}
+                {!loading && currentProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    productId={product.id}
+                    image={product.imageUrls?.[0]?.downloadUrl || "/Placeholder2.png"}
+                    stockStatus={product.quantity > 0 ? "in stock" : "out of stock"}
+                    title={product.title}
+                    price={formatPrice(product.discountedPrice)}
+                    originalPrice={formatPrice(product.price)}
+                    reviewCount={product.numRatings || 0}
+                  />
                 ))}
               </div>
-              
-              <Pagination 
-                totalPages={totalPages} 
-                basePath="product/all"
-                onPageChange={handlePageChange}
-              />
+              {/* Pagination dựa trên totalPages tính toán từ filteredProducts */}
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages} // Lấy từ state/memo
+                  onPageChange={(newPage) => handlePageChange(newPage, false)}
+                />
+              )}
             </div>
           </section>
         </div>

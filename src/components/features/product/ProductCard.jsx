@@ -1,124 +1,153 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { addItemToCart } from "../../../State/Cart/Action";
+import { Rating } from '@mui/material'
+import { useDispatch } from "react-redux"; // Assuming Redux is set up
+// import { addItemToCart } from "../../../State/Cart/Action"; // Correct path?
+
+// Mock dispatch and action if Redux isn't fully set up yet for testing
+const useMockDispatch = () => (action) => {
+  console.log("Dispatching Action:", action);
+  // Mock async behavior
+  return new Promise((resolve, reject) => {
+     if (action.type === 'ADD_ITEM_TO_CART_FAILURE') { // Example failure condition
+        reject({ message: "Mock Cart Error" });
+     } else {
+        resolve();
+     }
+  });
+};
+
+// Mock action creator
+const mockAddItemToCart = (data) => ({
+    type: 'ADD_ITEM_TO_CART_REQUEST', // Or whatever your action type is
+    payload: data
+});
+
 
 const ProductCard = ({
-  id,
+  productId, // Use productId passed from Catalog
   image,
   stockStatus = "in stock",
   title,
-  price,
-  originalPrice,
+  price, // Now expects formatted string (e.g., "32.890.600 ₫")
+  originalPrice, // Now expects formatted string
   reviewCount,
-  ratingImage,
-  productId
+  ratingImage, // Optional: pass rating image name based on averageRating
 }) => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  
-  // Handler để chuyển hướng đến trang chi tiết
+  // const dispatch = useDispatch(); // Use real dispatch if Redux is ready
+  const dispatch = useMockDispatch(); // Use mock dispatch for now if needed
+  // const addItemToCartAction = addItemToCart; // Use real action
+  const addItemToCartAction = mockAddItemToCart; // Use mock action
+
+  // Handler to navigate to product details page
   const handleCardClick = () => {
-    navigate(`/product/${productId || id || 1}`);
+    if (productId) {
+        navigate(`/product/${productId}`);
+    } else {
+        console.warn("ProductCard clicked without a valid productId");
+        // Optionally navigate to a default or error page
+        // navigate('/products/not-found');
+    }
   };
 
-  // Handler để thêm vào giỏ hàng
+  // Handler to add item to cart
   const handleAddToCart = (e) => {
-    e.stopPropagation(); // Ngăn chặn việc điều hướng đến trang chi tiết
-    
-    const cartData = {
-      productId: productId || id,
-      quantity: 1
-    };
-    
-    dispatch(addItemToCart(cartData))
+    e.stopPropagation(); // Prevent triggering handleCardClick
+    if (!productId) return; // Don't proceed without ID
+
+    const cartData = { productId, quantity: 1 }; // Use productId
+
+    dispatch(addItemToCartAction(cartData)) // Use the action creator
       .then(() => {
-        // Hiển thị thông báo thành công nếu cần
-        alert("Đã thêm sản phẩm vào giỏ hàng!");
+        alert("Đã thêm sản phẩm vào giỏ hàng! (Mock)"); // Use a better notification system later
       })
       .catch(error => {
         console.error("Error adding to cart:", error);
-        alert("Có lỗi xảy ra khi thêm vào giỏ hàng");
+        alert(`Có lỗi xảy ra khi thêm vào giỏ hàng: ${error.message || 'Unknown error'} (Mock)`);
       });
   };
 
-  // Handler để mua ngay
+  // Handler for "Buy Now"
   const handleBuyNow = (e) => {
-    e.stopPropagation(); // Ngăn chặn việc điều hướng đến trang chi tiết
-    
-    const cartData = {
-      productId: productId || id,
-      quantity: 1
-    };
-    
-    dispatch(addItemToCart(cartData))
+    e.stopPropagation();
+    if (!productId) return;
+
+    const cartData = { productId, quantity: 1 };
+
+    dispatch(addItemToCartAction(cartData))
       .then(() => {
-        // Chuyển hướng đến trang thanh toán
+        // alert("Adding to cart, then redirecting to checkout... (Mock)");
+        // Redirect to checkout after successful addition
         navigate('/checkout');
       })
       .catch(error => {
-        console.error("Error adding to cart:", error);
-        alert("Có lỗi xảy ra khi thêm vào giỏ hàng");
+        console.error("Error adding to cart before buying:", error);
+        alert(`Có lỗi xảy ra: ${error.message || 'Could not proceed to buy'} (Mock)`);
       });
   };
 
   return (
-    <div 
-      className="flex overflow-hidden flex-col flex-1 items-center cursor-pointer hover:shadow-md transition-shadow"
+    <div
+      className="flex flex-col flex-1 items-center border border-gray-200 rounded-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-white max-w-[235px]" // Added border and improved hover
       onClick={handleCardClick}
+      style={{ minHeight: '400px' }} // Give cards a consistent min height
     >
-      <div className="flex flex-col px-6 w-full bg-white max-w-[235px] max-md:px-5">
-        <div
-          className={`px-6 py-2.5 text-xs leading-loose text-center bg-white ${
-            stockStatus === "in stock" ? "text-neutral-500" : "text-red-500"
-          } w-[71px] max-md:pl-5`}
-        >
-          {stockStatus}
-        </div>
+      {/* Image container */}
+      <div className="relative w-full bg-gray-100 flex items-center justify-center aspect-square">
+         {stockStatus !== "in stock" && (
+             <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded z-10">Hết hàng</div>
+         )}
+          {originalPrice && price !== originalPrice && ( // Show discount % if applicable
+              <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs px-2 py-1 rounded z-10">Sale</div> // Example Sale Badge
+          )}
         <img
           src={image || "/Placeholder2.png"}
-          className="object-contain self-center max-w-full aspect-square w-[150px]"
-          alt={title || "Product"}
+          className="object-contain h-full w-full p-4" // Ensure image fits well
+          alt={title || "Product Image"}
+          loading="lazy" // Lazy load images
         />
-        <div className="flex gap-2.5 py-2.5 max-w-full text-xs items-center leading-loose text-center text-gray-400 w-[152px]">
-          <img
-            src={ratingImage ? `/${ratingImage}.svg` : "/4.svg"}
-            className="object-contain shrink-0 aspect-[5.62] w-[73px]"
-            alt="Rating"
-          />
-          <div>Reviews ({reviewCount || 0})</div>
+      </div>
+
+      {/* Content container */}
+      <div className="flex flex-col p-4 w-full text-left">
+        {/* Ratings and Reviews */}
+        <div className="flex gap-1.5 items-center text-xs text-gray-500 mb-1">
+            <Rating value={ratingImage} name='half-rating' readOnly precision={.5}/>
+            <span>({reviewCount || 0})</span>
         </div>
-        <div className="text-sm">{title || "Product Name"}</div>
-        <div className="text-lg font-semibold leading-6">
-          {originalPrice && (
-            <span
-              style={{
-                fontWeight: 400,
-                textDecoration: "line-through",
-                fontSize: "14px",
-                lineHeight: "20px",
-                color: "rgba(102,102,102,1)",
-              }}
-            >
-              {originalPrice}
-            </span>
-          )}
-          <br />{price || "0đ"}
+
+        {/* Title */}
+        <div className="text-[1.2rem] font-medium text-gray-800 h-15 overflow-hidden mb-2" title={title || "Product Name"}> {/* Fixed height, tooltip */}
+             {title || "Product Name"}
         </div>
-        
-        <div className="flex flex-col gap-2 mt-2 mb-4">
-          <button 
-            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-[50px] hover:bg-blue-700 transition-colors"
+
+        {/* Price */}
+        <div className="text-base font-semibold text-red-600 leading-tight mb-2">
+            {price || "Liên hệ"} {/* Show price or fallback */}
+            {originalPrice && price !== originalPrice && ( // Show original price if different
+                <span className="ml-2 text-xs font-normal text-gray-500 line-through">
+                    {originalPrice}
+                </span>
+            )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-2 mt-auto pt-2"> {/* Push buttons to bottom */}
+          <button
+            className="w-full px-3 py-2 text-sm text-white bg-blue-600 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50"
             onClick={handleAddToCart}
+            disabled={stockStatus !== "in stock"} // Disable if out of stock
           >
-            Thêm vào giỏ
+            {stockStatus === "in stock" ? "Thêm vào giỏ" : "Hết hàng"}
           </button>
-          
-          <button 
-            className="px-4 py-2 text-sm text-white bg-red-600 rounded-[50px] hover:bg-red-700 transition-colors"
+
+          <button
+            className="w-full px-3 py-2 text-sm text-white bg-red-600 rounded-full hover:bg-red-700 transition-colors disabled:opacity-50"
             onClick={handleBuyNow}
+            disabled={stockStatus !== "in stock"} // Disable if out of stock
           >
-            Mua ngay
+             {stockStatus === "in stock" ? "Mua ngay" : "Hết hàng"}
           </button>
         </div>
       </div>

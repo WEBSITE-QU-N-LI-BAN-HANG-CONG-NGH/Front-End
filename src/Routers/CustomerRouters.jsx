@@ -26,15 +26,18 @@ const CustomerRouters = () => {
           <Route path="/" element={<AppLayout />}>
           
             <Route index element={<Home />} />
-            <Route path="laptops" element={<Catalog category="laptops" />} />
-            <Route path="desktop-computers" element={<Catalog category="desktops" />} />
-            <Route path="accessories" element={<Catalog category="accessories" />} />
-            <Route path="phones" element={<Catalog category="phones" />} />
-            <Route path="computer-parts" element={<Catalog category="components" />} />
-            <Route path="other-products" element={<Catalog category="others" />} />
-            <Route path="our-deals" element={<Catalog category="deals" />} />
-            <Route path="product/all/:page?" element={<Catalog />} />
+            <Route path="laptop/:secondLevelCategory?/:page?" element={<Catalog category="laptop" />} />
+            <Route path="desktop-computers/:secondLevelCategory?/:page?" element={<Catalog category="desktops" />} />
+            <Route path="accessories/:secondLevelCategory?/:page?" element={<Catalog category="accessories" />} />
+            <Route path="phone/:secondLevelCategory?/:page?" element={<Catalog category="phone" />} />
+            <Route path="computer-parts/:secondLevelCategory?/:page?" element={<Catalog category="components" />} />
+            <Route path="other-products/:secondLevelCategory?/:page?" element={<Catalog category="others" />} />
+
+            <Route path="product/all/:page?" element={<Catalog category="all" />} /> {/* Hoặc không truyền category */}
+
             <Route path="detail/:productId" element={<ProductDetail1 />} />
+            
+            <Route path="our-deals" element={<Catalog category="deals" />} />
             <Route path="account" element={<UserAccount />} />
             <Route path="account/orders" element={<UserOrders />} />
             <Route path="account/orders/:orderId" element={<OrderDetail />} />

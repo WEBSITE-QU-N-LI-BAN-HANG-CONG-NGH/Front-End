@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import AuthForms from '../../pages/Auth/AuthForm';
-import { getCart } from '../../State/Cart/Action';
 import { logout, getUser } from '../../State/Auth/Action';
 import { Menu, MenuItem, Avatar, CircularProgress } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -14,10 +13,8 @@ const Header = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const modalRef = useRef(null);
   
-  // Lấy thông tin giỏ hàng từ Redux store
-  const cart = useSelector(state => state.cart?.cart);
   // Lấy thông tin người dùng từ Redux store
-  const auth = useSelector(state => state.auth);
+  const auth = useSelector(store => store.auth);
   const { user, isLoading, jwt } = auth;
   
   // Kiểm tra đã đăng nhập chưa
@@ -25,8 +22,6 @@ const Header = () => {
   
   // Lấy thông tin giỏ hàng và người dùng khi component được tạo
   useEffect(() => {
-    dispatch(getCart());
-    
     // Nếu có JWT token nhưng chưa có thông tin user, gọi API để lấy thông tin
     if (jwt && !user) {
       console.log("Có JWT nhưng chưa có thông tin người dùng, đang lấy thông tin...");
@@ -85,7 +80,7 @@ const Header = () => {
   }, [showLoginForm]);
   
   // Tính tổng số lượng sản phẩm trong giỏ hàng
-  const totalItems = cart?.totalItems || 0;
+  const totalItems = user?.cart?.totalItems || 0;
   
   // Format tên hiển thị của người dùng
   const getDisplayName = () => {
@@ -182,10 +177,10 @@ const Header = () => {
               Trang chủ
             </Link>
             <Link
-              to="/laptops"
+              to="/laptop"
               className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer"
             >
-              Laptops
+              Laptop
             </Link>
             <Link
               to="/desktop-computers"
@@ -200,7 +195,7 @@ const Header = () => {
               Phụ kiện
             </Link>
             <Link
-              to="/phones"
+              to="/phone"
               className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer"
             >
               Điện thoại

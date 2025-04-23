@@ -38,7 +38,7 @@ const FooterAddressSection = () => {
           Address: 97 Man Thiện, Thủ Đức, TP. Hồ Chí Minh
         </p>
         <p className="mb-2.5">
-          <span>Phones: </span>
+          <span>Phone: </span>
           <a href="tel:0012345678" className="text-sky-500">
             (00) 1234 5678
           </a>
@@ -125,7 +125,7 @@ const Footer = () => {
       <FooterLinkSection title="Linh kiện" links={componentsLinks} pathPrefix="/components" />
       <FooterLinkSection title="Máy tính bàn" links={desktopLinks} pathPrefix="/desktop" />
       <FooterLinkSection title="Điện thoại" links={phoneLinks} pathPrefix="/phone" />
-      <FooterLinkSection title="Laptops" links={laptopLinks} pathPrefix="/laptop" />
+      <FooterLinkSection title="Laptop" links={laptopLinks} pathPrefix="/laptop" />
       <FooterLinkSection title="Phụ kiện" links={accessoryLinks} pathPrefix="/accessories" />
       <FooterCopyright />
       <div className="flex shrink-0 mt-14 max-w-full h-px bg-white w-full max-md:mt-10" />
