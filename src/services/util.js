@@ -57,7 +57,6 @@ export const removeRefreshTokenFromCookie = () => {
 export const saveTokenToLocalStorage = (token) => {
     try {
         localStorage.setItem("jwt", token);
-        console.log("Đã lưu access token vào localStorage");
     } catch (error) {
         console.error("Lỗi khi lưu access token vào localStorage:", error);
     }

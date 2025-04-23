@@ -16,7 +16,6 @@ const OAuthRedirect = () => {
   useEffect(() => {
     // ** Hàm xử lý token từ URL **
     const handleOAuthRedirect = () => {
-      console.log("Đang xử lý chuyển hướng OAuth tại:", location.search);
       // Sử dụng URLSearchParams để lấy tham số từ query string
       const params = new URLSearchParams(location.search);
       const token = params.get('token'); // ** Lấy tham số 'token' **
@@ -36,7 +35,6 @@ const OAuthRedirect = () => {
 
       if (token) {
         // ** Tìm thấy token **
-        console.log("Đã nhận được Access Token:", token);
         try {
           // Lưu token vào localStorage
           saveTokenToLocalStorage(token);
@@ -46,7 +44,6 @@ const OAuthRedirect = () => {
           dispatch(getUser()); // getUser sẽ sử dụng token từ localStorage thông qua interceptor
 
           setStatus('success');
-          console.log("Đăng nhập OAuth thành công, đang chuyển hướng...");
           // Chuyển hướng đến trang chủ ngay lập tức hoặc sau một khoảng ngắn
           setTimeout(() => {
             navigate('/');

@@ -1,46 +1,50 @@
-import { Route, Routes } from "react-router-dom"
-import HomePage from "../components/HomePage"
-import Cart from "../components/Cart/Cart"
-import Navigation from "../components/Navigation/Navigation"
-import Footer from "../components/Footer/Footer"
-import Product from "../components/Product/Product"
-import ProductDetails from "../components/ProductDetails/ProductDetails"
-import Checkout from "../components/Checkout/Checkout"
-import Order from "../components/Order/Order"
-import OrderDetail from "../components/Order/OrderDetail"
-import OAuthRedirect from "../components/auth/OAuthRedirect"
-import PaymentOrderDetail from "../components/Payment/PaymentOrderDetail"
-import PaymentForm from "../components/Payment/PaymentForm"
-import PaymentResult from "../components/Payment/PaymentResult"
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Home from '../pages/Home/Home';
+import UserAccount from '../pages/UserAccount/UserAccount';
+import Cart from '../pages/Cart/Cart';
+import Catalog from '../pages/Catalog/Catalog';
+import ProductDetail1 from '../pages/ProductDetail/ProductDetail1';
+import ContactUs from '../pages/Contact/ContactUs';
+import ContactedUs from '../pages/Contact/ContactedUs';
+import Review from '../pages/Review/Review';
+import AppLayout from '../components/layout/AppLayout';
+import { FilterProvider } from '../components/features/catalog/FilterContext';
+import ForgotPassword from '../pages/Auth/ForgotPassword';
+import Checkout from '../pages/Checkout/Checkout'; // Import trang Checkout
+
+import OAuthRedirect from '../pages/Auth/OAuthRedirect';
 
 
 const CustomerRouters = () => {
   return (
     <div>
-        <div>
-            <Navigation />
-        </div>
-
+      <FilterProvider>
         <Routes>
-            <Route path="/sign-up" element={<HomePage />} />
-            <Route path="/sign-in" element={<HomePage />} />
-            <Route path="/" element={<HomePage />} />
-            <Route path="/cart" element={<Cart/>} />
-            <Route path="/:category/:section/:item" element={<Product/>} />
-            <Route path="/product/all" element={<Product/>} />
-            <Route path="/product/:productId" element={<ProductDetails/>} />
-            <Route path="/checkout" element={<Checkout/>} />
-            <Route path="/account/order" element={<Order/>} />
-            <Route path="/checkout/order/:orderId" element={<OrderDetail/>} />
-            <Route path="/oauth2/redirect" element={<OAuthRedirect />} />
-            <Route path="/payment/detail/:orderId" element={<PaymentOrderDetail />} />
-            <Route path="/payment/process/:orderId" element={<PaymentForm />} />
-            <Route path="/payment/result" element={<PaymentResult />} />
-        </Routes>
+          <Route path="/" element={<AppLayout />}>
+          
+            <Route index element={<Home />} />
+            <Route path="laptops" element={<Catalog category="laptops" />} />
+            <Route path="desktop-computers" element={<Catalog category="desktops" />} />
+            <Route path="accessories" element={<Catalog category="accessories" />} />
+            <Route path="phones" element={<Catalog category="phones" />} />
+            <Route path="computer-parts" element={<Catalog category="components" />} />
+            <Route path="other-products" element={<Catalog category="others" />} />
+            <Route path="our-deals" element={<Catalog category="deals" />} />
+            <Route path="product/all/:page?" element={<Catalog />} />
+            <Route path="detail/:productId" element={<ProductDetail1 />} />
+            <Route path="account" element={<UserAccount />} />
+            <Route path="cart" element={<Cart />} />
+            <Route path="information/contact-us" element={<ContactUs />} />
+            <Route path="information/contact-us/done" element={<ContactedUs />} />
+            <Route path="review" element={<Review />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="checkout" element={<Checkout />} /> {/* Thêm route cho trang Checkout */}
+            <Route path="oauth2/redirect" element={<OAuthRedirect />} />
 
-        <div>
-            <Footer />
-        </div>
+          </Route>
+        </Routes>
+      </FilterProvider>
     </div>
   )
 }

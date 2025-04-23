@@ -124,9 +124,9 @@ const Header = () => {
             onClick={handleUserMenuOpen}
             className="flex items-center space-x-2 focus:outline-none px-3 py-1 rounded-full hover:bg-blue-50 transition duration-300"
           >
-            {user.profileImage ? (
+            {user?.imageUrl ? (
               <Avatar 
-                src={user.profileImage} 
+                src={user?.imageUrl} 
                 alt={getDisplayName()} 
                 className="w-8 h-8"
               />
