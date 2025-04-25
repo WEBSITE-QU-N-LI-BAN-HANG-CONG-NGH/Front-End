@@ -6,8 +6,6 @@ import FilterSidebar from "../../components/features/catalog/FilterSidebar";
 import Filter from "../../components/features/catalog/Filter"; // Component hiển thị filter active
 import ProductCard from "../../components/features/product/ProductCard";
 import Pagination from "../../components/common/Pagination";
-// FilterContext không cần dùng trực tiếp ở đây nữa vì filter đọc từ URL
-// import { useFilter } from "../../components/features/catalog/FilterContext";
 import { productService } from "../../services/product.service";
 
 // --- Hàm định dạng giá ---
@@ -23,7 +21,7 @@ const Catalog = ({ category: categoryProp }) => { // Nhận categoryProp từ Ro
   const location = useLocation(); // Để đọc location.search (query string)
   const navigate = useNavigate();
   const currentPage = parseInt(pageFromParams, 10) || 1; // Trang hiện tại
-  const itemsPerPage = 10; // Số sản phẩm mỗi trang (có thể cấu hình)
+  const itemsPerPage = 12; // Số sản phẩm mỗi trang (có thể cấu hình)
 
   // --- State ---
   const [allFilteredProducts, setAllFilteredProducts] = useState([]); // Lưu toàn bộ SP khớp filter (cho client-side pagination)

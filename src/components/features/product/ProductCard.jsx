@@ -99,7 +99,7 @@ const ProductCard = ({
              <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded z-10">Hết hàng</div>
          )}
           {originalPrice && price !== originalPrice && ( // Show discount % if applicable
-              <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs px-2 py-1 rounded z-10">Sale</div> // Example Sale Badge
+              <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs px-2 py-1 rounded z-10">{} Sale</div> // Example Sale Badge
           )}
         <img
           src={image || "/Placeholder2.png"}

@@ -1,17 +1,6 @@
 import React, { useEffect, useState } from "react";
 
 
-
-const [totalPages, setTotalPages] = useState(1);
-
-
-useEffect( () => {
-  const queryParams = new URLSearchParams(location.search);
-  const totalPage = queryParams.get("totalPage");
-  setTotalPages(totalPage);
-
-}, [location.search])
-
 const BackButton = () => {
   return (
     <button
@@ -44,13 +33,8 @@ const DisplayControl = () => {
         aria-haspopup="listbox"
       >
         <span className="grow">
-          <span className="text-[#A2A6B0]">Show: </span>{totalPages} per page
+          <span className="text-[#A2A6B0]">Show: </span> 10 per page
         </span>
-        <img
-          src="/DownArrow.svg"
-          className="object-contain shrink-0 my-auto w-4 aspect-square"
-          alt="Display options dropdown indicator"
-        />
       </button>
     </div>
   );
