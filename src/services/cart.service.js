@@ -1,21 +1,23 @@
-import { api } from "./api";
+import { api } from "../config/ApiConfig";
+import { API_BASE_URL } from "../config/ApiConfig";
 
 export const cartService = {
+
     getCart: () => 
-        api.get('/api/cart/'),
+        api.get(`${API_BASE_URL}/cart/`),
     
     addToCart: (cartData) => 
-        api.post('/api/cart/add', {
+        api.post(`${API_BASE_URL}/api/cart/add`, {
             productId: cartData.productId,
             size: cartData.size,
             quantity: cartData.quantity || 1
         }),
     
     removeFromCart: (itemId) => 
-        api.delete(`/api/cart/remove/${itemId}`),
+        api.delete(`${API_BASE_URL}/cart/remove/${itemId}`),
     
-    updateCartItem: (reqData) => 
-        api.put(`/api/cart/update/${reqData.itemId}`, {
-            quantity: reqData.quantity
-        })
+    updateCartItem: (cartUpdateData, itemId) => {
+        console.log(`Updating cart item ${itemId} with data:`, cartUpdateData);
+        return api.put(`${API_BASE_URL}/cart/update/${itemId}`, cartUpdateData); // Thêm /api/v1/ và gửi đúng body
+    }
 };

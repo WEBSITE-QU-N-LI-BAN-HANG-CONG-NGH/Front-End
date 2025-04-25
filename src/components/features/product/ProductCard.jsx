@@ -32,7 +32,8 @@ const ProductCard = ({
   price, // Now expects formatted string (e.g., "32.890.600 ₫")
   originalPrice, // Now expects formatted string
   reviewCount,
-  ratingImage, // Optional: pass rating image name based on averageRating
+  ratingImage,
+  discountPercent // Optional: pass rating image name based on averageRating
 }) => {
   const navigate = useNavigate();
   // const dispatch = useDispatch(); // Use real dispatch if Redux is ready
@@ -99,7 +100,7 @@ const ProductCard = ({
              <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded z-10">Hết hàng</div>
          )}
           {originalPrice && price !== originalPrice && ( // Show discount % if applicable
-              <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs px-2 py-1 rounded z-10">{} Sale</div> // Example Sale Badge
+              <div className="absolute top-2 right-2 bg-yellow-400 text-black text-xs px-2 py-1 rounded z-10">Sale {discountPercent}%</div> // Example Sale Badge
           )}
         <img
           src={image || "/Placeholder2.png"}
@@ -114,7 +115,7 @@ const ProductCard = ({
         {/* Ratings and Reviews */}
         <div className="flex gap-1.5 items-center text-xs text-gray-500 mb-1">
             <Rating value={ratingImage} name='half-rating' readOnly precision={.5}/>
-            <span>({reviewCount || 0})</span>
+            <span>({reviewCount || 0}) đánh giá </span>
         </div>
 
         {/* Title */}

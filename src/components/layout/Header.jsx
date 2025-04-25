@@ -5,6 +5,7 @@ import AuthForms from '../../pages/Auth/AuthForm';
 import { logout, getUser } from '../../State/Auth/Action';
 import { Menu, MenuItem, Avatar, CircularProgress } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { getCart } from '../../State/Cart/Action';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -16,9 +17,15 @@ const Header = () => {
   // Lấy thông tin người dùng từ Redux store
   const auth = useSelector(store => store.auth);
   const { user, isLoading, jwt } = auth;
+  const { cart } = useSelector(store => store.cart);
   
   // Kiểm tra đã đăng nhập chưa
   const isAuthenticated = !!jwt;
+
+  useEffect(() => {
+    dispatch(getCart())
+  }, [dispatch]);
+
   
   // Lấy thông tin giỏ hàng và người dùng khi component được tạo
   useEffect(() => {
@@ -80,7 +87,7 @@ const Header = () => {
   }, [showLoginForm]);
   
   // Tính tổng số lượng sản phẩm trong giỏ hàng
-  const totalItems = user?.cart?.totalItems || 0;
+  const totalItems = cart?.totalItems || 0;
   
   // Format tên hiển thị của người dùng
   const getDisplayName = () => {

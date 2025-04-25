@@ -33,7 +33,7 @@ const DisplayControl = () => {
         aria-haspopup="listbox"
       >
         <span className="grow">
-          <span className="text-[#A2A6B0]">Show: </span> 10 per page
+          <span className="text-[#A2A6B0]">Show: </span> 12 per page
         </span>
       </button>
     </div>
