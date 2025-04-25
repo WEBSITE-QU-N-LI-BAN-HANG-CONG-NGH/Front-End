@@ -1,84 +1,79 @@
 import React from "react";
 import { useFilter } from "../../../components/features/catalog/FilterContext";
-import { useLocation, useNavigate } from "react-router-dom";
+// Bỏ useNavigate nếu không dùng
+// import { useLocation, useNavigate } from "react-router-dom";
 
 const Filter = () => {
   const { activeFilters, removeFilter, clearAllFilters } = useFilter();
-  
+
   // Create array of active filters to display
   const getActiveFilterItems = () => {
     const items = [];
-    
-    // Add color filters
-    activeFilters.color.forEach(color => {
-      items.push({ 
-        type: 'color', 
-        value: color,
-        displayValue: color.charAt(0).toUpperCase() + color.slice(1) // Capitalize color name
+
+    // ----- Sửa cách thêm color filter -----
+    if (activeFilters.color) { // Chỉ thêm nếu color có giá trị
+      items.push({
+        type: 'color',
+        value: activeFilters.color, // Giá trị là string
+        // Hiển thị tên màu (Viết hoa chữ cái đầu)
+        displayValue: activeFilters.color.charAt(0).toUpperCase() + activeFilters.color.slice(1)
       });
-    });
-  
-    // Add price filter
+    }
+    // ------------------------------------
+
+    // Add price filter (Giữ nguyên)
     if (activeFilters.price) {
       const [min, max] = activeFilters.price.split('-');
-      // Format price for display
       const formattedMin = parseInt(min).toLocaleString('vi-VN');
       const formattedMax = parseInt(max).toLocaleString('vi-VN');
-      items.push({ 
-        type: 'price', 
-        value: activeFilters.price, // Keep original value for removal
-        displayValue: `${formattedMin}đ - ${formattedMax}đ` 
-      });
-    }
-    
-    // Add discount filter if present
-    if (activeFilters.discount) {
       items.push({
-        type: 'discount',
-        value: activeFilters.discount,
-        displayValue: `Giảm giá ${activeFilters.discount}%+`
+        type: 'price',
+        value: activeFilters.price,
+        displayValue: `${formattedMin}đ - ${formattedMax}đ`
       });
     }
-    
+
+    // Bỏ discount filter nếu không dùng
+
     return items;
   };
-  
+
   const filterItems = getActiveFilterItems();
-  
-  // Don't display if no active filters
+
   if (filterItems.length === 0) {
     return null;
   }
 
-  // Handle filter removal correctly
+  // Handle filter removal
   const handleRemoveFilter = (filterType, filterValue) => {
+    // Khi xóa color hoặc price, gọi removeFilter (nó sẽ gọi updateFilters với isActive=false)
     removeFilter(filterType, filterValue);
   };
 
   return (
-    <div className="flex flex-row mt-5 gap-2 justify-center items-center max-w-full text-sm font-semibold leading-loose text-black w-full flex-wrap">
+    <div className="flex flex-row mt-5 gap-2 justify-start items-center max-w-full text-sm font-semibold leading-loose text-black w-full flex-wrap"> {/* Đổi thành justify-start */}
       {filterItems.map((item, index) => (
         <div
           key={`${item.type}-${item.value}-${index}`}
-          className="flex flex-row gap-2.5 justify-center items-center px-4 py-3 bg-white rounded-sm border border-solid border-[color:var(--Color---6,#CACDD8)] max-w-[230px] max-md:pr-5"
+          className="flex flex-row gap-2.5 justify-center items-center px-4 py-2 bg-gray-100 rounded-full border border-solid border-gray-300 max-md:pr-5" // Thay đổi style
         >
           <span>
             {item.displayValue}{" "}
           </span>
           <img
-            src="/Close.png"
+            src="/Close.png" // Đảm bảo có icon này
             alt="Remove filter"
-            className="box-border object-cover overflow-hidden shrink-0 aspect-square min-h-5 min-w-5 w-5 cursor-pointer"
+            className="w-3 h-3 cursor-pointer opacity-70 hover:opacity-100" // Thay đổi style icon
             onClick={() => handleRemoveFilter(item.type, item.value)}
           />
         </div>
       ))}
       {filterItems.length > 0 && (
-        <button 
-          className="px-4 py-3.5 bg-white rounded-sm border border-solid border-[color:var(--Color---6,#CACDD8)] h-[53px]"
+        <button
+          className="ml-2 px-3 py-2 text-xs text-red-600 hover:underline" // Style khác cho Clear All
           onClick={clearAllFilters}
         >
-          Clear All
+          Clear All Filters
         </button>
       )}
     </div>
