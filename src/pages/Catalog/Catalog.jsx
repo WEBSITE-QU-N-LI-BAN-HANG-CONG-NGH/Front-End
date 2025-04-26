@@ -246,6 +246,7 @@ const Catalog = ({ category: categoryProp }) => {
                       originalPrice={formatPrice(product.price)}
                       reviewCount={product.numRatings || 0}
                       discountPercent={product.discountPercent || 0}
+                      onClick={() => navigate(`/product/${product.id}`)}
                     />
                   ))
                 )}

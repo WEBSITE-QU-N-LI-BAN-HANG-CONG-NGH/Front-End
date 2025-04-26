@@ -7,11 +7,7 @@ export const cartService = {
         api.get(`${API_BASE_URL}/cart/`),
     
     addToCart: (cartData) => 
-        api.post(`${API_BASE_URL}/api/cart/add`, {
-            productId: cartData.productId,
-            size: cartData.size,
-            quantity: cartData.quantity || 1
-        }),
+        api.post(`${API_BASE_URL}/cart/add`, cartData),
     
     removeFromCart: (itemId) => 
         api.delete(`${API_BASE_URL}/cart/remove/${itemId}`),

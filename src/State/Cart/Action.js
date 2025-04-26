@@ -21,11 +21,11 @@ export const addItemToCart = (reqData) => async (dispatch) => {
     try {
         const cartData = {
             productId: reqData.productId,
-            size: reqData.size,
-            quantity: reqData.quantity || 1
+            size: reqData.size,       // Make sure to include size
+            quantity: reqData.quantity // Make sure to include quantity
         };
-        
-        const {data} = await cartService.addToCart(cartData);
+        // Pass the single cartData object to the service
+        const { data } = await cartService.addToCart(cartData);
         console.log("Add to cart response:", data);
         dispatch({type: ADD_ITEM_TO_CART_SUCCESS, payload: data})
         return data;

@@ -1,10 +1,18 @@
 import { api } from "../config/ApiConfig";
-import axios from "axios";
 import { API_BASE_URL } from "../config/ApiConfig";
 
 export const productService = {
-    getProductById: (productId) => 
-        api.get(`${API_BASE_URL}/products/id/${productId}`),
+    getProductById: (productId) => {
+        try{
+            if (!productId) {
+                throw new Error("Product ID is required");
+            }
+            return api.get(`${API_BASE_URL}/products/id/${productId}`);
+        } catch (error) {
+            console.error("Error fetching product by ID:", error);
+            throw error; // Rethrow the error to be handled by the calling function
+        }
+    },
 
     getAllProducts: () =>
         api.get(`${API_BASE_URL}/products/all`),
@@ -50,7 +58,7 @@ export const productService = {
 
 
     getSecondCategory: (topCategory) =>
-        api.get(`${API_BASE_URL}/categories/${topCategory}`),
+        api.get(`${API_BASE_URL}/categories/${topCategory}`)
 
 };
 
