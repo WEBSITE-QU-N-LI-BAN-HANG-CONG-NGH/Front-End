@@ -52,7 +52,6 @@ const ProductInfo = ({item}) => {
   const [showToast, setShowToast] = useState(false); // State để quản lý hiển thị toast
   const { productId } = useParams();
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -112,7 +111,7 @@ const ProductInfo = ({item}) => {
       <h1 className="mb-5 text-2xl">{item.title}</h1>
 
       <div className="flex gap-1.5 items-center text-xs text-gray-500 mb-1">
-            <span>{item.averageRating}</span>
+            <span>{item.averageRating.toFixed(1)}</span>
             <Rating value={item.averageRating || 0} name='half-rating' readOnly precision={.5}/>
             <span> </span>
             <span> </span>
