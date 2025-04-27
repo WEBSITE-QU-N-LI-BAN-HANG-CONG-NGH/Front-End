@@ -4,9 +4,12 @@ import { Radio, RadioGroup } from '@headlessui/react'
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addItemToCart, getCart } from "../../../State/Cart/Action";
+import { useToast } from "../../../contexts/ToastContext.jsx"; // 1. Import useToast
+
 
 // Toast Notification Component
 const ToastNotification = ({ show, message, productName, productImage, onClose }) => {
+
   useEffect(() => {
     if (show) {
       // Tự động ẩn thông báo sau 5 giây
@@ -49,9 +52,11 @@ const ToastNotification = ({ show, message, productName, productImage, onClose }
 
 const ProductInfo = ({item}) => {
   const [selectedSize, setSelectedSize] = useState(null);
-  const [showToast, setShowToast] = useState(false); // State để quản lý hiển thị toast
+  const [showToastt, setShowToast] = useState(false); // State để quản lý hiển thị toast
   const { productId } = useParams();
   const dispatch = useDispatch();
+  const {showToast} = useToast()
+
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -68,7 +73,7 @@ const ProductInfo = ({item}) => {
 
   const handleClickToCart = () => {
     if (!selectedSize) {
-      alert("Vui lòng chọn size trước khi thêm vào giỏ hàng");
+      showToast("Vui lòng chọn size", "warning");
       return;
     }
     
@@ -101,7 +106,7 @@ const ProductInfo = ({item}) => {
     <div className="flex flex-col flex-1">
       {/* Toast Notification */}
       <ToastNotification 
-        show={showToast} 
+        show={showToastt} 
         message="Thêm vào giỏ hàng thành công" 
         productName={item.title}
         productImage={item.imageUrl || (item.images && item.images[0])}
@@ -181,7 +186,8 @@ const ProductInfo = ({item}) => {
 
       <button 
         onClick={handleClickToCart} 
-        className="px-8 mt-5 py-4 mb-5 w-full text-base text-white bg-rose-600 cursor-pointer border-[none] hover:bg-rose-700"
+        disabled={!selectedSize}
+        className={`px-8 mt-5 py-4 mb-5 w-full text-base text-white cursor-pointer border-[none] ${selectedSize ? 'bg-rose-500 hover:bg-rose-700' : 'bg-gray-300 cursor-not-allowed'}`}
       >
         Thêm vào giỏ hàng
       </button>
