@@ -40,6 +40,19 @@ export const login = (userData) => async (dispatch) => {
         
         if(accessToken) {
             dispatch(loginSuccess(accessToken));
+
+            const userData = response.data.data || response.data;
+            // Nếu user có role là SELLER hoặc có isSeller = true
+            if (userData.roles?.includes('SELLER') || userData.isSeller === true) {
+                // Lưu token vào localStorage để frontend seller có thể sử dụng
+                localStorage.setItem("jwt", accessToken);
+
+                // Chuyển hướng sang trang seller
+                window.location.href = "http://localhost:5174/dashboard"; // Thay đổi port tùy theo cấu hình
+                return; // Dừng execution flow ở đây
+            }
+
+            // Nếu không phải seller, tiếp tục luồng đăng nhập customer thông thường
             dispatch(getUser());
             console.log("Đăng nhập thành công với token");
         } else {
