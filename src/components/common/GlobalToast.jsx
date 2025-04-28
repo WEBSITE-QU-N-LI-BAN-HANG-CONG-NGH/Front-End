@@ -58,9 +58,8 @@ const GlobalToast = () => {
         <div className="ml-4 flex-shrink-0">
           <button
             onClick={hideToast}
-            className={`inline-flex rounded-md p-1.5 ${textColor} hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 ${
-              type === 'warning' ? 'focus:ring-offset-yellow-500' : type === 'error' ? 'focus:ring-offset-red-600' : type === 'success' ? 'focus:ring-offset-green-500' : 'focus:ring-offset-blue-500'
-            }`}
+            className={`inline-flex rounded-md p-1.5 ${textColor} hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 ${type === 'warning' ? 'focus:ring-offset-yellow-500' : type === 'error' ? 'focus:ring-offset-red-600' : type === 'success' ? 'focus:ring-offset-green-500' : 'focus:ring-offset-blue-500'
+              }`}
           >
             <span className="sr-only">Đóng</span>
             <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">

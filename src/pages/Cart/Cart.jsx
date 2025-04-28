@@ -88,7 +88,7 @@ const CartSummary = ({ item, formatCurrency }) => {
       </div>
       <button 
         className="py-4 w-full text-base font-semibold text-white bg-rose-600 rounded hover:bg-rose-700 transition-colors"
-        onClick={() => window.location.href = "/checkout"}
+        onClick={() => window.location.href = "/checkout?step=2"}
       >
         ĐẶT HÀNG NGAY
       </button>

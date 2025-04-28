@@ -39,12 +39,16 @@ const CustomerRouters = () => {
             <Route path="our-deals" element={<Catalog category="deals" />} />
             
             <Route path="account" element={<UserAccount />} />
+            
             <Route path="account/orders" element={<UserOrders />} />
+
             <Route path="account/orders/:orderId" element={<OrderDetail />} />
             <Route path="cart" element={<Cart />} />
+
             <Route path="information/contact-us" element={<ContactUs />} />
             <Route path="information/contact-us/done" element={<ContactedUs />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
+
             <Route path="checkout" element={<Checkout />} /> {/* Thêm route cho trang Checkout */}
             <Route path="oauth2/redirect" element={<OAuthRedirect />} />
 
