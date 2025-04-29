@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import Features from './Features';
+import ChatBot from '../features/chatbot/ChatBot'; // Đường dẫn đến component ChatBot
 
 const AppLayout = () => {
     return (
@@ -11,8 +12,9 @@ const AppLayout = () => {
             <main className="flex-grow pr-22">
                 <Outlet />
             </main>
-            <Features  />
+            <Features />
             <Footer />
+            <ChatBot /> {/* Thêm component ChatBot ở đây */}
         </div>
     );
 };
