@@ -7,7 +7,7 @@ export const orderService = {
         api.post(`/orders/create/${addressId}`),
     
     getOrderById: (orderId) => 
-        api.get(`/api/order/${orderId}`),
+        api.get(`/orders/${orderId}`),
     
     getAddresses: () => 
         api.get("/users/address"),

@@ -7,6 +7,7 @@ import { getAddress, getOrderById } from '../../State/Order/Action';
 import { orderService } from '../../services/order.service';
 import { useToast } from '../../contexts/ToastContext';
 import { cartService } from '../../services/cart.service';
+
 // import Cart from '../Cart/Cart'; // Không cần import Cart ở đây nữa
 
 const API_BASE_URL_LOCATION = "https://open.oapi.vn/location"; // 2. Sửa API endpoint
@@ -52,9 +53,14 @@ const { address } = useSelector(store => store.order)
 const dispatch = useDispatch();
 // Dữ liệu mẫu địa chỉ đã lưu
 const [savedAddresses, setSavedAddresses] = useState([]);
+const finalOrder = useSelector(store => store.order?.order);
+const vnp_TxnRef = queryParams.get('vnp_TxnRef');
+
+const orderId = vnp_TxnRef ? vnp_TxnRef.split('_')[0] : orderIdFromUrl;
 
 useEffect(() => {
   dispatch(getAddress());
+  dispatch(getOrderById(orderId));
 }, [dispatch])
   
 
@@ -317,6 +323,7 @@ const handlePlaceOrder = async () => {
       // Cập nhật URL và state step
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
       setStep(4);
+      window.location.reload(); // Tải lại trang để hiển thị thông tin đơn hàng
       // Không cần set processedOrderId ở đây vì useEffect sẽ xử lý khi step=4
     }
   } catch (orderError) { /* ... (báo lỗi tạo order như cũ) ... */ }
@@ -669,14 +676,12 @@ const PaymentStep = () => {
 const CompleteStep = () => {
   const currentOrderId = queryParams.get('orderId') || 'ORD123456';
   // Lấy cart cuối cùng từ store để hiển thị tổng tiền chính xác
-  const finalOrder = useSelector(store => store.order?.order);
   const status = queryParams.get('vnp_ResponseCode');
 
   if (status === '00' && currentOrderId) {
     cartService.clearCart();
   }
 
-  console.log('finalOrder :>> ', finalOrder);
 
   return (
     <div className="text-center py-10">
@@ -688,15 +693,24 @@ const CompleteStep = () => {
           <h2 className="text-2xl font-bold mb-2">{status === '00' && currentOrderId ? "Thanh toán thành công!" : "Đặt hàng thành công"}</h2>
           <p className="text-lg mb-6">Cảm ơn bạn đã đặt hàng tại Tech Shop.</p>
 
-          {/* Thông tin đơn hàng */}
+
           <div className="bg-gray-50 p-6 rounded border border-gray-300 mb-6 text-left">
-            <h3 className="text-lg font-medium mb-4">Thông tin đơn hàng #{currentOrderId}</h3>
-            <p className="mb-2"><strong>Ngày đặt hàng:</strong> {new Date().toLocaleDateString('vi-VN')}</p>
-            <p className="mb-2"><strong>Phương thức thanh toán:</strong> {paymentMethod == "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán VNPAY"}</p>
+            <h3 className="text-xl mb-4 font-bold">Thông tin đơn hàng #{processedOrderId}</h3>
+            <p className="mb-2"><strong>Ngày đặt hàng:</strong> {finalOrder?.orderDate ? new Date(finalOrder.orderDate).toLocaleString('vi-VN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            }) : "Đang cập nhật..."}</p>
+
+            <p className="mb-2"><strong>Phương thức thanh toán:</strong> {finalOrder?.paymentMethod == "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán VNPAY"}</p>
             {/* Hiển thị địa chỉ đã chọn hoặc điền */}
 
-            <p className="mb-2"><strong>Địa chỉ giao hàng:</strong> {selectedAddress ? `${selectedAddress?.ward}, ${selectedAddress?.district}, ${selectedAddress?.province}` : `${shippingInfo.ward}, ${shippingInfo.district}, ${shippingInfo.province}`}</p>
-            <p className="mb-2"><strong>Tổng tiền:</strong> {finalOrder ? formatCurrency(finalOrder.totalPrice) : "Đang cập nhật..."}</p>
+            <p className="mb-2"><strong>Địa chỉ giao hàng:</strong> {`${finalOrder?.shippingAddress?.street}, ${finalOrder?.shippingAddress?.ward}, ${finalOrder?.shippingAddress?.district}, ${finalOrder?.shippingAddress?.province}` }</p>
+
+            <p className="mb-2"><strong>Tổng tiền:</strong> {finalOrder ? formatCurrency(finalOrder.totalDiscountedPrice) : "Đang cập nhật..."}</p>
           </div>
 
           <p className="mb-6">Chúng tôi sẽ xử lý đơn hàng của bạn trong thời gian sớm nhất.</p>
