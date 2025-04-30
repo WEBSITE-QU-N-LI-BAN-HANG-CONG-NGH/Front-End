@@ -17,6 +17,7 @@ import Checkout from '../pages/Checkout/Checkout'; // Import trang Checkout
 import OAuthRedirect from '../pages/Auth/OAuthRedirect';
 
 
+
 const CustomerRouters = () => {
   return (
     <div>
@@ -51,6 +52,7 @@ const CustomerRouters = () => {
 
             <Route path="checkout" element={<Checkout />} /> {/* Thêm route cho trang Checkout */}
             <Route path="oauth2/redirect" element={<OAuthRedirect />} />
+
 
           </Route>
         </Routes>

@@ -15,5 +15,8 @@ export const cartService = {
     updateCartItem: (cartUpdateData, itemId) => {
         console.log(`Updating cart item ${itemId} with data:`, cartUpdateData);
         return api.put(`${API_BASE_URL}/cart/update/${itemId}`, cartUpdateData); // Thêm /api/v1/ và gửi đúng body
-    }
+    },
+
+    clearCart: () => 
+        api.delete(`${API_BASE_URL}/cart/clear`),
 };

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios'; // 1. Import axios
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
-import { getAddress } from '../../State/Order/Action';
+import { getAddress, getOrderById } from '../../State/Order/Action';
 import { orderService } from '../../services/order.service';
 import { useToast } from '../../contexts/ToastContext';
+import { cartService } from '../../services/cart.service';
 // import Cart from '../Cart/Cart'; // Không cần import Cart ở đây nữa
 
 const API_BASE_URL_LOCATION = "https://open.oapi.vn/location"; // 2. Sửa API endpoint
@@ -15,7 +16,12 @@ const navigate = useNavigate();
 const { showToast } = useToast();
 const queryParams = new URLSearchParams(window.location.search);
 const initialStep = parseInt(queryParams.get('step') || '2');
-const orderId = queryParams.get('orderId');
+const orderIdFromUrl = queryParams.get('orderId');
+
+const [vnpayStatus, setVnpayStatus] = useState(null); // null | 'processing' | 'success' | 'failed'
+const [vnpayMessage, setVnpayMessage] = useState('');
+// State để lưu orderId đã xử lý (từ URL hoặc từ COD)
+const [processedOrderId, setProcessedOrderId] = useState(orderIdFromUrl);
 
 const [step, setStep] = useState(initialStep < 2 ? 2 : initialStep);
 const [isLoading, setIsLoading] = useState(false);
@@ -214,36 +220,114 @@ const handlePrevStep = () => {
   }
 };
 
+
+useEffect(() => {
+  const searchParams = new URLSearchParams(location.search);
+  const isVNPayReturn = searchParams.has('vnp_ResponseCode');
+  const currentStepFromUrl = parseInt(searchParams.get('step') || '0');
+
+  // Chỉ xử lý khi đây là URL return từ VNPAY, step trên URL đúng là 4, và chưa xử lý trước đó
+  if (isVNPayReturn && currentStepFromUrl === 4 && vnpayStatus === null) {
+    console.log("Processing VNPAY return...");
+    setVnpayStatus('processing');
+    setVnpayMessage('Đang xác nhận kết quả thanh toán VNPAY...');
+  
+    const paramsObject = Object.fromEntries(searchParams);
+    const vnp_ResponseCode = paramsObject['vnp_ResponseCode'];
+    const vnp_TxnRef = paramsObject['vnp_TxnRef'];
+  
+    // Lấy orderId từ TxnRef hoặc orderId trên URL
+    const extractedOrderId = vnp_TxnRef ? vnp_TxnRef.split('_')[0] : searchParams.get('orderId');
+    setProcessedOrderId(extractedOrderId);
+  
+    const processCallbackIfNeeded = async () => {
+      try {
+        // Pass the parameters directly
+        await orderService.handleVNPayCallback(paramsObject);
+        
+        if (vnp_ResponseCode === '00') {
+          setVnpayStatus('success');
+          setVnpayMessage('Thanh toán qua VNPAY thành công!');
+          showToast('Thanh toán thành công!', 'success');
+        } else {
+          setVnpayStatus('failed');
+          setVnpayMessage(`Thanh toán qua VNPAY thất bại. Mã lỗi: ${vnp_ResponseCode}.`);
+          showToast('Thanh toán thất bại.', 'error');
+        }
+      } catch (error) {
+        console.error("Error during VNPAY callback processing:", error);
+        setVnpayStatus('failed');
+        setVnpayMessage('Lỗi khi xác nhận kết quả thanh toán.');
+        showToast('Lỗi xác nhận thanh toán.', 'error');
+      }
+    };
+  
+    setTimeout(processCallbackIfNeeded, 500);
+  } else if (currentStepFromUrl === 4 && !isVNPayReturn && vnpayStatus === null) {
+     // Trường hợp vào step 4 bằng COD hoặc refresh trang sau VNPAY success/failed
+     // Cần lấy orderId từ URL để hiển thị đúng thông tin
+     const currentOrderId = searchParams.get('orderId');
+     if(currentOrderId) {
+         setProcessedOrderId(currentOrderId);
+         // Nếu không có status VNPAY, giả định là COD thành công (hoặc đã xử lý VNPAY trước đó)
+         if(vnpayStatus === null) {
+              // Không set status ở đây, để CompleteStep tự xử lý dựa trên processedOrderId
+         }
+     } else if (!orderIdFromUrl) {
+         // Không có orderId và không phải VNPAY return -> lỗi hoặc trạng thái không xác định
+         console.warn("Reached step 4 without orderId and not a VNPAY return.");
+         setVnpayStatus('failed'); // Đánh dấu là lỗi
+         setVnpayMessage('Không tìm thấy thông tin đơn hàng.');
+     }
+  }
+
+}, [location.search, step, navigate, showToast, vnpayStatus]);
+
+
+
+// Modify handlePlaceOrder function to handle VNPAY
 const handlePlaceOrder = async () => {
   setIsLoading(true);
+  const addressId = selectedAddress ? selectedAddress.id : null;
+  if (!addressId) { /* ... (báo lỗi như cũ) ... */ return; }
+
   try {
-    // Get addressId from URL or selected address
-    const urlParams = new URLSearchParams(window.location.search);
-    const addressId = urlParams.get('addressId') || (selectedAddress ? selectedAddress.id : null);
-    
-    
-    const response = await orderService.createOrder(addressId);
+    const orderResponse = await orderService.createOrder(addressId);
+    const actualOrderId = orderResponse.data?.id;
+    if (!actualOrderId) { throw new Error("Không nhận được ID đơn hàng."); }
 
-    console.log('response :>> ', response);
-    const params = new URLSearchParams();
-    params.set('step', '4');
-    params.set('orderId', response.data.id);
-    params.set('addressId', addressId); // Keep the addressId in URL
-    window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
-    setStep(4);
-    
-    // Display the addressId (could show in an alert or toast)
-    console.log("Order placed with addressId:", addressId);
-    alert(`Đơn hàng đã được đặt thành công với địa chỉ ID: ${addressId}`);
-
-  } catch (error) {
-    console.error("Error creating order:", error);
-    alert("Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại.");
-  } finally {
-    setIsLoading(false);
-    window.scrollTo(0, 0);
+    if (paymentMethod === "VNPAY") {
+      try {
+        const paymentResponse = await orderService.createVNPayPayment(actualOrderId);
+        if (paymentResponse.data?.paymentUrl) {
+          // **** QUAN TRỌNG: Đảm bảo Return URL trỏ về /checkout?step=4 ****
+          // URL này cần được cấu hình ở backend khi gọi VNPAY hoặc trong dashboard VNPAY
+          // Ví dụ: returnUrl = `http://localhost:5173/checkout?step=4&orderId=${actualOrderId}`
+          window.location.href = paymentResponse.data.paymentUrl;
+          // Không set state hay làm gì khác ở đây
+          return;
+        } else { throw new Error("Không nhận được link thanh toán VNPAY."); }
+      } catch (paymentError) { /* ... (báo lỗi VNPAY như cũ) ... */ setIsLoading(false); return; }
+    } else {
+      // --- Xử lý COD ---
+      await cartService.clearCart(); // Xóa giỏ hàng sau khi đặt hàng thành công
+      const params = new URLSearchParams();
+      params.set('step', '4');
+      params.set('orderId', actualOrderId); // Đặt orderId vào URL
+      // Cập nhật URL và state step
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+      setStep(4);
+      // Không cần set processedOrderId ở đây vì useEffect sẽ xử lý khi step=4
+    }
+  } catch (orderError) { /* ... (báo lỗi tạo order như cũ) ... */ }
+  finally {
+      // Chỉ dừng loading nếu là COD
+    if (paymentMethod !== 'VNPAY') {
+         setIsLoading(false);
+    }
   }
 };
+
 
 
 const handleAddressSelect = (address) => { /* ... Giữ nguyên ... */
@@ -495,7 +579,7 @@ const AddressStep = () => (
 // Component hiển thị phương thức thanh toán (Step 3)
 const PaymentStep = () => {
   // 4. Lấy cart data trực tiếp từ store
-  const cartDataForPayment = useSelector(state => state.cart?.cart);
+  const cartDataForPayment = useSelector(store => store.cart?.cart);
 
   return (
     <div>
@@ -514,23 +598,45 @@ const PaymentStep = () => {
 
       {/* Phần thông tin đơn hàng */}
       <div className="p-6 mb-6 border border-gray-300">
-        <h3 className="text-lg font-medium mb-4">Thông tin đơn hàng</h3>
+        <h3 className="text-2xl font-bold mb-4">Thông tin đơn hàng</h3>
         {/* Sử dụng cartDataForPayment lấy từ store */}
         {cartDataForPayment && cartDataForPayment.cartItems && cartDataForPayment.cartItems.map(item => (
           <div key={item.id} className="flex justify-between items-center mb-3">
-            <p>{item.product?.title || "Sản phẩm"} x {item.quantity}</p>
-            <p className="font-medium">{formatCurrency(item.price * item.quantity)}</p>
+            <p>
+              <span className='text-xl pr-5'>{item.productName || "Sản phẩm"} </span>
+              <span className='text-gray-600'>Size: {item?.size} </span>
+              <span className='text-xl pl-50'> x {item?.quantity}</span>
+            </p>
+
+            <p className="text-2xl font-semibold text-red-600">{formatCurrency(item?.discountedPrice) || "0đ"}
+              <span className="pl-3 text-[17px] line-through text-stone-500">
+                {formatCurrency(item?.price)}
+              </span>
+            </p>
+
           </div>
         ))}
         <div className="border-t border-gray-300 mt-4 pt-4">
           <div className="flex justify-between items-center mb-2">
-            <p>Phí vận chuyển:</p>
-            <p className="text-green-600">Miễn phí</p>
+            <p className='text-2xl'>Phí vận chuyển:</p>
+            <p className="text-green-600 text-2xl">Miễn phí</p>
           </div>
-          <div className="flex justify-between items-center">
-            <p className="font-medium">Tổng tiền:</p>
-            <p className="text-xl font-semibold text-red-600">
-              {cartDataForPayment ? formatCurrency(cartDataForPayment.totalPrice) : "0đ"}
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-2xl">Giá gốc:</p>
+            <p className="text-2xl font-semibold text-red-600">
+              {cartDataForPayment?.totalOriginalPrice ? formatCurrency(cartDataForPayment.totalOriginalPrice) : "0đ"}
+            </p>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-2xl">Giảm giá:</p>
+            <p className="text-2xl font-semibold text-red-600">
+              {cartDataForPayment?.discount ? formatCurrency(cartDataForPayment.discount) : "0đ"}
+            </p>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-2xl">Tổng tiền:</p>
+            <p className="text-2xl font-semibold text-red-600">
+              {cartDataForPayment?.totalDiscountedPrice ? formatCurrency(cartDataForPayment.totalDiscountedPrice) : "0đ"}
             </p>
           </div>
         </div>
@@ -557,11 +663,20 @@ const PaymentStep = () => {
   );
 };
 
+
+
 // Component hiển thị khi đặt hàng thành công (Step 4 - Cập nhật để lấy cart từ store)
 const CompleteStep = () => {
   const currentOrderId = queryParams.get('orderId') || 'ORD123456';
   // Lấy cart cuối cùng từ store để hiển thị tổng tiền chính xác
-  const finalCartData = useSelector(state => state.cart?.cart);
+  const finalOrder = useSelector(store => store.order?.order);
+  const status = queryParams.get('vnp_ResponseCode');
+
+  if (status === '00' && currentOrderId) {
+    cartService.clearCart();
+  }
+
+  console.log('finalOrder :>> ', finalOrder);
 
   return (
     <div className="text-center py-10">
@@ -570,17 +685,18 @@ const CompleteStep = () => {
           <div className="relative mx-auto mt-0 mb-5 bg-green-600 rounded-full h-[60px] w-[60px] flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"> <polyline points="20 6 9 17 4 12"></polyline> </svg>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Đặt hàng thành công!</h2>
+          <h2 className="text-2xl font-bold mb-2">{status === '00' && currentOrderId ? "Thanh toán thành công!" : "Đặt hàng thành công"}</h2>
           <p className="text-lg mb-6">Cảm ơn bạn đã đặt hàng tại Tech Shop.</p>
 
           {/* Thông tin đơn hàng */}
           <div className="bg-gray-50 p-6 rounded border border-gray-300 mb-6 text-left">
             <h3 className="text-lg font-medium mb-4">Thông tin đơn hàng #{currentOrderId}</h3>
             <p className="mb-2"><strong>Ngày đặt hàng:</strong> {new Date().toLocaleDateString('vi-VN')}</p>
-            <p className="mb-2"><strong>Phương thức thanh toán:</strong> {paymentMethod === "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán VNPAY"}</p>
+            <p className="mb-2"><strong>Phương thức thanh toán:</strong> {paymentMethod == "COD" ? "Thanh toán khi nhận hàng" : "Thanh toán VNPAY"}</p>
             {/* Hiển thị địa chỉ đã chọn hoặc điền */}
-            <p className="mb-2"><strong>Địa chỉ giao hàng:</strong> {selectedAddress ? `${selectedAddress.streetAddress}, ${selectedAddress.state}, ${selectedAddress.city}` : `${shippingInfo.address}, ${shippingInfo.district}, ${shippingInfo.city}`}</p>
-            <p className="mb-2"><strong>Tổng tiền:</strong> {finalCartData ? formatCurrency(finalCartData.totalPrice) : "Đang cập nhật..."}</p>
+
+            <p className="mb-2"><strong>Địa chỉ giao hàng:</strong> {selectedAddress ? `${selectedAddress?.ward}, ${selectedAddress?.district}, ${selectedAddress?.province}` : `${shippingInfo.ward}, ${shippingInfo.district}, ${shippingInfo.province}`}</p>
+            <p className="mb-2"><strong>Tổng tiền:</strong> {finalOrder ? formatCurrency(finalOrder.totalPrice) : "Đang cập nhật..."}</p>
           </div>
 
           <p className="mb-6">Chúng tôi sẽ xử lý đơn hàng của bạn trong thời gian sớm nhất.</p>

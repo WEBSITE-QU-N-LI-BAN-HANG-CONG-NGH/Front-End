@@ -135,7 +135,7 @@ const ProductCard = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-2 mt-auto pt-2"> {/* Push buttons to bottom */}
-          <button
+          {/* <button
             className="w-full px-3 py-2 text-sm text-white bg-blue-600 rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50"
             onClick={handleAddToCart}
             disabled={stockStatus !== "in stock"} // Disable if out of stock
@@ -149,7 +149,7 @@ const ProductCard = ({
             disabled={stockStatus !== "in stock"} // Disable if out of stock
           >
              {stockStatus === "in stock" ? "Mua ngay" : "Hết hàng"}
-          </button>
+          </button> */}
         </div>
       </div>
     </div>
