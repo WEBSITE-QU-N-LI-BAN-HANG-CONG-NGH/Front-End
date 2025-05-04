@@ -45,4 +45,7 @@ export const orderService = {
 
     getConfirmedOrders: () =>
         api.get("/orders/confirmed"),
+
+    cancelOrder: (orderId) => 
+        api.put(`/orders/cancel/${orderId}`),
 };

@@ -39,12 +39,12 @@ const Home = () => {
       <div className="flex flex-col items-center self-end mt-3 w-full max-w-[1652px] max-md:mr-2 max-md:max-w-full">
         <Slider />
         <FlashSale />
-        <TabMenu/>
+        {/* <TabMenu/> */}
         <CustomBuilds />
-        <TabMenu/>
+        {/* <TabMenu/> */}
         <Desktops />
-        <TabMenu/>
-        <GamingMonitors />
+        {/* <TabMenu/> */}
+        {/* <GamingMonitors /> */}
       </div>
     </div>
   );

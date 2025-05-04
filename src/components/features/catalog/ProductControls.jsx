@@ -46,7 +46,7 @@ const SortControl = ({ onSortChange }) => {
   
   // Danh sách các tùy chọn sắp xếp
   const sortOptions = [
-    { label: "Mặc định", value: "" },
+    { label: "Sort", value: "" },
     { label: "Giá thấp đến cao", value: "price_low" },
     { label: "Giá cao đến thấp", value: "price_high" },
     { label: "Giảm giá nhiều", value: "discount" },

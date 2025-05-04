@@ -3,12 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
 import AccountSidebar from "../../components/features/user/AccountSidebar";
 import { orderService } from "../../services/order.service";
+import { useToast } from "../../contexts/ToastContext";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState(null);
+  const {showToast} = useToast();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -37,6 +39,19 @@ const OrderDetail = () => {
       minimumFractionDigits: 0
     }).format(amount);
   };
+
+  const handleCancelOrder = async () => {
+    if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
+      try {
+        await orderService.cancelOrder(orderId);
+        showToast("Đơn hàng đã được hủy thành công", "success");
+        navigate('/my-order');
+      } catch (error) {
+        console.error("Error cancelling order:", error);
+        alert("Có lỗi xảy ra khi hủy đơn hàng. Vui lòng thử lại sau.");
+      }
+    }
+  }
   
   // Ánh xạ trạng thái đơn hàng sang tiếng Việt
   const getStatusText = (status) => {
@@ -290,12 +305,7 @@ const OrderDetail = () => {
               {["PENDING", "CONFIRMED"].includes(order.orderStatus) && (
                 <button 
                   className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                  onClick={() => {
-                    // Xử lý hủy đơn hàng
-                    if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
-                      alert("Đã gửi yêu cầu hủy đơn hàng!");
-                    }
-                  }}
+                  onClick={handleCancelOrder}
                 >
                   Hủy đơn hàng
                 </button>

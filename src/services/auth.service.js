@@ -143,4 +143,15 @@ export const authService = {
     // Hàm lấy refresh token
     getRefreshToken: getRefreshTokenFromCookie,
 
+    updateProfile: async (userData) => {
+        try {
+            const response = await api.put(`${API_BASE_URL}/users/update`, userData);
+            console.log("Phản hồi cập nhật thông tin người dùng:", response.data);
+            return response.message;
+        } catch (error) {
+            console.error("Lỗi cập nhật thông tin người dùng:", error);
+            throw error;
+        }
+    }
+
 };
