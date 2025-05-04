@@ -44,16 +44,24 @@ const CustomerRouters = () => {
             <Route path="account/orders" element={<UserOrders />} />
 
             <Route path="account/orders/:orderId" element={<OrderDetail />} />
+
             <Route path="cart" element={<Cart />} />
 
             <Route path="information/contact-us" element={<ContactUs />} />
+
             <Route path="information/contact-us/done" element={<ContactedUs />} />
+
             <Route path="forgot-password" element={<ForgotPassword />} />
 
             <Route path="checkout" element={<Checkout />} /> {/* Thêm route cho trang Checkout */}
+
             <Route path="oauth2/redirect" element={<OAuthRedirect />} />
 
-
+            {/* Thay đổi route tìm kiếm theo chuẩn query parameter */}
+            <Route path="search" element={<Catalog category="all" />} />
+            
+            {/* Giữ lại route cũ để đảm bảo tương thích */}
+            <Route path="search/search=:search/:page?" element={<Catalog category="all" />} />
           </Route>
         </Routes>
       </FilterProvider>

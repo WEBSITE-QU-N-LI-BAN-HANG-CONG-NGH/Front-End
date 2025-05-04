@@ -2,66 +2,32 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
 import AccountSidebar from "../../components/features/user/AccountSidebar";
+import { orderService } from "../../services/order.service";
 
 const OrderDetail = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+  const [order, setOrder] = useState(null);
+
   useEffect(() => {
-    // Trong thực tế, bạn sẽ gọi API để lấy chi tiết đơn hàng theo orderId
-    // Đây chỉ là dữ liệu mẫu để demo
-    
-    // Giả lập API call
-    setTimeout(() => {
-      // Giả sử chúng ta có một đơn hàng mẫu
-      const sampleOrder = {
-        id: orderId || "ORD123456",
-        date: "2023-04-15",
-        totalAmount: 52990000,
-        status: "delivered", // Đã giao hàng
-        items: [
-          {
-            id: "ITEM001",
-            name: "Laptop Acer Swift X14 SFX14 72G 79UW",
-            quantity: 1,
-            price: 52990000,
-            originalPrice: 55990000,
-            image: "/Placeholder1.png",
-            specifications: [
-              { name: "CPU", value: "Intel Core i7-12700H" },
-              { name: "RAM", value: "32GB LPDDR5" },
-              { name: "Ổ cứng", value: "1TB PCIe NVMe SSD" },
-              { name: "Card đồ họa", value: "NVIDIA GeForce RTX 4050 6GB" },
-              { name: "Màn hình", value: '14.5" 2.8K OLED 120Hz' }
-            ]
-          }
-        ],
-        history: [
-          { date: "2023-04-15 08:30:00", status: "ordered", description: "Đơn hàng đã được đặt" },
-          { date: "2023-04-15 09:15:00", status: "confirmed", description: "Đơn hàng đã được xác nhận" },
-          { date: "2023-04-16 10:00:00", status: "processing", description: "Đơn hàng đang được xử lý" },
-          { date: "2023-04-17 14:30:00", status: "shipping", description: "Đơn hàng đang được vận chuyển" },
-          { date: "2023-04-18 16:45:00", status: "delivered", description: "Đơn hàng đã được giao" }
-        ],
-        shippingInfo: {
-          fullName: "Nguyễn Văn A",
-          address: "97 Man Thiện, Phường Hiệp Phú, Quận 9, TP. Hồ Chí Minh",
-          phone: "0912345678",
-          email: "example@gmail.com"
-        },
-        paymentInfo: {
-          method: "COD",
-          status: "Đã thanh toán",
-          date: "2023-04-18 16:45:00"
-        }
-      };
-      
-      setOrder(sampleOrder);
-      setLoading(false);
-    }, 1000);
+    window.scrollTo(0, 0);
+    const fetchOrder = async () => {
+      setLoading(true);
+      try {
+        const response = await orderService.getOrderById(orderId);
+        setOrder(response?.data);
+      } catch (error) {
+        console.error("Error fetching order details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrder();
   }, [orderId]);
+
+  console.log('order :>> ', order);
   
   // Format tiền theo định dạng Việt Nam
   const formatCurrency = (amount) => {
@@ -75,17 +41,15 @@ const OrderDetail = () => {
   // Ánh xạ trạng thái đơn hàng sang tiếng Việt
   const getStatusText = (status) => {
     switch(status) {
-      case "delivered":
+      case "DELIVERED":
         return "Đã giao hàng";
-      case "shipping":
+      case "SHIPPED":
         return "Đang vận chuyển";
-      case "processing":
+      case "PENDING":
         return "Đang xử lý";
-      case "confirmed":
+      case "CONFIRMED":
         return "Đã xác nhận";
-      case "ordered":
-        return "Đã đặt hàng";
-      case "cancelled":
+      case "CANCELLED":
         return "Đã hủy";
       default:
         return status;
@@ -95,17 +59,15 @@ const OrderDetail = () => {
   // Lấy màu sắc tương ứng với trạng thái
   const getStatusColor = (status) => {
     switch(status) {
-      case "delivered":
+      case "DELIVERED":
         return "bg-green-100 text-green-800";
-      case "shipping":
+      case "SHIPPED":
         return "bg-blue-100 text-blue-800";
-      case "processing":
+      case "PENDING":
         return "bg-yellow-100 text-yellow-800";
-      case "confirmed":
+      case "CONFIRMED":
         return "bg-purple-100 text-purple-800";
-      case "ordered":
-        return "bg-gray-100 text-gray-800";
-      case "cancelled":
+      case "CANCELLED":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -151,6 +113,45 @@ const OrderDetail = () => {
     );
   }
   
+  // Create order history timeline from available data
+  const orderHistory = [];
+  
+  // Add order placed event
+  if (order.orderDate) {
+    orderHistory.push({
+      status: "PENDING",
+      description: "Đơn hàng đã được đặt",
+      date: order.orderDate
+    });
+  }
+  
+  // Add payment completed event if payment is completed
+  if (order.paymentStatus === "COMPLETED") {
+    orderHistory.push({
+      status: "CONFIRMED",
+      description: "Thanh toán đã hoàn tất",
+      date: order.orderDate // Using order date as payment date if not available
+    });
+  }
+  
+  // Add shipping event
+  if (order.orderStatus === "SHIPPED" || order.orderStatus === "DELIVERED") {
+    orderHistory.push({
+      status: "SHIPPED",
+      description: "Đơn hàng đang được vận chuyển",
+      date: order.orderDate // Using a date between order and delivery
+    });
+  }
+  
+  // Add delivery event
+  if (order.orderStatus === "DELIVERED" && order.deliveryDate) {
+    orderHistory.push({
+      status: "DELIVERED",
+      description: "Đơn hàng đã được giao thành công",
+      date: order.deliveryDate
+    });
+  }
+  
   return (
     <div className="flex flex-col pt-3 bg-white min-h-screen">
       <main className="flex flex-col px-10 py-6 max-sm:px-5">
@@ -173,20 +174,19 @@ const OrderDetail = () => {
             <div className="mb-8">
               <div className="flex items-center mb-4">
                 <h2 className="text-lg font-medium mr-3">Trạng thái:</h2>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
-                  {getStatusText(order.status)}
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.orderStatus)}`}>
+                  {getStatusText(order.orderStatus)}
                 </span>
               </div>
               
               {/* Order Timeline */}
               <div className="border-l-2 border-gray-200 ml-4">
-                {order.history.map((event, index) => (
+                {orderHistory.map((event, index) => (
                   <div key={index} className="relative mb-6">
-                    <div className={`absolute -left-2 mt-1.5 w-4 h-4 rounded-full ${event.status === order.status ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                    <div className={`absolute -left-2 mt-1.5 w-4 h-4 rounded-full ${event.status === order.orderStatus ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
                     <div className="ml-6">
                       <p className="font-medium">{getStatusText(event.status)}</p>
                       <p className="text-sm text-gray-600">{event.description}</p>
-                      <p className="text-xs text-gray-500">{new Date(event.date).toLocaleString('vi-VN')}</p>
                     </div>
                   </div>
                 ))}
@@ -198,37 +198,35 @@ const OrderDetail = () => {
               <h2 className="text-lg font-medium mb-4">Sản phẩm trong đơn hàng</h2>
               
               <div className="border rounded-lg overflow-hidden">
-                {order.items.map((item, index) => (
+                {order.orderItems.map((item, index) => (
                   <div 
                     key={index}
-                    className={`flex p-4 ${index < order.items.length - 1 ? 'border-b' : ''}`}
+                    className={`flex p-4 ${index < order.orderItems.length - 1 ? 'border-b' : ''}`}
                   >
                     <img 
-                      src={item.image} 
-                      alt={item.name}
+                      src={item.imageUrl} 
+                      alt={item.productTitle}
                       className="w-24 h-24 object-contain"
                     />
                     <div className="ml-4 flex-1">
-                      <h3 className="font-medium text-lg">{item.name}</h3>
+                      <h3 className="font-medium text-lg">{item.productTitle}</h3>
                       <p className="text-sm text-gray-600 mb-2">Số lượng: {item.quantity}</p>
                       
                       {/* Display specifications if available */}
-                      {item.specifications && (
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          {item.specifications.map((spec, idx) => (
-                            <div key={idx} className="flex">
-                              <span className="text-sm text-gray-600 mr-2">{spec.name}:</span>
-                              <span className="text-sm">{spec.value}</span>
-                            </div>
-                          ))}
+                      {item.size && (
+                        <div className="mt-2">
+                          <div className="flex">
+                            <span className="text-sm text-gray-600 mr-2">Cấu hình:</span>
+                            <span className="text-sm">{item.size}</span>
+                          </div>
                         </div>
                       )}
                     </div>
                     
                     <div className="text-right ml-4">
-                      <p className="font-medium text-blue-600 text-lg">{formatCurrency(item.price)}</p>
-                      {item.originalPrice && item.originalPrice > item.price && (
-                        <p className="text-sm text-gray-500 line-through">{formatCurrency(item.originalPrice)}</p>
+                      <p className="font-medium text-blue-600 text-lg">{formatCurrency(item.discountedPrice)}</p>
+                      {item.price > item.discountedPrice && (
+                        <p className="text-sm text-gray-500 line-through">{formatCurrency(item.price)}</p>
                       )}
                     </div>
                   </div>
@@ -238,7 +236,11 @@ const OrderDetail = () => {
                 <div className="bg-gray-50 p-4 border-t">
                   <div className="flex justify-between items-center">
                     <p className="text-gray-600">Tổng phụ:</p>
-                    <p>{formatCurrency(order.totalAmount)}</p>
+                    <p>{formatCurrency(order.originalPrice)}</p>
+                  </div>
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-gray-600">Giảm giá:</p>
+                    <p className="text-green-600">-{formatCurrency(order.discount)}</p>
                   </div>
                   <div className="flex justify-between items-center mt-2">
                     <p className="text-gray-600">Phí vận chuyển:</p>
@@ -246,7 +248,7 @@ const OrderDetail = () => {
                   </div>
                   <div className="flex justify-between items-center mt-2 text-lg font-medium">
                     <p>Tổng cộng:</p>
-                    <p>{formatCurrency(order.totalAmount)}</p>
+                    <p>{formatCurrency(order.totalDiscountedPrice)}</p>
                   </div>
                 </div>
               </div>
@@ -257,24 +259,26 @@ const OrderDetail = () => {
               {/* Shipping Information */}
               <div className="border rounded-lg p-4">
                 <h2 className="text-lg font-medium mb-3">Thông tin giao hàng</h2>
-                <p className="mb-2"><strong>Người nhận:</strong> {order.shippingInfo.fullName}</p>
-                <p className="mb-2"><strong>Địa chỉ:</strong> {order.shippingInfo.address}</p>
-                <p className="mb-2"><strong>Số điện thoại:</strong> {order.shippingInfo.phone}</p>
-                <p><strong>Email:</strong> {order.shippingInfo.email}</p>
+                <p className="mb-2"><strong>Người nhận:</strong> {order.shippingAddress.fullName}</p>
+                <p className="mb-2"><strong>Địa chỉ:</strong> {order.shippingAddress.street}, {order.shippingAddress.ward}, {order.shippingAddress.district}, {order.shippingAddress.province}</p>
+                <p className="mb-2"><strong>Số điện thoại:</strong> {order.shippingAddress.phoneNumber}</p>
+                {order.shippingAddress.note && (
+                  <p className="mb-2"><strong>Ghi chú:</strong> {order.shippingAddress.note}</p>
+                )}
               </div>
               
               {/* Payment Information */}
               <div className="border rounded-lg p-4">
                 <h2 className="text-lg font-medium mb-3">Thông tin thanh toán</h2>
-                <p className="mb-2"><strong>Phương thức:</strong> {order.paymentInfo.method}</p>
-                <p className="mb-2"><strong>Trạng thái:</strong> {order.paymentInfo.status}</p>
-                <p><strong>Ngày thanh toán:</strong> {new Date(order.paymentInfo.date).toLocaleString('vi-VN')}</p>
+                <p className="mb-2"><strong>Phương thức:</strong> {order.paymentMethod === "COD" ? "Thanh toán khi nhận hàng (COD)" : order.paymentMethod}</p>
+                <p className="mb-2"><strong>Trạng thái:</strong> {order.paymentStatus === "COMPLETED" ? "Đã thanh toán" : "Chưa thanh toán"}</p>
+                <p><strong>Ngày đặt hàng:</strong> {new Date(order.orderDate).toLocaleString('vi-VN')}</p>
               </div>
             </div>
             
             {/* Actions */}
             <div className="mt-8 flex justify-end">
-              {order.status === "delivered" && (
+              {order.orderStatus === "DELIVERED" && (
                 <button 
                   className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors mr-4"
                   // onClick={}
@@ -283,7 +287,7 @@ const OrderDetail = () => {
                 </button>
               )}
               
-              {["ordered", "confirmed"].includes(order.status) && (
+              {["PENDING", "CONFIRMED"].includes(order.orderStatus) && (
                 <button 
                   className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                   onClick={() => {
@@ -297,7 +301,7 @@ const OrderDetail = () => {
                 </button>
               )}
               
-              {order.status === "delivered" && (
+              {order.orderStatus === "DELIVERED" && (
                 <button 
                   className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                   onClick={() => navigate(`/information/contact-us?orderId=${order.id}`)}

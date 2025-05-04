@@ -26,5 +26,23 @@ export const orderService = {
         return api.post(`/payment/vnpay-callback`, null, {
             params: vnpayParams  // Correctly send as query params
           });
-    }
+    },
+
+    getAllOrders: () => 
+        api.get("/orders/user"),
+
+    getPendingOrders: () => 
+        api.get("/orders/pending"),
+
+    getShippingOrders: () =>
+        api.get("/orders/shipped"),
+
+    getDeliveredOrders: () =>
+        api.get("/orders/delivered"),
+
+    getCancelledOrders: () =>
+        api.get("/orders/cancelled"),
+
+    getConfirmedOrders: () =>
+        api.get("/orders/confirmed"),
 };

@@ -7,6 +7,7 @@ import { getAddress, getOrderById } from '../../State/Order/Action';
 import { orderService } from '../../services/order.service';
 import { useToast } from '../../contexts/ToastContext';
 import { cartService } from '../../services/cart.service';
+import AddressStep from './AddressStep';
 
 // import Cart from '../Cart/Cart'; // Không cần import Cart ở đây nữa
 
@@ -159,6 +160,7 @@ const handleShippingChange = (e) => {
   const { name, value } = e.target;
   setShippingInfo(prev => ({ ...prev, [name]: value }));
 };
+
 
 const handleProvinceChange = (e) => {
     const id = e.target.value;
@@ -425,162 +427,162 @@ const CheckoutProgress = () => (
 // 2. Bỏ hoàn toàn component CartStep
 
 // Component hiển thị form chọn địa chỉ giao hàng (Step 2 - Giữ nguyên)
-const AddressStep = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-    {/* Phần địa chỉ đã lưu (Đã sửa ở bước trước) */}
-    <div>
-      <h2 className="text-xl font-bold mb-6">Địa chỉ đã lưu</h2>
-      <div className="max-h-80 overflow-y-auto pr-2 space-y-4">
-          {savedAddresses.map(address => (
-            <div
-              key={address.id}
-              className={`p-4 border ${selectedAddress && selectedAddress.id === address.id ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} rounded-md cursor-pointer hover:border-blue-400`}
-              onClick={() => handleAddressSelect(address)}
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-medium">{address?.fullName}</h3>
-                  <p className="text-gray-600 mt-1 text-sm">{address?.phoneNumber}</p>
-                  <p className="text-gray-600 text-sm">{address?.street}</p>
-                  <p className="text-gray-600 text-sm">{address?.ward}, {address?.district}, {address?.province}</p>
-                </div>
-                {address.isDefault && (
-                  <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded">Mặc định</span>
-                )}
-              </div>
-            </div>
-          ))}
-      </div>
-    </div>
+// const AddressStep = () => (
+//   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+//     {/* Phần địa chỉ đã lưu (Đã sửa ở bước trước) */}
+//     <div>
+//       <h2 className="text-xl font-bold mb-6">Địa chỉ đã lưu</h2>
+//       <div className="max-h-80 overflow-y-auto pr-2 space-y-4">
+//           {savedAddresses.map(address => (
+//             <div
+//               key={address.id}
+//               className={`p-4 border ${selectedAddress && selectedAddress.id === address.id ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-300'} rounded-md cursor-pointer hover:border-blue-400`}
+//               onClick={() => handleAddressSelect(address)}
+//             >
+//               <div className="flex justify-between items-start">
+//                 <div>
+//                   <h3 className="font-medium">{address?.fullName}</h3>
+//                   <p className="text-gray-600 mt-1 text-sm">{address?.phoneNumber}</p>
+//                   <p className="text-gray-600 text-sm">{address?.street}</p>
+//                   <p className="text-gray-600 text-sm">{address?.ward}, {address?.district}, {address?.province}</p>
+//                 </div>
+//                 {address.isDefault && (
+//                   <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded">Mặc định</span>
+//                 )}
+//               </div>
+//             </div>
+//           ))}
+//       </div>
+//     </div>
 
-    {/* Form điền thông tin mới (Đã sửa ở bước trước để dùng API mới) */}
-    <div>
-      <h2 className="text-xl font-bold mb-6">Thông tin giao hàng</h2>
-      <form className="space-y-4">
-          {/* Họ tên, SĐT, Email giữ nguyên */}
-          <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Họ và tên *</label>
-              <input type="text" id="fullName" name="fullName" value={shippingInfo.fullName} onChange={handleShippingChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-          </div>
-          <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại *</label>
-              <input type="tel" id="phone" name="phone" value={shippingInfo.phone} onChange={handleShippingChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-          </div>
-          <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input type="email" id="email" name="email" value={shippingInfo.email} onChange={handleShippingChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-        {/* ---- Phần địa chỉ với Dropdown (Sử dụng ID và API mới) ---- */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-                <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố *</label>
-                <select
-                    id="province"
-                    name="province"
-                    value={selectedProvinceId} // Sử dụng selectedProvinceId
-                    onChange={handleProvinceChange}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
-                    disabled={isLoadingProvinces}
-                    required
-                >
-                    <option value="">{isLoadingProvinces ? 'Đang tải...' : 'Chọn Tỉnh/Thành phố'}</option>
-                    {/* Map qua provinces, dùng id và name */}
-                    {provinces.map(province => (
-                        <option key={province.id} value={province.id}>
-                            {province.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
-              <div>
-                <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện *</label>
-                <select
-                    id="district"
-                    name="district"
-                    value={selectedDistrictId} // Sử dụng selectedDistrictId
-                    onChange={handleDistrictChange}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
-                    disabled={!selectedProvinceId || isLoadingDistricts}
-                    required
-                >
-                    <option value="">{isLoadingDistricts ? 'Đang tải...' : 'Chọn Quận/Huyện'}</option>
-                    {/* Map qua districts, dùng id và name */}
-                    {districts.map(district => (
-                        <option key={district.id} value={district.id}>
-                            {district.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
-          </div>
-          <div>
-            <label htmlFor="ward" className="block text-sm font-medium text-gray-700 mb-1">Phường/Xã *</label>
-            <select
-                id="ward"
-                name="ward"
-                value={selectedWardId} // Sử dụng selectedWardId
-                onChange={handleWardChange}
-                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
-                disabled={!selectedDistrictId || isLoadingWards}
-                required
-            >
-                <option value="">{isLoadingWards ? 'Đang tải...' : 'Chọn Phường/Xã'}</option>
-                  {/* Map qua wards, dùng id và name */}
-                {wards.map(ward => (
-                    <option key={ward.id} value={ward.id}>
-                        {ward.name}
-                    </option>
-                ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Số nhà, tên đường *</label>
-            <input
-                type="text"
-                id="address"
-                name="address"
-                value={shippingInfo.address}
-                onChange={handleShippingChange}
-                placeholder="Ví dụ: 123 Nguyễn Huệ"
-                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-            />
-        </div>
-          {/* ---- Kết thúc phần địa chỉ ---- */}
+//     {/* Form điền thông tin mới (Đã sửa ở bước trước để dùng API mới) */}
+//     <div>
+//       <h2 className="text-xl font-bold mb-6">Thông tin giao hàng</h2>
+//       <form className="space-y-4">
+//           {/* Họ tên, SĐT, Email giữ nguyên */}
+//           <div>
+//               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Họ và tên *</label>
+//               <input type="text" id="fullName" name="fullName" value={shippingInfo.fullName} onChange={handleShippingChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+//           </div>
+//           <div>
+//               <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại *</label>
+//               <input type="tel" id="phone" name="phone" value={shippingInfo.phone} onChange={handleShippingChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+//           </div>
+//           <div>
+//               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+//               <input type="email" id="email" name="email" value={shippingInfo.email} onChange={handleShippingChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+//           </div>
+//         {/* ---- Phần địa chỉ với Dropdown (Sử dụng ID và API mới) ---- */}
+//           <div className="grid grid-cols-2 gap-4">
+//             <div>
+//                 <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố *</label>
+//                 <select
+//                     id="province"
+//                     name="province"
+//                     value={selectedProvinceId} // Sử dụng selectedProvinceId
+//                     onChange={handleProvinceChange}
+//                     className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
+//                     disabled={isLoadingProvinces}
+//                     required
+//                 >
+//                     <option value="">{isLoadingProvinces ? 'Đang tải...' : 'Chọn Tỉnh/Thành phố'}</option>
+//                     {/* Map qua provinces, dùng id và name */}
+//                     {provinces.map(province => (
+//                         <option key={province.id} value={province.id}>
+//                             {province.name}
+//                         </option>
+//                     ))}
+//                 </select>
+//             </div>
+//               <div>
+//                 <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện *</label>
+//                 <select
+//                     id="district"
+//                     name="district"
+//                     value={selectedDistrictId} // Sử dụng selectedDistrictId
+//                     onChange={handleDistrictChange}
+//                     className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
+//                     disabled={!selectedProvinceId || isLoadingDistricts}
+//                     required
+//                 >
+//                     <option value="">{isLoadingDistricts ? 'Đang tải...' : 'Chọn Quận/Huyện'}</option>
+//                     {/* Map qua districts, dùng id và name */}
+//                     {districts.map(district => (
+//                         <option key={district.id} value={district.id}>
+//                             {district.name}
+//                         </option>
+//                     ))}
+//                 </select>
+//             </div>
+//           </div>
+//           <div>
+//             <label htmlFor="ward" className="block text-sm font-medium text-gray-700 mb-1">Phường/Xã *</label>
+//             <select
+//                 id="ward"
+//                 name="ward"
+//                 value={selectedWardId} // Sử dụng selectedWardId
+//                 onChange={handleWardChange}
+//                 className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white appearance-none"
+//                 disabled={!selectedDistrictId || isLoadingWards}
+//                 required
+//             >
+//                 <option value="">{isLoadingWards ? 'Đang tải...' : 'Chọn Phường/Xã'}</option>
+//                   {/* Map qua wards, dùng id và name */}
+//                 {wards.map(ward => (
+//                     <option key={ward.id} value={ward.id}>
+//                         {ward.name}
+//                     </option>
+//                 ))}
+//             </select>
+//           </div>
+//           <div>
+//             <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Số nhà, tên đường *</label>
+//             <input
+//                 type="text"
+//                 id="address"
+//                 name="address"
+//                 value={shippingInfo.address}
+//                 onChange={handleShippingChange}
+//                 placeholder="Ví dụ: 123 Nguyễn Huệ"
+//                 className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+//                 required
+//             />
+//         </div>
+//           {/* ---- Kết thúc phần địa chỉ ---- */}
 
-          <div>
-            <label htmlFor="note" className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
-            <textarea id="note" name="note" value={shippingInfo.note} onChange={handleShippingChange} rows="3" className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-        </div>
-      </form>
-    </div>
+//           <div>
+//             <label htmlFor="note" className="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
+//             <textarea id="note" name="note" value={shippingInfo.note} onChange={handleShippingChange} rows="3" className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+//         </div>
+//       </form>
+//     </div>
 
-    {/* Nút bấm (Đã sửa ở bước trước) */}
-      <div className="col-span-1 md:col-span-2 flex justify-between mt-6">
-      <button
-        className="py-4 px-8 text-base font-semibold text-gray-600 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
-        onClick={handlePrevStep}
-      >
-        QUAY LẠI GIỎ HÀNG
-      </button>
-      <div className="flex gap-4">
-        <button
-          className="py-4 px-8 text-base font-semibold text-blue-600 border border-blue-600 rounded hover:bg-blue-50 transition-colors"
-          onClick={handleAddAddress}
-        >
-          THÊM ĐỊA CHỈ
-        </button>
-        <button
-          className="py-4 px-8 text-base font-semibold text-white bg-rose-600 rounded hover:bg-rose-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={handleNextStep}
-          disabled={!selectedAddress}
-        >
-          TIẾP TỤC THANH TOÁN
-        </button>
-      </div>
-    </div>
-  </div>
-);
+//     {/* Nút bấm (Đã sửa ở bước trước) */}
+//       <div className="col-span-1 md:col-span-2 flex justify-between mt-6">
+//       <button
+//         className="py-4 px-8 text-base font-semibold text-gray-600 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
+//         onClick={handlePrevStep}
+//       >
+//         QUAY LẠI GIỎ HÀNG
+//       </button>
+//       <div className="flex gap-4">
+//         <button
+//           className="py-4 px-8 text-base font-semibold text-blue-600 border border-blue-600 rounded hover:bg-blue-50 transition-colors"
+//           onClick={handleAddAddress}
+//         >
+//           THÊM ĐỊA CHỈ
+//         </button>
+//         <button
+//           className="py-4 px-8 text-base font-semibold text-white bg-rose-600 rounded hover:bg-rose-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+//           onClick={handleNextStep}
+//           disabled={!selectedAddress}
+//         >
+//           TIẾP TỤC THANH TOÁN
+//         </button>
+//       </div>
+//     </div>
+//   </div>
+// );
 
 
 // Component hiển thị phương thức thanh toán (Step 3)
@@ -607,46 +609,75 @@ const PaymentStep = () => {
       <div className="p-6 mb-6 border border-gray-300">
         <h3 className="text-2xl font-bold mb-4">Thông tin đơn hàng</h3>
         {/* Sử dụng cartDataForPayment lấy từ store */}
-        {cartDataForPayment && cartDataForPayment.cartItems && cartDataForPayment.cartItems.map(item => (
-          <div key={item.id} className="flex justify-between items-center mb-3">
-            <p>
-              <span className='text-xl pr-5'>{item.productName || "Sản phẩm"} </span>
-              <span className='text-gray-600'>Size: {item?.size} </span>
-              <span className='text-xl pl-50'> x {item?.quantity}</span>
-            </p>
-
-            <p className="text-2xl font-semibold text-red-600">{formatCurrency(item?.discountedPrice) || "0đ"}
-              <span className="pl-3 text-[17px] line-through text-stone-500">
+    <div className="overflow-x-auto mb-4"> {/* Container để xử lý tràn nếu cần */}
+      <table className="w-full text-left border-collapse">
+        
+        <thead>
+          <tr className="border-b">
+            <th className="py-2 px-4 font-medium text-gray-600">Sản phẩm</th>
+            <th className="py-2 px-4 font-medium text-gray-600 text-center">Số lượng</th>
+            <th className="py-2 px-4 font-medium text-gray-600 text-right">Giá bán</th>
+            <th className="py-2 px-4 font-medium text-gray-600 text-right">Giá gốc</th>
+          </tr>
+        </thead>
+       
+        <tbody>
+          {cartDataForPayment?.cartItems?.map(item => (
+            <tr key={item.id} className="border-b border-gray-200 align-middle">
+              {/* Cột Thông tin sản phẩm */}
+              <td className="py-3 px-4">
+                <span className='block font-medium'>{item.productName || "Sản phẩm"}</span>
+                {/* Chỉ hiển thị Size nếu có */}
+                {item?.size && <span className='block text-sm text-gray-500'>Size: {item.size}</span>}
+              </td>
+              {/* Cột Số lượng */}
+              <td className="py-3 px-4 text-center text-gray-600">
+                x {item?.quantity}
+              </td>
+              {/* Cột Giá bán */}
+              <td className="py-3 px-4 text-right font-semibold text-red-600 whitespace-nowrap"> {/* whitespace-nowrap để giá không bị xuống dòng */}
+                {formatCurrency(item?.discountedPrice) || "0đ"}
+              </td>
+              {/* Cột Giá gốc */}
+              <td className="py-3 px-4 text-right text-sm line-through text-stone-500 whitespace-nowrap">
                 {formatCurrency(item?.price)}
-              </span>
-            </p>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
 
-          </div>
-        ))}
-        <div className="border-t border-gray-300 mt-4 pt-4">
-          <div className="flex justify-between items-center mb-2">
-            <p className='text-2xl'>Phí vận chuyển:</p>
-            <p className="text-green-600 text-2xl">Miễn phí</p>
-          </div>
-          <div className="flex justify-between items-center mb-2">
-            <p className="text-2xl">Giá gốc:</p>
-            <p className="text-2xl font-semibold text-red-600">
-              {cartDataForPayment?.totalOriginalPrice ? formatCurrency(cartDataForPayment.totalOriginalPrice) : "0đ"}
-            </p>
-          </div>
-          <div className="flex justify-between items-center mb-2">
-            <p className="text-2xl">Giảm giá:</p>
-            <p className="text-2xl font-semibold text-red-600">
-              {cartDataForPayment?.discount ? formatCurrency(cartDataForPayment.discount) : "0đ"}
-            </p>
-          </div>
-          <div className="flex justify-between items-center mb-2">
-            <p className="text-2xl">Tổng tiền:</p>
-            <p className="text-2xl font-semibold text-red-600">
-              {cartDataForPayment?.totalDiscountedPrice ? formatCurrency(cartDataForPayment.totalDiscountedPrice) : "0đ"}
-            </p>
-          </div>
-        </div>
+    <div className="border-t border-gray-200 mt-6 pt-6 space-y-3"> {/* Tăng khoảng cách trên và giữa các dòng */}
+      {/* Phí vận chuyển */}
+      <div className="flex justify-between items-center text-lg"> {/* Giảm cỡ chữ */}
+        <p className='text-gray-600'>Phí vận chuyển:</p> {/* Màu chữ nhạt hơn */}
+        <p className="text-green-600 font-medium">Miễn phí</p> {/* Đổi thành font-medium */}
+      </div>
+      {/* Giá gốc */}
+      <div className="flex justify-between items-center text-lg">
+        <p className='text-gray-600'>Giá gốc:</p>
+        <p className="font-semibold text-gray-700"> {/* Màu đỏ có thể hơi chói, đổi thành màu đậm */}
+          {cartDataForPayment?.totalOriginalPrice ? formatCurrency(cartDataForPayment.totalOriginalPrice) : "0đ"}
+        </p>
+      </div>
+      {/* Giảm giá */}
+      <div className="flex justify-between items-center text-lg">
+        <p className='text-gray-600'>Giảm giá:</p>
+        <p className="font-semibold text-red-600"> {/* Giữ màu đỏ cho giảm giá */}
+          {/* Hiển thị dấu trừ nếu muốn */}
+          - {cartDataForPayment?.discount ? formatCurrency(cartDataForPayment.discount) : "0đ"}
+        </p>
+      </div>
+      {/* Tổng tiền */}
+      <div className="flex justify-between items-center text-xl font-semibold"> {/* Tăng cỡ chữ và độ đậm cho dòng tổng */}
+        <p className='text-gray-800'>Tổng tiền:</p> {/* Màu chữ đậm hơn */}
+        <p className="text-red-600"> {/* Giữ màu đỏ cho tổng cuối */}
+          {cartDataForPayment?.totalDiscountedPrice ? formatCurrency(cartDataForPayment.totalDiscountedPrice) : "0đ"}
+        </p>
+      </div>
+</div>
+
       </div>
 
       {/* Nút điều hướng */}
@@ -748,7 +779,31 @@ return (
       <CheckoutProgress />
 
       {/* 5. Bỏ render điều kiện cho step 1 */}
-      {step === 2 && <AddressStep />}
+      {step === 2 && (
+        <AddressStep
+          savedAddresses={savedAddresses}
+          selectedAddress={selectedAddress}
+          handleAddressSelect={handleAddressSelect}
+          shippingInfo={shippingInfo}
+          handleShippingChange={handleShippingChange}
+          selectedProvinceId={selectedProvinceId}
+          selectedDistrictId={selectedDistrictId}
+          selectedWardId={selectedWardId}
+          handleProvinceChange={handleProvinceChange}
+          handleDistrictChange={handleDistrictChange}
+          handleWardChange={handleWardChange}
+          provinces={provinces}
+          districts={districts}
+          wards={wards}
+          isLoadingProvinces={isLoadingProvinces}
+          isLoadingDistricts={isLoadingDistricts}
+          isLoadingWards={isLoadingWards}
+          handlePrevStep={handlePrevStep}
+          handleAddAddress={handleAddAddress}
+          handleNextStep={handleNextStep}
+        />
+      )}
+
       {step === 3 && <PaymentStep />}
       {step === 4 && <CompleteStep />}
     </div>

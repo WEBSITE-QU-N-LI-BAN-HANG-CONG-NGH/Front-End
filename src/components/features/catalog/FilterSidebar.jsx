@@ -98,13 +98,24 @@ const FilterSidebar = ({ topCategory }) => {
 
     // *** Sửa đổi handleCategoryChange ***
     const handleCategoryChange = (slug) => {
-      // Nếu slug rỗng (chọn "All"), targetPath chỉ là /${topCategory}
-      // Nếu có slug, targetPath là /${topCategory}/${slug}/1 (vẫn về trang 1 cho sub-category)
-      const targetPath = slug ? `/${topCategory}/${slug}/1` : `/${topCategory}`; // <-- Thay đổi ở đây
-  
-      const currentQueryString = location.search; // Giữ lại query string
-      const targetUrl = `${targetPath}${currentQueryString}`; // Không cần thêm /1 nếu slug rỗng
-  
+      // Lấy query parameters hiện tại (color, price, sort, v.v.)
+      const params = new URLSearchParams(location.search);
+      
+      // Xây dựng URL mới dựa vào slug
+      let targetPath;
+    
+      if (slug) {
+        // Nếu có slug (chọn subcategory cụ thể), URL sẽ là: /topCategory/slug
+        targetPath = `/${topCategory}/${slug}`;
+      } else {
+        // Nếu slug rỗng (chọn "All"), URL sẽ chỉ là: /topCategory
+        targetPath = `/${topCategory}`;
+      }
+    
+      // Giữ lại query string (color, price, sort, v.v.) từ URL hiện tại
+      const queryString = params.toString();
+      const targetUrl = `${targetPath}${queryString ? `?${queryString}` : ''}`;
+    
       console.log(`Navigating to category: ${targetUrl}`);
       navigate(targetUrl, { replace: true });
     };

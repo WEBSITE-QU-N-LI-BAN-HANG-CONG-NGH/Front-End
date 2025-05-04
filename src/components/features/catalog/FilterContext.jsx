@@ -39,60 +39,54 @@ export const FilterProvider = ({ children }) => {
   }, [location.search]);
 
   // Cập nhật state và URL query string KHI người dùng tương tác UI
-  const updateFilters = (filterType, value, isActive) => {
-    if (filterType !== 'price' && filterType !== 'color') return;
+  // Cập nhật state và URL query string KHI người dùng tương tác UI
+const updateFilters = (filterType, value, isActive) => {
+  if (filterType !== 'price' && filterType !== 'color') return;
 
-    console.log(`[FilterContext Update] Received update: ${filterType}=${value}, isActive=${isActive}`);
+  console.log(`[FilterContext Update] Received update: ${filterType}=${value}, isActive=${isActive}`);
 
-    // --- Cập nhật URL Query String TRƯỚC ---
-    const params = new URLSearchParams(location.search);
-    let shouldNavigate = false;
+  // --- Cập nhật URL Query String TRƯỚC ---
+  const params = new URLSearchParams(location.search);
+  let shouldNavigate = false;
 
-    if (filterType === 'color') {
-        const currentColor = params.get('color');
-        // Value từ radio "All" sẽ là null hoặc "", value từ màu cụ thể là tên màu
-        const newColor = isActive ? value : null;
-        if (currentColor !== newColor) {
-            if (newColor) {
-                params.set('color', newColor);
-            } else {
-                params.delete('color'); // Xóa param nếu chọn "All" hoặc bỏ chọn
-            }
-            shouldNavigate = true;
-        }
-    } else if (filterType === 'price') {
-        const currentPrice = params.get('price');
-        const newPrice = isActive ? value : null; // Price cũng là radio
-        if (currentPrice !== newPrice) {
-            if (newPrice) {
-                params.set('price', newPrice);
-            } else {
-                params.delete('price');
-            }
-            shouldNavigate = true;
-        }
+  if (filterType === 'color') {
+    const currentColor = params.get('color');
+    // Value từ radio "All" sẽ là null hoặc "", value từ màu cụ thể là tên màu
+    const newColor = isActive ? value : null;
+    if (currentColor !== newColor) {
+      if (newColor) {
+        params.set('color', newColor);
+      } else {
+        params.delete('color'); // Xóa param nếu chọn "All" hoặc bỏ chọn
+      }
+      shouldNavigate = true;
     }
-
-    // Chỉ navigate nếu URL query thực sự thay đổi
-    if (shouldNavigate) {
-        const currentPathname = location.pathname;
-        // Reset về trang 1 khi thay đổi filter
-        const pathSegments = currentPathname.split('/');
-        const pageIndex = pathSegments.findIndex(seg => /^\d+$/.test(seg));
-        let basePath = currentPathname;
-        if (pageIndex > -1) basePath = pathSegments.slice(0, pageIndex).join('/');
-        const targetPath = `${basePath}/1`;
-
-        const queryString = params.toString();
-        const newUrl = `${targetPath}${queryString ? `?${queryString}` : ''}`;
-
-        console.log("[FilterContext Update] Navigating to:", newUrl);
-        navigate(newUrl, { replace: true });
-    } else {
-        console.log("[FilterContext Update] No change in URL needed.");
+  } else if (filterType === 'price') {
+    const currentPrice = params.get('price');
+    const newPrice = isActive ? value : null; // Price cũng là radio
+    if (currentPrice !== newPrice) {
+      if (newPrice) {
+        params.set('price', newPrice);
+      } else {
+        params.delete('price');
+      }
+      shouldNavigate = true;
     }
-    // State sẽ được cập nhật bởi useEffect sau khi URL thay đổi
-  };
+  }
+
+  // Chỉ navigate nếu URL query thực sự thay đổi
+  if (shouldNavigate) {
+    const currentPathname = location.pathname;
+    const queryString = params.toString();
+    const newUrl = `${currentPathname}${queryString ? `?${queryString}` : ''}`;
+
+    console.log("[FilterContext Update] Navigating to:", newUrl);
+    navigate(newUrl, { replace: true });
+  } else {
+    console.log("[FilterContext Update] No change in URL needed.");
+  }
+  // State sẽ được cập nhật bởi useEffect sau khi URL thay đổi
+};
 
   // Xóa một bộ lọc cụ thể
   const removeFilter = (filterType, value) => {
@@ -101,31 +95,35 @@ export const FilterProvider = ({ children }) => {
      updateFilters(filterType, value, false);
   };
 
+  
   // Xóa tất cả bộ lọc price và color
-  const clearAllFilters = () => {
-    const params = new URLSearchParams(location.search);
-    let didChange = false;
-    if (params.has('color')) { params.delete('color'); didChange = true; }
-    if (params.has('price')) { params.delete('price'); didChange = true; }
+// Xóa tất cả bộ lọc price và color
+const clearAllFilters = () => {
+  const params = new URLSearchParams(location.search);
+  let didChange = false;
+  
+  if (params.has('color')) { 
+    params.delete('color'); 
+    didChange = true; 
+  }
+  
+  if (params.has('price')) { 
+    params.delete('price'); 
+    didChange = true; 
+  }
 
-    if (didChange) {
-        const currentPathname = location.pathname;
-        // Reset về trang 1
-        const pathSegments = currentPathname.split('/');
-        const pageIndex = pathSegments.findIndex(seg => /^\d+$/.test(seg));
-        let basePath = currentPathname;
-        if (pageIndex > -1) basePath = pathSegments.slice(0, pageIndex).join('/');
-        const targetPath = `${basePath}/1`;
-
-        const queryString = params.toString();
-        const newUrl = `${targetPath}${queryString ? `?${queryString}` : ''}`;
-        console.log("[FilterContext Clear] Clearing filters, navigating to:", newUrl);
-        navigate(newUrl, { replace: true });
-    } else {
-         console.log("[FilterContext Clear] No filters to clear.");
-    }
-    // State sẽ tự động cập nhật bởi useEffect
-  };
+  if (didChange) {
+    const currentPathname = location.pathname;
+    const queryString = params.toString();
+    const newUrl = `${currentPathname}${queryString ? `?${queryString}` : ''}`;
+    
+    console.log("[FilterContext Clear] Clearing filters, navigating to:", newUrl);
+    navigate(newUrl, { replace: true });
+  } else {
+    console.log("[FilterContext Clear] No filters to clear.");
+  }
+  // State sẽ tự động cập nhật bởi useEffect
+};
 
   // Đếm số lượng bộ lọc active
   const getActiveFilterCount = () => {

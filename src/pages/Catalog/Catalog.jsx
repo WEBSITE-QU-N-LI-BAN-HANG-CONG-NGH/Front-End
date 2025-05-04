@@ -3,9 +3,9 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import BreadcrumbNav from "../../components/layout/BreadcrumbNav";
 import ProductControls from "../../components/features/catalog/ProductControls";
 import FilterSidebar from "../../components/features/catalog/FilterSidebar";
-import Filter from "../../components/features/catalog/Filter"; // Component hiển thị filter active
+import Filter from "../../components/features/catalog/Filter";
 import ProductCard from "../../components/features/product/ProductCard";
-import ProductSkeleton from "../../components/features/product/ProductSkeleton"; // Import component skeleton
+import ProductSkeleton from "../../components/features/product/ProductSkeleton";
 import Pagination from "../../components/common/Pagination";
 import { productService } from "../../services/product.service";
 
@@ -17,13 +17,21 @@ const formatPrice = (price) => {
 
 // --- Component Catalog ---
 const Catalog = ({ category: categoryProp }) => {
-  // Lấy các tham số từ URL path
-  const { secondLevelCategory: secondLevelCategoryProp, page: pageFromParams = "1" } = useParams();
+  // Lấy các tham số từ URL path và query
+  const { secondLevelCategory: secondLevelCategoryProp, search: keywordFromPath } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const currentPage = parseInt(pageFromParams, 10) || 1;
+  const searchParams = new URLSearchParams(location.search);
+
+  // Lấy trang từ query parameter nếu có, nếu không thì từ path params
+  const pageFromQuery = searchParams.get('page');
+  const pageFromParams = useParams().page;
+  const currentPage = parseInt(pageFromQuery || pageFromParams || "1", 10);
+
   const itemsPerPage = 12;
-  const [isLoading, setIsLoading] = useState(false);
+
+  // Cập nhật: Lấy keyword từ query parameter q nếu có, hoặc từ path parameter
+  const keyword = searchParams.get('q') || keywordFromPath || null;
 
   // --- State ---
   const [allFilteredProducts, setAllFilteredProducts] = useState([]);
@@ -39,18 +47,19 @@ const Catalog = ({ category: categoryProp }) => {
     setLoading(true);
     setStatusMessage("Đang tải sản phẩm...");
     setMessageType("info");
-    
+  
     // Reset state trước mỗi lần fetch
     setAllFilteredProducts([]);
     setCurrentProducts([]);
-
+  
     try {
       // 1. Phân tích Query String từ URL
       const queryParams = new URLSearchParams(location.search);
       const colorFilter = queryParams.get('color');
       const priceFilter = queryParams.get('price');
       const sortFilter = queryParams.get('sort');
-
+      const queryKeyword = queryParams.get('q'); // Lấy keyword từ query parameter
+  
       let minPrice = null;
       let maxPrice = null;
       if (priceFilter) {
@@ -60,51 +69,50 @@ const Catalog = ({ category: categoryProp }) => {
         if (!isNaN(parsedMin)) minPrice = parsedMin;
         if (!isNaN(parsedMax)) maxPrice = parsedMax;
       }
-
-      const hasQueryFilters = !!colorFilter || !!priceFilter || !!sortFilter;
-
-      let response;
-      let fetchedData = [];
-
-      // 2. Quyết định gọi API nào
-      if (hasQueryFilters) {
-        const filterPayload = {
-          topLevelCategory: (categoryProp && categoryProp !== 'all') ? categoryProp : undefined,
-          secondLevelCategory: secondLevelCategoryProp || undefined,
-          color: colorFilter || undefined,
-          minPrice: minPrice,
-          maxPrice: maxPrice,
-          sort: sortFilter || undefined,
-        };
-        response = await productService.getProductByFilter(filterPayload);
-        fetchedData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
-      } else {
-        if (categoryProp && categoryProp !== 'all' && secondLevelCategoryProp) {
-          response = await productService.getProductByTopCategoryAndSecondCategory(categoryProp, secondLevelCategoryProp);
-        } else if (categoryProp && categoryProp !== 'all') {
-          response = await productService.getProductByTopCategory(categoryProp);
-        } else {
-          response = await productService.getAllProducts();
-        }
-        fetchedData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
-      }
-
-      // 3. Lưu trữ và Phân trang Client-side
+  
+      // 2. Tạo payload cho API
+      const filterPayload = {
+        // Luôn lấy topLevelCategory từ path - đây là category chính
+        topLevelCategory: (location.pathname.includes('/laptop')) ? "laptop" : 
+                          (categoryProp && categoryProp !== 'all') ? categoryProp : undefined,
+        
+        // Chỉ thêm secondLevelCategory khi nó có giá trị
+        secondLevelCategory: secondLevelCategoryProp || undefined,
+        
+        // Giữ nguyên các tham số lọc trong mọi trường hợp
+        color: colorFilter || undefined,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        sort: sortFilter || undefined,
+        
+        // Ưu tiên keyword từ query parameter, sau đó từ path
+        keyword: queryKeyword || keyword || undefined
+      };
+  
+      console.log("Filter payload:", filterPayload);
+  
+      // 3. Gọi API lọc sản phẩm
+      const response = await productService.getProductByFilter(filterPayload);
+      console.log("API response:", response);
+  
+      const fetchedData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+  
+      // 4. Lưu trữ và Phân trang Client-side
       setAllFilteredProducts(fetchedData);
       const totalFetchedItems = fetchedData.length;
       setTotalItems(totalFetchedItems);
-
+  
       const calculatedTotalPages = Math.ceil(totalFetchedItems / itemsPerPage);
       setTotalPages(calculatedTotalPages);
-
+  
       // Tính toán slice cho trang hiện tại
       const startIndex = (currentPage - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
       setCurrentProducts(fetchedData.slice(startIndex, endIndex));
-
+  
       setStatusMessage("");
       setMessageType("");
-
+  
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu sản phẩm:", error);
       setStatusMessage(error.response?.data?.message || "Tải sản phẩm thất bại. Vui lòng thử lại.");
@@ -119,7 +127,7 @@ const Catalog = ({ category: categoryProp }) => {
         setLoading(false);
       }, 500);
     }
-  }, [categoryProp, secondLevelCategoryProp, currentPage, location.search, itemsPerPage]);
+  }, [categoryProp, secondLevelCategoryProp, currentPage, location.search, itemsPerPage, keyword, location.pathname]);
 
   useEffect(() => {
     fetchDataAndPaginate();
@@ -148,46 +156,40 @@ const Catalog = ({ category: categoryProp }) => {
     window.scrollTo(0, 0);
   }, [currentPage, totalPages, loading]);
 
-  // --- Effect: Cập nhật totalItem/totalPage trên URL ---
-  useEffect(() => {
-    if (!loading) {
-      const params = new URLSearchParams(location.search);
-      const currentTotalItem = params.get('totalItem');
-      const currentTotalPage = params.get('totalPage');
-      const newTotalItem = totalItems.toString();
-      const newTotalPage = totalPages.toString();
-
-      if (currentTotalItem !== newTotalItem || currentTotalPage !== newTotalPage) {
-        params.set('totalItem', newTotalItem);
-        params.set('totalPage', newTotalPage);
-        navigate(`${location.pathname}?${params.toString()}`, { replace: true, state: location.state });
-      }
-    }
-  }, [totalItems, totalPages, loading, navigate, location.pathname, location.search, location.state]);
+  // --- Loại bỏ effect cập nhật totalItem/totalPage trên URL vì không cần thiết ---
+  // Không cần phải đặt những thông tin này vào URL
 
   // --- Hàm xử lý chuyển trang ---
   const handlePageChange = (newPage, replace = false) => {
     if (newPage < 1 || (totalPages > 0 && newPage > totalPages) || newPage === currentPage) {
       return;
     }
+  
+    // Lấy query parameters hiện tại (color, price, sort, v.v.)
     const params = new URLSearchParams(location.search);
-    let basePathSegments = [];
-    if (categoryProp && categoryProp !== 'all') {
-      basePathSegments.push(categoryProp);
-      if (secondLevelCategoryProp) basePathSegments.push(secondLevelCategoryProp);
-    } else {
-      basePathSegments.push('product', 'all');
-    }
-    const basePath = `/${basePathSegments.join('/')}`;
+    
+    // Xóa các thông số không cần thiết
+    params.delete('totalItem');
+    params.delete('totalPage');
+    
+    // Cập nhật page
+    params.set('page', newPage.toString());
+  
+    // Giữ nguyên URL path hiện tại và chỉ cập nhật query params
     const queryString = params.toString();
-    const targetUrl = `${basePath}/${newPage}${queryString ? `?${queryString}` : ''}`;
+    const targetUrl = `${location.pathname}${queryString ? `?${queryString}` : ''}`;
+    
     navigate(targetUrl, { replace: replace, state: location.state });
   };
 
   // --- Xác định tiêu đề trang ---
-  const pageTitle = secondLevelCategoryProp
-    ? `${categoryTitleMap[categoryProp] || categoryProp} - ${secondLevelCategoryTitleMap[secondLevelCategoryProp] || secondLevelCategoryProp}`
-    : (categoryTitleMap[categoryProp] || "Tất cả sản phẩm");
+  const pageTitle = searchParams.get('q') 
+    ? `Kết quả tìm kiếm: "${searchParams.get('q')}"`
+    : keyword 
+      ? `Kết quả tìm kiếm: "${keyword}"`
+      : secondLevelCategoryProp
+        ? `${categoryTitleMap[categoryProp] || categoryProp} - ${secondLevelCategoryTitleMap[secondLevelCategoryProp] || secondLevelCategoryProp}`
+        : (categoryTitleMap[categoryProp] || "Tất cả sản phẩm");
 
   // Tạo mảng skeletons cho hiệu ứng loading
   const skeletonItems = Array(itemsPerPage).fill(0).map((_, index) => (
@@ -198,7 +200,6 @@ const Catalog = ({ category: categoryProp }) => {
   return (
     <div className="flex overflow-hidden flex-col pt-3 bg-gray-50 min-h-screen">
       <div className="flex flex-col self-center mt-4 w-full max-w-screen-xl px-4">
-        <BreadcrumbNav />
         <h1 className="self-start mt-4 mb-4 text-2xl md:text-3xl font-semibold text-gray-800">
           {pageTitle} ({loading ? "..." : totalItems})
         </h1>

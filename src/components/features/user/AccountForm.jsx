@@ -1,31 +1,33 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 
 const AccountForm = () => {
-  const [user, setUser] = useState({
-    fullName: "Your name",
-    gender: "",
-    phone: "********",
-    email: "d*******@gmail.com",
-    birthDay: "",
-    birthMonth: "",
-    birthYear: ""
-  });
+  // The primary issue: useSelector called outside component body
+  // We'll move this inside the component and handle the case where
+  // the redux store might not be properly initialized
+  const userStore = useSelector((store) => store?.auth?.user) || {};
+
+  const [user, setUser] = useState({});
 
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Use effect to update the form when userStore changes
+  useEffect(() => {
+    if (userStore?.fullName || userStore?.phone || userStore?.email) {
+      setUser({
+        fullName: userStore.firstName + userStore.lastName || "Your name",
+        phone: userStore.phone || "*************",
+        email: userStore.email || "*******@gmail.com",
+      });
+    }
+  }, [userStore]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setUser({
       ...user,
       [name]: value
-    });
-  };
-
-  const handleRadioChange = (e) => {
-    setUser({
-      ...user,
-      gender: e.target.value
     });
   };
 
@@ -42,7 +44,7 @@ const AccountForm = () => {
 
   return (
     <div className="flex-1">
-      <h1 className="mb-6 text-3xl font-bold text-black">Your name</h1>
+      <h1 className="mb-6 text-3xl font-bold text-black">{user.fullName}</h1>
       <h2 className="mb-4 text-lg font-bold text-neutral-800">
         Thông tin tài khoản
       </h2>
@@ -72,33 +74,6 @@ const AccountForm = () => {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-base font-medium text-black">
-              Giới tính
-            </label>
-            <div className="flex gap-6">
-              <label className="flex gap-2 items-center">
-                <input 
-                  type="radio" 
-                  name="gender" 
-                  value="male" 
-                  checked={user.gender === "male"}
-                  onChange={handleRadioChange}
-                />
-                <span>Nam</span>
-              </label>
-              <label className="flex gap-2 items-center">
-                <input 
-                  type="radio" 
-                  name="gender" 
-                  value="female" 
-                  checked={user.gender === "female"}
-                  onChange={handleRadioChange}
-                />
-                <span>Nữ</span>
-              </label>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
             <label className="text-base font-medium text-black" htmlFor="phone">
               Số điện thoại
             </label>
@@ -119,59 +94,11 @@ const AccountForm = () => {
               type="email"
               id="email"
               name="email"
+              readOnly
               value={user.email}
               onChange={handleChange}
               className="p-3 w-full rounded border border-gray-300"
             />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-base font-medium text-black">
-              Ngày sinh
-            </label>
-            <div className="flex gap-4">
-              <select 
-                className="p-3 rounded border border-gray-300"
-                name="birthDay"
-                value={user.birthDay}
-                onChange={handleChange}
-              >
-                <option value="">Ngày</option>
-                {[...Array(31)].map((_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {i + 1}
-                  </option>
-                ))}
-              </select>
-              <select 
-                className="p-3 rounded border border-gray-300"
-                name="birthMonth"
-                value={user.birthMonth}
-                onChange={handleChange}
-              >
-                <option value="">Tháng</option>
-                {[...Array(12)].map((_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {i + 1}
-                  </option>
-                ))}
-              </select>
-              <select 
-                className="p-3 rounded border border-gray-300"
-                name="birthYear"
-                value={user.birthYear}
-                onChange={handleChange}
-              >
-                <option value="">Năm</option>
-                {[...Array(100)].map((_, i) => {
-                  const year = new Date().getFullYear() - i;
-                  return (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
           </div>
         </div>
         <button

@@ -6,6 +6,7 @@ import { logout, getUser } from '../../State/Auth/Action';
 import { Menu, MenuItem, Avatar, CircularProgress } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { getCart } from '../../State/Cart/Action';
+import SearchBar from '../features/search/SearchBar';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -18,6 +19,15 @@ const Header = () => {
   const auth = useSelector(store => store.auth);
   const { user, isLoading, jwt } = auth;
   const { cart } = useSelector(store => store.cart);
+
+  const [searchText, setSearchText] = useState("");
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchText.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
   
   // Kiểm tra đã đăng nhập chưa
   const isAuthenticated = !!jwt;
@@ -227,29 +237,8 @@ const Header = () => {
             </Link>
           </>
 
-          <div className="flex items-center border-2 border-solid border-[color:var(--Color---7,#000)] h-[37px] rounded-[50px] w-[250px] ml-4">
-            <button className="flex items-center justify-center px-3">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                className="w-5 h-5 text-gray-600"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35"
-                />
-              </svg>
-            </button>
-            <input
-              type="text"
-              className="flex-grow py-2 pl-2 pr-3 border-none rounded-[50px] focus:outline-none h-full"
-              placeholder="Search"
-            />
-          </div>
+          <SearchBar />
+
 
           <div
             className="relative inline-block cursor-pointer"

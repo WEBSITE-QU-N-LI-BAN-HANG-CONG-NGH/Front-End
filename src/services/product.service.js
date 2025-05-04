@@ -17,13 +17,6 @@ export const productService = {
     getAllProducts: () =>
         api.get(`${API_BASE_URL}/products/all`),
 
-    getProductByTopCategory: (topCategory) =>
-        api.get(`${API_BASE_URL}/products/${topCategory}`),
-
-    getProductByTopCategoryAndSecondCategory: (topCategory, secondLevelCategory) =>
-        api.get(`${API_BASE_URL}/products/${topCategory}/${secondLevelCategory}`),
-
-
     getProductByFilter: (filterPayload) => {
         const {
             topLevelCategory,
@@ -32,6 +25,7 @@ export const productService = {
             minPrice,
             maxPrice,
             sort,
+            keyword
             // Bỏ pageNumber, pageSize nếu backend không dùng
         } = filterPayload;
 
@@ -43,6 +37,7 @@ export const productService = {
             minPrice: minPrice ?? undefined, // Gửi nếu là số
             maxPrice: maxPrice ?? undefined,
             sort: sort || undefined,
+            keyword: keyword || undefined
         };
 
         // Loại bỏ các key undefined
@@ -53,8 +48,6 @@ export const productService = {
         return api.get(`${API_BASE_URL}/products/`, { params }); // Axios sẽ tự chuyển thành query string
     },
 
-    getProductBySearch: (search) =>
-        api.get(`${API_BASE_URL}/products/search/${search}`),
 
 
     getSecondCategory: (topCategory) =>
