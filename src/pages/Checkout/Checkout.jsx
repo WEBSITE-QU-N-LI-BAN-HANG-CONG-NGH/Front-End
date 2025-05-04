@@ -749,7 +749,7 @@ const CompleteStep = () => {
           {/* Nút điều hướng giữ nguyên */}
           <div className="flex justify-center gap-4">
             <button className="py-3 px-6 text-base font-semibold text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors" onClick={() => navigate('/')}> TIẾP TỤC MUA SẮM </button>
-            <button className="py-3 px-6 text-base font-semibold text-blue-600 border border-blue-600 rounded hover:bg-blue-50 transition-colors" onClick={() => navigate('/account/orders')}> XEM ĐƠN HÀNG </button> {/* Sửa lại link xem đơn hàng */}
+            <button className="py-3 px-6 text-base font-semibold text-blue-600 border border-blue-600 rounded hover:bg-blue-50 transition-colors" onClick={() => navigate('/my-order')}> XEM ĐƠN HÀNG </button> {/* Sửa lại link xem đơn hàng */}
           </div>
       </div>
     </div>

@@ -98,7 +98,7 @@ const OrderManagement = () => {
   
   // Xử lý xem chi tiết đơn hàng
   const handleViewOrderDetails = (orderId) => {
-    navigate(`/account/orders/${orderId}`);
+    navigate(`/my-order/${orderId}`);
   };
   
   return (

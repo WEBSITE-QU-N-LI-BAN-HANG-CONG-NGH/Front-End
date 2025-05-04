@@ -26,13 +26,13 @@ const AccountSidebar = () => {
         </h2>
         <Link 
           to="/account" 
-          className={`text-base ${isActive('/account') && !isActive('/account/orders') ? 'text-blue-600 font-medium' : 'text-stone-500'} hover:text-blue-600`}
+          className={`text-base ${isActive('/account') && !isActive('/my-order') ? 'text-blue-600 font-medium' : 'text-stone-500'} hover:text-blue-600`}
         >
           Thông tin cá nhân
         </Link>
         <Link 
-          to="/account/orders" 
-          className={`text-base ${isActive('/account/orders') ? 'text-blue-600 font-medium' : 'text-stone-500'} hover:text-blue-600`}
+          to="/my-order" 
+          className={`text-base ${isActive('/my-order') ? 'text-blue-600 font-medium' : 'text-stone-500'} hover:text-blue-600`}
         >
           Quản lý đơn hàng
         </Link>

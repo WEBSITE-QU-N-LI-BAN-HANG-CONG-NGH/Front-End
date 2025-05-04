@@ -58,7 +58,7 @@ const Catalog = ({ category: categoryProp }) => {
       const colorFilter = queryParams.get('color');
       const priceFilter = queryParams.get('price');
       const sortFilter = queryParams.get('sort');
-      const queryKeyword = queryParams.get('q'); // Lấy keyword từ query parameter
+      const queryKeyword = queryParams.get('q'); 
   
       let minPrice = null;
       let maxPrice = null;
@@ -167,10 +167,6 @@ const Catalog = ({ category: categoryProp }) => {
   
     // Lấy query parameters hiện tại (color, price, sort, v.v.)
     const params = new URLSearchParams(location.search);
-    
-    // Xóa các thông số không cần thiết
-    params.delete('totalItem');
-    params.delete('totalPage');
     
     // Cập nhật page
     params.set('page', newPage.toString());

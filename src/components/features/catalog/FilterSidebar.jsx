@@ -22,6 +22,14 @@ const colors = [
   // ...
 ];
 
+const sortOptions = [
+  { label: "Mặc định", value: "" },
+  { label: "Giá thấp đến cao", value: "price_low" },
+  { label: "Giá cao đến thấp", value: "price_high" },
+  { label: "Giảm giá nhiều", value: "discount" },
+  { label: "Mới nhất", value: "newest" }
+];
+
 // Nhận topCategory từ props của Catalog component
 const FilterSidebar = ({ topCategory }) => {
   const { activeFilters, updateFilters, clearAllFilters } = useFilter();
@@ -41,8 +49,7 @@ const FilterSidebar = ({ topCategory }) => {
     category: true,
     price: true,
     color: true,
-    size: true, // Thêm size nếu có bộ lọc size
-    discount: false
+    sort: true
   });
 
   // --- Fetch second-level categories khi topCategory thay đổi ---
@@ -292,6 +299,43 @@ const FilterSidebar = ({ topCategory }) => {
              )}
           </section>
 
+
+          {/* --- Sort Section --- */}
+          <section className="p-4 w-full text-black max-w-[234px]">
+             <div className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap cursor-pointer mb-3" onClick={() => toggleSection('sort')}>
+                 <h3>Sort</h3>
+                 <img src={expandedSections.sort ? "/UpArrow.svg" : "/DownArrow.svg"} alt="Toggle price" className="object-contain shrink-0 w-4 aspect-square"/>
+             </div>
+             {expandedSections.sort && (
+                 <div className="flex flex-col gap-2 text-sm leading-7 mt-4">
+                     {sortOptions.map((sortOptions) => (
+                         <div key={sortOptions.value} className="flex items-center">
+                             <input
+                                 type="radio"
+                                 id={`sort-${sortOptions.value}`}
+                                 name="sortFilter" // Đổi tên radio group cho price
+                                 value={sortOptions.value}
+                                 checked={activeFilters.sort === sortOptions.value}
+                                 onChange={() => {
+                                     updateFilters('sort', sortOptions.value, true); // Cập nhật context/query
+                                 }}
+                                 className="mr-2 cursor-pointer"
+                             />
+                             <label htmlFor={`sort-${sortOptions.value}`} className="cursor-pointer">{sortOptions.label}</label>
+                         </div>
+                     ))}
+                     {/* Thêm nút bỏ chọn Price */}
+                     {activeFilters.sort && (
+                        <button
+                            onClick={() => updateFilters('sort', activeFilters.sort, false)}
+                            className="text-xs text-blue-600 hover:underline mt-1 pl-6" // Style cho nút bỏ chọn
+                        >
+                            Clear price filter
+                        </button>
+                     )}
+                 </div>
+             )}
+          </section>
 
         </section>
       </div>

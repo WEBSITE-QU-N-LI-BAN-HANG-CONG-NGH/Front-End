@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useFilter } from "./FilterContext";
 
 
 const BackButton = () => {
@@ -40,6 +41,41 @@ const DisplayControl = () => {
   );
 };
 
+const SortControl = ({ onSortChange }) => {
+  const { activeFilters, updateFilters } = useFilter();
+  
+  // Danh sách các tùy chọn sắp xếp
+  const sortOptions = [
+    { label: "Mặc định", value: "" },
+    { label: "Giá thấp đến cao", value: "price_low" },
+    { label: "Giá cao đến thấp", value: "price_high" },
+    { label: "Giảm giá nhiều", value: "discount" },
+    { label: "Mới nhất", value: "newest" }
+  ];
+
+  const handleSortChange = (event) => {
+    const value = event.target.value;
+    updateFilters('sort', value, value !== "");
+    if (onSortChange) onSortChange();
+  };
+
+  return (
+    <div className="flex text-center">
+      <select 
+        className="px-5 py-3 rounded-sm border-2 border-solid border-[color:var(--Color---6,#CACDD8)]"
+        value={activeFilters.sort || ""}
+        onChange={handleSortChange}
+      >
+        {sortOptions.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
+
 const ViewToggle = () => {
   return (
     <img
@@ -59,12 +95,13 @@ const ViewToggle = () => {
 };
 
 // Đúng cách định nghĩa component với destructuring props
-const ProductControls = ({ shown, total }) => {
+const ProductControls = ({ shown, total, onSortChange }) => {
   return (
     <nav className="flex flex-wrap gap-2 mt-5 w-full font-semibold max-md:max-w-full">
       <BackButton />
       <div className="flex flex-row flex-auto gap-3 justify-end my-auto ml-auto text-sm leading-7 text-black max-md:max-w-full">
         <ItemsCounter itemsShown={shown || 0} totalItems={total || 0} />
+        <SortControl onSortChange={onSortChange} />
         <DisplayControl />
         <ViewToggle />
       </div>

@@ -12,7 +12,7 @@ const BreadcrumbNav = () => {
     'phone': 'Điện thoại',
     'computer-parts': 'Linh kiện máy tính',
     'other-products': 'Sản phẩm khác',
-    'our-deals': 'Khuyến mãi',
+    'my-order': 'Đơn hàng của tôi',
     'product': 'Sản phẩm',
     'detail': 'Chi tiết sản phẩm',
     'account': 'Tài khoản',

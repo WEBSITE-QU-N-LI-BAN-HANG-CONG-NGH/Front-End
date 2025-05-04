@@ -11,6 +11,7 @@ export const FilterProvider = ({ children }) => {
   const [activeFilters, setActiveFilters] = useState({
     color: null, // Thay đổi: null nghĩa là không có màu nào được chọn (All)
     price: null,
+    sort: '',
   });
   // ----------------------------------------------------
 
@@ -21,15 +22,18 @@ export const FilterProvider = ({ children }) => {
     // Đọc trực tiếp giá trị color (string) hoặc null
     const colorParam = params.get('color');
     const priceParam = params.get('price');
+    const sortParam = params.get('sort');
 
     const initialFilters = {
       color: colorParam || null, // Lấy giá trị hoặc null
       price: priceParam || null,
+      sort: sortParam || '',
     };
 
     // Cập nhật state NẾU khác biệt thực sự
     if (activeFilters.price !== initialFilters.price ||
-        activeFilters.color !== initialFilters.color) // So sánh trực tiếp string/null
+        activeFilters.color !== initialFilters.color ||
+        activeFilters.sort !== initialFilters.sort) // So sánh trực tiếp string/null
     {
       console.log("[FilterContext Effect] State differs from URL, updating state:", initialFilters);
       setActiveFilters(initialFilters);
@@ -41,15 +45,26 @@ export const FilterProvider = ({ children }) => {
   // Cập nhật state và URL query string KHI người dùng tương tác UI
   // Cập nhật state và URL query string KHI người dùng tương tác UI
 const updateFilters = (filterType, value, isActive) => {
-  if (filterType !== 'price' && filterType !== 'color') return;
+  if (filterType !== 'price' && filterType !== 'color' && filterType !== 'sort') 
+    return;
 
-  console.log(`[FilterContext Update] Received update: ${filterType}=${value}, isActive=${isActive}`);
 
   // --- Cập nhật URL Query String TRƯỚC ---
   const params = new URLSearchParams(location.search);
   let shouldNavigate = false;
 
-  if (filterType === 'color') {
+  if (filterType === 'sort') {
+    const currentSort = params.get('sort');
+    const newSort = isActive ? value : null;
+    if (currentSort !== newSort) {
+      if (newSort) {
+        params.set('sort', newSort);
+      } else {
+        params.delete('sort');
+      }
+      shouldNavigate = true;
+    }
+  } else if (filterType === 'color') {
     const currentColor = params.get('color');
     // Value từ radio "All" sẽ là null hoặc "", value từ màu cụ thể là tên màu
     const newColor = isActive ? value : null;
@@ -90,7 +105,7 @@ const updateFilters = (filterType, value, isActive) => {
 
   // Xóa một bộ lọc cụ thể
   const removeFilter = (filterType, value) => {
-     if (filterType !== 'price' && filterType !== 'color') return;
+     if (filterType !== 'price' && filterType !== 'color' && filterType !== 'sort') return;
      // Gọi updateFilters với isActive = false để xóa filter khỏi URL/state
      updateFilters(filterType, value, false);
   };
@@ -110,6 +125,11 @@ const clearAllFilters = () => {
   if (params.has('price')) { 
     params.delete('price'); 
     didChange = true; 
+  }
+
+  if (params.has('sort')) {
+    params.delete('sort');
+    didChange = true;
   }
 
   if (didChange) {
