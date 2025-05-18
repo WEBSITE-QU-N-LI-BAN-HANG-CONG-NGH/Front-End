@@ -3,6 +3,7 @@ import { Rating } from '@mui/material';
 import { reviewService } from "../../../services/review.service";
 import { authService } from "../../../services/auth.service";
 import { useToast } from "../../../contexts/ToastContext.jsx"; // 1. Import useToast
+import { set } from "react-hook-form";
 
 // Nhận thêm prop onRatingUpdate, initialAverageRating, initialTotalReviews
 const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initialTotalReviews }) => {
@@ -17,6 +18,7 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [canReview, setCanReview] = useState(false);
   const [reviewsPerPage] = useState(5);
 
   const { showToast } = useToast(); // 2. Lấy hàm showToast từ context
@@ -32,6 +34,8 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
       const response = await reviewService.getReviewsByProduct(productId);
       console.log('Response Reviews :>> ', response.data);
       const result = response.data;
+      const tempp = await reviewService.canReview(productId);
+      setCanReview(tempp.data.data);
 
       if (result.data) {
         const { reviews: fetchedReviews = [], averageRating: avgRating = 0, ratingDistribution = {}, productName: fetchedProductName = "", totalReviews: total = 0 } = result.data;
@@ -275,13 +279,17 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
           ))}
         </div>
       </div>
-
+   
       {!showForm ? (
         <button
-          onClick={() => setShowForm(true)}
-          className="px-5 py-2.5 text-white bg-blue-600 cursor-pointer border-[none] rounded-md hover:bg-blue-700 mb-8"
+          onClick={() => {
+            (canReview) ? setShowForm(true) : setShowForm(false);
+            (!canReview) ? showToast("Bạn cần mua sản phẩm này trước khi đánh giá", "warning") : "";
+          }}
+          className={`px-5 py-2.5 text-white bg-blue-600 cursor-pointer border-[none] rounded-md hover:bg-blue-700 mb-8 ${!canReview ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
+          // disabled={!canReview}
         >
-          Viết đánh giá của bạn
+          {!canReview ? "Bạn cần mua sản phẩm này trước khi đánh giá" : "Viết đánh giá của bạn"}
         </button>
       ) : (
           <div className="bg-white p-5 rounded-lg shadow-sm mb-8">

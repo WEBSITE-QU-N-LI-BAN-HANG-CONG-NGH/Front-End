@@ -41,7 +41,7 @@ const OAuthRedirect = () => {
           // Dispatch action báo đăng nhập thành công với token mới
           dispatch(loginSuccess(token));
           // Dispatch action để lấy thông tin user với token vừa lưu
-          dispatch(getUser()); // getUser sẽ sử dụng token từ localStorage thông qua interceptor
+          // dispatch(getUser()); // getUser sẽ sử dụng token từ localStorage thông qua interceptor
 
           setStatus('success');
           // Chuyển hướng đến trang chủ ngay lập tức hoặc sau một khoảng ngắn

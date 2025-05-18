@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios'; // 1. Import axios
@@ -319,13 +319,19 @@ const handlePlaceOrder = async () => {
     } else {
       // --- Xử lý COD ---
       await cartService.clearCart(); // Xóa giỏ hàng sau khi đặt hàng thành công
+      await orderService.sendOrderToEmail(actualOrderId); // Gửi email đơn hàng
       const params = new URLSearchParams();
       params.set('step', '4');
       params.set('orderId', actualOrderId); // Đặt orderId vào URL
       // Cập nhật URL và state step
       navigate(`${location.pathname}?${params.toString()}`, { replace: true });
       setStep(4);
-      window.location.reload(); // Tải lại trang để hiển thị thông tin đơn hàng
+      
+      // Thêm window.location.reload() để tải lại trang sau khi cập nhật URL và state
+      setTimeout(() => {
+        window.location.reload();
+      }, 100); // Thêm setTimeout để đảm bảo navigate và setStep được thực hiện trước
+      
       // Không cần set processedOrderId ở đây vì useEffect sẽ xử lý khi step=4
     }
   } catch (orderError) { /* ... (báo lỗi tạo order như cũ) ... */ }
@@ -706,13 +712,35 @@ const PaymentStep = () => {
 // Component hiển thị khi đặt hàng thành công (Step 4 - Cập nhật để lấy cart từ store)
 const CompleteStep = () => {
   const currentOrderId = queryParams.get('orderId') || 'ORD123456';
-  // Lấy cart cuối cùng từ store để hiển thị tổng tiền chính xác
   const status = queryParams.get('vnp_ResponseCode');
-
-  if (status === '00' && currentOrderId) {
-    cartService.clearCart();
-  }
-
+  
+  // Sử dụng useRef để theo dõi xem email đã được gửi hay chưa
+  const emailSent = useRef(false);
+  
+  // Sử dụng useEffect để đảm bảo code chỉ chạy một lần sau khi render
+  useEffect(() => {
+    // Chỉ xử lý khi có status='00' (thành công) và chưa gửi email trước đó
+    if (status === '00' && currentOrderId && !emailSent.current) {
+      const handleSuccessfulPayment = async () => {
+        try {
+          // Đánh dấu đã gửi email
+          emailSent.current = true;
+          
+          // Xóa giỏ hàng
+          await cartService.clearCart();
+          
+          // Gửi email
+          await orderService.sendOrderToEmail(currentOrderId);
+          // showToast('Email đã được gửi thành công!', 'success');
+        } catch (error) {
+          console.error("Error in payment completion process:", error);
+          showToast('Có lỗi xảy ra khi hoàn tất thanh toán.', 'error');
+        }
+      };
+      
+      handleSuccessfulPayment();
+    }
+  }, [status, currentOrderId]); // Chỉ chạy lại khi status hoặc orderId thay đổi
 
   return (
     <div className="text-center py-10">

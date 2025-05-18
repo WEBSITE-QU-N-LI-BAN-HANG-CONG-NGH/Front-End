@@ -60,10 +60,10 @@ const AddressStep = ({
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại *</label>
             <input type="tel" id="phone" name="phone" value={shippingInfo.phone} onChange={handleShippingChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
           </div>
-          <div>
+          {/* <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input type="email" id="email" name="email" value={shippingInfo.email} onChange={handleShippingChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
+          </div> */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố *</label>

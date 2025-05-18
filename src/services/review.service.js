@@ -12,4 +12,7 @@ export const reviewService = {
 
     deleteReview: (reviewId) =>
         api.delete(`${API_BASE_URL}/review/delete/${reviewId}`),
+
+    canReview: (reviewId) =>
+        api.get(`${API_BASE_URL}/review/can-review/${reviewId}`),
 };

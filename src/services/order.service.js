@@ -3,8 +3,18 @@ import { API_BASE_URL } from "../config/ApiConfig";
 
 
 export const orderService = {
-    createOrder: (addressId) => 
-        api.post(`/orders/create/${addressId}`),
+    // createOrder: (addressId) => 
+    //     api.post(`/orders/create/${addressId}`),
+    createOrder: async (addressId) => {
+    try {
+        const response = await api.post(`/orders/create/${addressId}`);
+        return response;
+    } catch (error) {
+        console.error('Error creating order:', error);
+        // Đảm bảo chúng ta xử lý lỗi một cách thích hợp và trả về lỗi để component xử lý
+        throw error;
+    }
+    },
     
     getOrderById: (orderId) => 
         api.get(`/orders/${orderId}`),
@@ -48,4 +58,7 @@ export const orderService = {
 
     cancelOrder: (orderId) => 
         api.put(`/orders/cancel/${orderId}`),
+
+    sendOrderToEmail: (orderId) =>
+        api.post(`/orders/send-mail/${orderId}`),
 };
