@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import Cookies from "js-cookie";
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([
@@ -8,6 +9,26 @@ const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  
+  // Lấy lịch sử chat từ cookie khi component được mount
+  useEffect(() => {
+    const storedMessages = Cookies.get('tech_shop_chat_history');
+    if (storedMessages) {
+      try {
+        const parsedMessages = JSON.parse(storedMessages);
+        setMessages(parsedMessages);
+      } catch (error) {
+        console.error("Error parsing stored messages:", error);
+      }
+    }
+  }, []);
+
+  // Lưu lịch sử chat vào cookie mỗi khi messages thay đổi
+  useEffect(() => {
+    if (messages.length > 1) { // Chỉ lưu khi có tin nhắn thật sự (không chỉ là lời chào)
+      Cookies.set('tech_shop_chat_history', JSON.stringify(messages), { expires: 7 }); // Lưu trong 7 ngày
+    }
+  }, [messages]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -78,6 +99,14 @@ const ChatBot = () => {
     }
   };
 
+  // Xóa lịch sử chat và reset về trạng thái ban đầu
+  const clearChatHistory = () => {
+    Cookies.remove('tech_shop_chat_history');
+    setMessages([
+      { sender: "bot", content: "Xin chào! Tôi là trợ lý Tech Shop. Tôi có thể giúp gì cho bạn?" }
+    ]);
+  };
+
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {/* Chat toggle button */}
@@ -100,9 +129,18 @@ const ChatBot = () => {
       {isOpen && (
         <div className="absolute bottom-16 right-0 w-96 h-[500px] bg-white rounded-lg shadow-xl flex flex-col border border-gray-300">
           {/* Chat header */}
-          <div className="bg-blue-600 text-white p-4 rounded-t-lg">
-            <h3 className="font-medium">Tech Shop Trợ Lý Ảo</h3>
-            <p className="text-xs opacity-80">Hỗ trợ trực tuyến 24/7</p>
+          <div className="bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
+            <div>
+              <h3 className="font-medium">Tech Shop Trợ Lý Ảo</h3>
+              <p className="text-xs opacity-80">Hỗ trợ trực tuyến 24/7</p>
+            </div>
+            <button 
+              onClick={clearChatHistory}
+              className="bg-blue-700 hover:bg-blue-800 text-white text-xs px-2 py-1 rounded"
+              title="Xóa lịch sử trò chuyện"
+            >
+              Xóa lịch sử
+            </button>
           </div>
 
           {/* Chat messages */}
