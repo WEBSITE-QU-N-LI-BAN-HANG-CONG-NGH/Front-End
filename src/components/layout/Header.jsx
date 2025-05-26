@@ -239,23 +239,25 @@ const Header = () => {
 
           <SearchBar />
 
-
-          <div
-            className="relative inline-block cursor-pointer"
-            aria-label="Shopping Cart"
-            onClick={handleCartClick}
-          >
-            <img
-              src="/CartIcon.png"
-              className="object-contain shrink-0 self-start aspect-[1.18] w-[33px]"
-              alt="Cart Icon"
-            />
-            <span
-              className="absolute bottom-3 left-3 text-white bg-blue-600 rounded-full text-xs px-1.5 py-0.5"
+          {/* Cart Icon - Only show when user is authenticated and logged in */}
+          {isAuthenticated && user && (
+            <div
+              className="relative inline-block cursor-pointer"
+              aria-label="Shopping Cart"
+              onClick={handleCartClick}
             >
-              {totalItems}
-            </span>
-          </div>
+              <img
+                src="/CartIcon.png"
+                className="object-contain shrink-0 self-start aspect-[1.18] w-[33px]"
+                alt="Cart Icon"
+              />
+              <span
+                className="absolute bottom-3 left-3 text-white bg-blue-600 rounded-full text-xs px-1.5 py-0.5"
+              >
+                {totalItems}
+              </span>
+            </div>
+          )}
 
           <div>
             {renderUserDisplay()}
