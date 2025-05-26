@@ -37,7 +37,7 @@ const FlashSale = () => {
         <a
           href="/product/all"
           className="my-auto text-sm leading-none text-right text-blue-600 underline underline-offset-auto">
-          See All New Products
+           Xem toàn bộ sản phẩm
         </a>
       </div>
       <div className="flex flex-wrap mt-3.5 text-black max-md:max-w-full">

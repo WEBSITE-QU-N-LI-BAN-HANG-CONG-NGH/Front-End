@@ -201,7 +201,7 @@ const ProductInfo = ({item}) => {
       <button 
         onClick={handleClickToCart} 
         disabled={!selectedSize}
-        className={`px-8 mt-5 py-4 mb-5 w-full text-base text-white cursor-pointer border-[none] ${selectedSize ? 'bg-rose-500 hover:bg-rose-700' : 'bg-gray-300 cursor-not-allowed'}`}
+        className={`px-8 mt-5 py-4 mb-5 w-full text-base text-white cursor-pointer border-[none] ${selectedSize ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'}`}
       >
         Thêm vào giỏ hàng
       </button>

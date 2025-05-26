@@ -5,7 +5,7 @@ import { useFilter } from "./FilterContext";
 const BackButton = () => {
   return (
     <button
-      className="py-5 w-50 text-sm text-center text-black bg-white grow-0 max-md:px-5"
+      className="py-3 w-30 text-sm text-center text-black border-2 border-solid border-[color:var(--Color---6,#CACDD8)] grow-0 max-md:px-5 hover:scale-105 hover:border-blue-600 hover:text-blue-600 transition duration-500"
       onClick={() => window.history.back()}
       aria-label="Go back"
     >
@@ -16,7 +16,7 @@ const BackButton = () => {
 
 const ItemsCounter = ({ itemsShown, totalItems }) => {
   return (
-    <p className="px-1 py-3 text-gray-400 bg-white max-md:pr-5 max-md:max-w-full">
+    <p className="px-3 py-3 border-2 border-solid border-[color:var(--Color---6,#CACDD8)] text-black max-md:pr-5 max-md:max-w-full">
       Items {itemsShown} of {totalItems}
     </p>
   );
@@ -102,8 +102,6 @@ const ProductControls = ({ shown, total, onSortChange }) => {
       <div className="flex flex-row flex-auto gap-3 justify-end my-auto ml-auto text-sm leading-7 text-black max-md:max-w-full">
         <ItemsCounter itemsShown={shown || 0} totalItems={total || 0} />
         <SortControl onSortChange={onSortChange} />
-        <DisplayControl />
-        <ViewToggle />
       </div>
     </nav>
   );

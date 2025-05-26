@@ -110,7 +110,6 @@ const OrderDetail = () => {
     return (
       <div className="flex flex-col pt-3 bg-white min-h-screen">
         <main className="flex flex-col px-10 py-6 max-sm:px-5">
-          <BreadcrumbNav />
           <div className="flex gap-10 mt-10 max-md:flex-col">
             <AccountSidebar />
             <div className="flex flex-col items-center justify-center py-20 flex-1">

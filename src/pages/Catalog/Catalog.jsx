@@ -204,9 +204,7 @@ const Catalog = ({ category: categoryProp }) => {
         {!loading && messageType === 'error' && (
           <div className="text-center p-4 text-red-600 bg-red-100 rounded border border-red-300">{statusMessage}</div>
         )}
-        {!loading && !allFilteredProducts.length && messageType !== 'error' && (
-          <div className="text-center p-10 text-gray-500">Không tìm thấy sản phẩm nào phù hợp.</div>
-        )}
+
 
         <div className="flex flex-col md:flex-row gap-6 lg:gap-8 mt-4">
           {/* Sidebar - Truyền callback để bắt sự kiện khi filter thay đổi */}
@@ -226,6 +224,9 @@ const Catalog = ({ category: categoryProp }) => {
               />
               
               {/* Product Grid */}
+              {!loading && !allFilteredProducts.length && messageType !== 'error' && (
+          <div className="text-center p-10 text-gray-500">Không tìm thấy sản phẩm nào phù hợp.</div>
+        )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mt-4">
                 {/* Hiển thị skeleton khi đang loading */}
                 {loading ? (

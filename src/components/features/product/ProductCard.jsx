@@ -104,7 +104,7 @@ const ProductCard = ({
           )}
         <img
           src={image || "/Placeholder2.png"}
-          className="object-contain h-full w-full p-4" // Ensure image fits well
+          className="object-cover aspect-square w-full p-4" // Ensure image fits well
           alt={title || "Product Image"}
           loading="lazy" // Lazy load images
         />

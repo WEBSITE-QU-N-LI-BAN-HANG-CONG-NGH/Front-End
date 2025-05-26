@@ -20,7 +20,7 @@ const CategoryBanner = ({
           {title}
         </div>
         <div className="relative mt-24 text-sm leading-none underline max-md:mt-10">
-          See All Products
+          Xem toàn bộ sản phẩm
         </div>
       </div>
     </div>

@@ -11,6 +11,10 @@ module.exports = {
       animation: {
         fade: 'fade 1s ease-in-out infinite',
       },
+      fontFamily: {
+        segoe: ["Segoe UI", "sans-serif"],
+      },
+
     },
   },
   plugins: [],

@@ -64,14 +64,7 @@ const FooterCopyright = () => {
 
 const Footer = () => {
   const informationLinks = [
-    "About Us",
-    "Privacy Policy",
-    "Search",
-    "Terms",
-    "Orders and Returns",
-    "Contact Us",
-    "Advanced Search",
-    "Newsletter Subscription",
+    "Báo cáo vấn đề",
   ];
 
   const componentsLinks = [
@@ -121,12 +114,12 @@ const Footer = () => {
 
   return (
     <footer className="flex relative flex-wrap justify-between px-12 py-10 bg-black text-[white] max-md:px-4 max-md:py-8 max-sm:flex-col max-sm:p-5">
-      <FooterLinkSection title="Information" links={informationLinks} pathPrefix="/information" />
       <FooterLinkSection title="Linh kiện" links={componentsLinks} pathPrefix="/components" />
       <FooterLinkSection title="Máy tính bàn" links={desktopLinks} pathPrefix="/desktop" />
       <FooterLinkSection title="Điện thoại" links={phoneLinks} pathPrefix="/phone" />
       <FooterLinkSection title="Laptop" links={laptopLinks} pathPrefix="/laptop" />
       <FooterLinkSection title="Phụ kiện" links={accessoryLinks} pathPrefix="/accessories" />
+      <FooterLinkSection title="Liên hệ" links={informationLinks} pathPrefix="/information" />
       <FooterCopyright />
       <div className="flex shrink-0 mt-14 max-w-full h-px bg-white w-full max-md:mt-10" />
         <div className="flex flex-wrap gap-10 items-start mt-9 w-full max-w-[1360px] max-md:max-w-full">

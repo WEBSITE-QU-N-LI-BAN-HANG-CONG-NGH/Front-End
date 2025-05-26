@@ -1,8 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import CustomerRouters from './Routers/CustomerRouters';
 import { ToastProvider } from './contexts/ToastContext.jsx';
-// 2. Thêm đuôi .jsx vào import
 import GlobalToast from './components/common/GlobalToast.jsx';
+import "./assets/styles/App.css"
 
 function App() {
   return (

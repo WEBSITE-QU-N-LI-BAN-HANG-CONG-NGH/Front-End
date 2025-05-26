@@ -174,8 +174,7 @@ const Cart = () => {
   return (
     <main className="flex flex-col pt-3 bg-white min-h-screen">
       <section className="flex flex-col items-center px-4 md:px-10 lg:px-64 py-10 max-md:px-10 max-sm:px-5">
-        <BreadcrumbNav />
-        <h1 className="mb-10 text-4xl md:text-6xl font-semibold">Shopping Cart</h1>
+        <h1 className="mb-10 text-4xl font-bold">Giỏ hàng</h1>
         
         <div className="flex justify-between mb-10 w-full">
           <div className="flex items-center">

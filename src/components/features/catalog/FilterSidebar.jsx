@@ -130,11 +130,11 @@ const FilterSidebar = ({ topCategory }) => {
 
 
   return (
-    <aside className="w-[17%] max-md:ml-0 max-md:w-full">
+    <aside className="w-[20%] max-md:ml-0 max-md:w-full">
       <div className="max-md:mt-1.5">
         <section className="bg-violet-50 divide-y divide-gray-300">
           {/* Filter Header & Clear Button */}
-          <div className="max-w-full text-center rounded-none w-[234px]">
+          <div className="max-w-full text-center rounded-none w-[250px]">
              <div className="flex flex-col px-4 py-5">
               <h2 className="self-center text-base font-bold text-black">Filters</h2>
             </div>
@@ -142,7 +142,7 @@ const FilterSidebar = ({ topCategory }) => {
 
           {/* --- Category Section (Radio Buttons for Navigation) --- */}
           {topCategory && topCategory !== 'all' && (
-            <section className="px-4 py-5 w-full text-black max-w-[234px]">
+            <section className="px-4 py-5 w-full text-black min-w-[250px]">
                 <div
                     className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap cursor-pointer mb-3"
                     onClick={() => toggleSection('category')}
@@ -208,7 +208,7 @@ const FilterSidebar = ({ topCategory }) => {
           )}
           {/* ----------------------------------------------------------- */}
 
-          <section className="px-4 py-5 w-full text-black max-w-[234px]">
+          <section className="px-4 py-5 w-full text-black min-w-[250px]">
             <div className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap cursor-pointer mb-3" onClick={() => toggleSection('color')}>
               <h3 className="my-auto">Color</h3>
               <img src={expandedSections.color ? "/UpArrow.svg" : "/DownArrow.svg"} alt="Toggle color" className="object-contain shrink-0 w-4 aspect-square"/>
@@ -262,7 +262,7 @@ const FilterSidebar = ({ topCategory }) => {
           {/* ---------------------------------------------------- */}
 
           {/* --- Price Section --- */}
-          <section className="p-4 w-full text-black max-w-[234px]">
+          <section className="p-4 w-full text-black min-w-[250px]">
              <div className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap cursor-pointer mb-3" onClick={() => toggleSection('price')}>
                  <h3>Price</h3>
                  <img src={expandedSections.price ? "/UpArrow.svg" : "/DownArrow.svg"} alt="Toggle price" className="object-contain shrink-0 w-4 aspect-square"/>
@@ -301,7 +301,7 @@ const FilterSidebar = ({ topCategory }) => {
 
 
           {/* --- Sort Section --- */}
-          <section className="p-4 w-full text-black max-w-[234px]">
+          <section className="p-4 w-full text-black min-w-[250px]">
              <div className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap cursor-pointer mb-3" onClick={() => toggleSection('sort')}>
                  <h3>Sort</h3>
                  <img src={expandedSections.sort ? "/UpArrow.svg" : "/DownArrow.svg"} alt="Toggle price" className="object-contain shrink-0 w-4 aspect-square"/>

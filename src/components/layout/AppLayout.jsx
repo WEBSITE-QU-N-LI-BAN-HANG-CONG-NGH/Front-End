@@ -9,7 +9,7 @@ const AppLayout = () => {
     return (
         <div className="flex flex-col bg-white min-h-screen">
             <Header />
-            <main className="flex-grow pr-22">
+            <main className="flex-grow">
                 <Outlet />
             </main>
             <Features />

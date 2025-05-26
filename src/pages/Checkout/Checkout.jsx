@@ -797,8 +797,8 @@ if (step < 2 && !window.location.pathname.endsWith('/cart')) {
 return (
   <div className="bg-white min-h-screen">
     <div className="max-w-7xl mx-auto py-8 px-2">
-      <BreadcrumbNav />
-      <h1 className="text-3xl font-bold text-center mb-8">{
+      {/*<BreadcrumbNav />*/}
+      <h1 className="text-4xl font-bold text-center mb-8">{
         step === 2 ? "Thông tin đặt hàng" :
         step === 3 ? "Thanh Toán" :
         step === 4 ? "Hoàn tất đơn hàng" : "Thanh Toán" // Fallback title
