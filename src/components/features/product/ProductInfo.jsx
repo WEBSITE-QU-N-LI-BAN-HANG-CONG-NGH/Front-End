@@ -1,299 +1,221 @@
-
-import React, { useState, useEffect } from "react";
-import { Alert, Rating } from '@mui/material'
-import { Radio, RadioGroup } from '@headlessui/react'
-import { useNavigate, useParams } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { addItemToCart, getCart } from "../../../State/Cart/Action";
+import React, { useState } from "react"; // Bỏ useEffect nếu không dùng
+import { Rating, CircularProgress } from '@mui/material'; // Thêm CircularProgress
+import { Radio, RadioGroup } from '@headlessui/react';
+import { useCartContext } from "../../../contexts/CartContext";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 
-// Toast Notification Component
-const ToastNotification = ({ show, message, productName, productImage, onClose }) => {
-  useEffect(() => {
-    if (show) {
-      // Tự động ẩn thông báo sau 5 giây
-      const timer = setTimeout(() => {
-        onClose();
-      }, 4000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [show, onClose]);
-
-  if (!show) return null;
-
-  return (
-    <div className="fixed top-20 right-55 w-full max-w-sm z-50 animate-slide-down">
-      <div className="bg-white rounded-md shadow-lg overflow-hidden border border-gray-100">
-        <div className="p-4">
-          <div className="text-center text-green-600 font-medium mb-2">
-            {message}
-          </div>
-          <div className="flex items-center gap-3">
-            {productImage && (
-              <img src={productImage} alt={productName} className="w-12 h-12 object-cover rounded-md" />
-            )}
-            <div className="flex-1">
-              <p className="text-sm font-medium">{productName}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-orange-500 text-white py-3 text-center cursor-pointer" onClick={() => {
-          onClose();
-          window.location.href = "/cart";
-        }}>
-          XEM GIỎ HÀNG
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ProductInfo = ({item}) => {
+const ProductInfo = ({ item }) => {
   const [selectedSize, setSelectedSize] = useState(null);
-  const [showToastt, setShowToast] = useState(false);
-  const { productId } = useParams();
-  const dispatch = useDispatch();
-  const {showToast} = useToast();
+  const { addItemToCart, isLoading: isCartLoadingGlobal } = useCartContext();
+  const { showToast } = useToast();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showFullSpecs, setShowFullSpecs] = useState(false);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      minimumFractionDigits: 0
-    }).format(amount || 0);
-  };
 
-  const handleClickToCart = () => {
+  const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
+
+  const handleClickToCart = async () => {
+    if (!item || !item.id) {
+        showToast("Thông tin sản phẩm không hợp lệ.", "error");
+        return;
+    }
     if (!selectedSize) {
-      showToast("Vui lòng chọn size", "warning");
+      showToast("Vui lòng chọn cấu hình.", "warning");
       return;
     }
-    
-    const cartData = {
-      productId: productId,
-      size: selectedSize.name,
-      quantity: 1
-    };
-        
-    dispatch(addItemToCart(cartData))
-      .then(data => {
-        console.log("Successfully added to cart", data);
-        dispatch(getCart());
-        // Hiển thị thông báo khi thêm vào giỏ hàng thành công
-        setShowToast(true);
-      })
-      .catch(err => {
-        console.error("Failed to add to cart", err);
-        alert("Không thể thêm vào giỏ hàng: " + (err.message || "Lỗi không xác định"));
-      });
-  }
+    setIsAddingToCart(true);
+    try {
+      const cartData = {
+        productId: item.id,
+        size: selectedSize.name,
+        quantity: 1
+      };
+      await addItemToCart(cartData);
+      showToast(`${item.title || 'Sản phẩm'} đã được thêm vào giỏ hàng!`, "success");
+    } catch (err) {
+      showToast(err.response?.data?.message || err.message || "Không thể thêm vào giỏ hàng.", "error");
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
 
-  function classNames(...classes) {
-    return classes.filter(Boolean).join(' ')
-  }
+  function classNames(...classes) { return classes.filter(Boolean).join(' ') }
 
-  // Basic product information object (always visible)
   const basicInfo = [
-    { label: "Brand", value: item.brand || "Unknown" },
-    { label: "Color", value: item.color || "Unknown" },
-    { label: "Mô tả sản phẩm", value: item.description || "No description available" },
+    { label: "Thương hiệu", value: item?.brand?.name || item?.brand || "Chưa rõ" },
+    { label: "Màu sắc", value: item?.color || "Chưa rõ" },
+    // Thêm các trường khác từ item nếu có
   ];
 
-  // Extended product information object (visible when expanded)
   const extendedInfo = [
-    { label: "Dung lượng pin", value: item.batteryCapacity || "N/A" },
-    { label: "Loại pin", value: item.batteryTtype || "N/A" },
-    { label: "Cổng kết nối", value: item.connectionPort || "N/A" },
-    { label: "Kích thước", value: item.dimension || "N/A" },
-    { label: "Dung lượng ram", value: item.ramCapacity || "N/A" },
-    { label: "Dung lượng bộ nhớ trong", value: item.romCapacity || "N/A" },
-    { label: "Kích thước màn hình", value: item.screenSize || "N/A" },
-    { label: "Trọng lượng", value: item.weight || "N/A" },
+    { label: "Mô tả sản phẩm", value: item?.description || "Không có mô tả." },
+    { label: "Dung lượng pin", value: item?.batteryCapacity || "N/A" },
+    { label: "Loại pin", value: item?.batteryType || "N/A" }, // Sửa batteryTtype
+    { label: "Cổng kết nối", value: item?.connectionPort || "N/A" },
+    { label: "Kích thước", value: item?.dimension || "N/A" },
+    { label: "Dung lượng RAM", value: item?.ramCapacity || "N/A" },
+    { label: "Bộ nhớ trong", value: item?.romCapacity || "N/A" },
+    { label: "Kích thước màn hình", value: item?.screenSize || "N/A" },
+    { label: "Trọng lượng", value: item?.weight || "N/A" },
   ];
+
+
+  if (!item) {
+    return (
+      <div className="flex flex-col flex-1 items-center justify-center p-10">
+        <CircularProgress />
+        <Typography sx={{mt: 2}}>Đang tải thông tin sản phẩm...</Typography>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1">
-      {/* Toast Notification */}
-      <ToastNotification 
-        show={showToastt} 
-        message="Thêm vào giỏ hàng thành công" 
-        productName={item.title}
-        productImage={item.imageUrl || (item.images && item.images[0])}
-        onClose={() => setShowToast(false)} 
-      />
-      
-      <h1 className="mb-5 text-2xl">{item.title}</h1>
-
-      <div className="flex gap-1.5 items-center text-xs text-gray-500 mb-1">
-        <span>{item?.averageRating?.toFixed(1) || "0.0"}</span>
-        <Rating value={item?.averageRating || 0} name='half-rating' readOnly precision={.5}/>
-        <span> </span>
-        <span> </span>
-        <span>({item?.numRatings || 0}) đánh giá </span>
-        <span> </span>
-        <span> </span>
-        <span>Đã bán ({item?.quantitySold || 0}) </span>
+      <h1 className="mb-3 text-2xl lg:text-3xl font-semibold text-gray-800">{item.title || "Tên sản phẩm"}</h1>
+      <div className="flex gap-2 items-center text-sm text-gray-600 mb-3">
+        <Rating value={item?.averageRating || 0} name='product-rating' readOnly precision={0.5} size="small"/>
+        <span>({item?.numRatings || 0} đánh giá)</span>
+        <span className="mx-1">|</span>
+        <span>Đã bán ({item?.quantitySold || 0})</span>
       </div>
-
-      <p className="text-3xl font-semibold text-red-600">{formatCurrency(item?.discountedPrice) || "0đ"} 
-        <span> </span>
-        <span className="text-xl line-through text-stone-500">{formatCurrency(item?.price) || "0đ"}</span>   
-        <span> </span>
-        <span className="text-sm border border-red-500 p-1 r-1">-{item?.discountPercent || 0}%</span>
-      </p> 
-
-      {/* Size Selection */}
-      <fieldset aria-label="Choose a size" className="mt-4">
-        <legend className="text-sm font-medium text-gray-900">Size</legend>
-        <RadioGroup
-          value={selectedSize}
-          onChange={(size) => {setSelectedSize(size)}}
-          className="grid grid-cols-4 gap-4 sm:grid-cols-8 lg:grid-cols-4 mt-4"
-        >
-          {(item?.sizes || []).map((size) => {
-            const inStock = size.quantity > 0;
-            return (
-              <Radio
-                key={size.name}
-                value={size}
-                disabled={!inStock}
-                className={classNames(
-                  inStock
-                    ? 'cursor-pointer bg-white text-gray-900 shadow-xs'
-                    : 'cursor-not-allowed bg-gray-50 text-gray-200',
-                  'group relative flex items-center justify-center rounded-md border px-4 py-3 text-sm font-medium uppercase hover:bg-gray-50 focus:outline-none data-focus:ring-2 data-focus:ring-indigo-500 sm:flex-1 sm:py-6'
-                )}
-              >
-                <span>{size.name}</span>
-                {inStock ? (
-                  <span
-                    className="pointer-events-none absolute -inset-px rounded-md border-2 border-transparent group-data-checked:border-indigo-500"
-                  />
-                ) : (
-                  <span className="pointer-events-none absolute -inset-px rounded-md border-2 border-gray-200">
-                    <svg
-                      stroke="currentColor"
-                      viewBox="0 0 100 100"
-                      preserveAspectRatio="none"
-                      className="absolute inset-0 size-full stroke-2 text-gray-200"
-                    >
-                      <line x1={0} x2={100} y1={100} y2={0} vectorEffect="non-scaling-stroke" />
-                    </svg>
-                  </span>
-                )}
-              </Radio>
-            );
-          })}
-        </RadioGroup>
-      </fieldset>
-
-      {/* Hiển thị size đã chọn */}
-      <div className="mt-2 text-sm">
-        {selectedSize ? (
-          <p>Size đã chọn: <strong>{selectedSize.name}</strong></p>
-        ) : (
-          <p className="text-gray-500">Vui lòng chọn size</p>
+      <div className="mb-4">
+        <span className="text-3xl lg:text-4xl font-bold text-red-600">{formatCurrency(item?.discountedPrice)}</span>
+        {item?.price > item?.discountedPrice && (
+          <>
+            <span className="ml-3 text-lg lg:text-xl line-through text-gray-500">{formatCurrency(item?.price)}</span>
+            <span className="ml-2 text-sm bg-red-100 text-red-600 font-semibold px-2 py-0.5 rounded">
+              -{item?.discountPercent || 0}%
+            </span>
+          </>
         )}
       </div>
 
-      <button 
-        onClick={handleClickToCart} 
-        disabled={!selectedSize}
-        className={`px-8 mt-5 py-4 mb-5 w-full text-base text-white cursor-pointer border-[none] ${selectedSize ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'}`}
+      {item?.sizes && item.sizes.length > 0 && (
+        <fieldset aria-label="Choose a configuration" className="mt-4 mb-5">
+          <legend className="text-md font-medium text-gray-900 mb-2">Chọn cấu hình:</legend>
+          <RadioGroup
+            value={selectedSize}
+            onChange={setSelectedSize}
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+          >
+            {item.sizes.map((size) => (
+              <Radio
+                key={size.name}
+                value={size}
+                disabled={size.quantity <= 0}
+                className={({ checked, disabled }) =>
+                  classNames(
+                    disabled ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                             : 'bg-white text-gray-900 hover:bg-gray-50 cursor-pointer',
+                    checked ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-gray-300',
+                    'group relative flex items-center justify-center rounded-md border px-3 py-2.5 text-sm font-medium focus:outline-none transition-all'
+                  )
+                }
+              >
+                <span>{size.name}</span>
+                {size.quantity <= 0 && (
+                    <span className="pointer-events-none absolute -inset-px rounded-md border-2 border-gray-200">
+                        <svg stroke="currentColor" viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 size-full stroke-2 text-gray-200">
+                        <line x1={0} x2={100} y1={100} y2={0} vectorEffect="non-scaling-stroke" />
+                        </svg>
+                    </span>
+                )}
+              </Radio>
+            ))}
+          </RadioGroup>
+        </fieldset>
+      )}
+
+      {selectedSize && (
+        <div className="mt-1 mb-3 text-sm text-green-600">
+          Đã chọn: <strong>{selectedSize.name}</strong> (Còn lại: {selectedSize.quantity})
+        </div>
+      )}
+      {!selectedSize && item?.sizes && item.sizes.length > 0 && (
+         <div className="mt-1 mb-3 text-sm text-red-500">Vui lòng chọn một cấu hình.</div>
+      )}
+
+
+      <button
+        onClick={handleClickToCart}
+        disabled={(!selectedSize && item?.sizes?.length > 0) || isAddingToCart || isCartLoadingGlobal}
+        className={`w-full px-8 py-3 text-base font-semibold text-white rounded-md transition-colors duration-150 ease-in-out
+                    ${(!selectedSize && item?.sizes?.length > 0) || isAddingToCart || isCartLoadingGlobal
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300'
+                    }`}
       >
-        Thêm vào giỏ hàng
+        {isAddingToCart || isCartLoadingGlobal ? <CircularProgress size={24} color="inherit" /> : "Thêm vào giỏ hàng"}
       </button>
-      
-      <section className="mb-10">
-        <p className="mb-2.5 text-sm">Bảo hành 24 tháng</p>
-        <p className="mb-2.5 text-sm">Đổi trả dễ dàng trong 7 ngày</p>
-        <p className="mb-2.5 text-sm">Miễn phí giao hàng toàn quốc</p>
+
+      <section className="my-6 py-4 border-t border-b border-gray-200">
+        <ul className="space-y-1 text-sm text-gray-600">
+            <li><span className="font-medium text-green-600">✓</span> Bảo hành {item?.warrantyPeriod || "12"} tháng</li>
+            <li><span className="font-medium text-green-600">✓</span> Đổi trả dễ dàng trong 7 ngày</li>
+            <li><span className="font-medium text-green-600">✓</span> Miễn phí giao hàng toàn quốc</li>
+        </ul>
       </section>
-      
-      {/* Thông tin sản phẩm với nút hiển thị thêm */}
+
       <section className="mb-10">
-        <h2 className="text-lg font-medium mb-4">Thông tin sản phẩm</h2>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <table className="w-full text-sm">
+        <h2 className="text-xl font-semibold mb-3 text-gray-800">Thông tin chi tiết</h2>
+        <div className="bg-gray-50 rounded-lg p-4 text-sm">
+          <table className="w-full">
             <tbody>
-              {/* Always show basic information */}
               {basicInfo.map((info, index) => (
-                info.value !== null && info.value !== "N/A" && info.value !== undefined ? (
-                  <tr key={`basic-${index}`}>
-                    <td className="px-2 py-2.5 border-b border-solid border-b-zinc-100 font-medium w-1/3">
-                      {info.label}
-                    </td>
-                    <td className="px-2 py-2.5 border-b border-solid border-b-zinc-100">
-                      {info.value}
-                    </td>
+                info.value && info.value !== "N/A" && (
+                  <tr key={`basic-${index}`} className="border-b border-gray-200 last:border-b-0">
+                    <td className="py-2.5 pr-3 font-medium text-gray-600 w-1/3">{info.label}</td>
+                    <td className="py-2.5 text-gray-800">{info.value}</td>
                   </tr>
-                ) : null
+                )
               ))}
-              
-              {/* Show "Đọc tiếp bài viết" button if not expanded */}
               {!showFullSpecs && (
                 <tr>
-                  <td colSpan="2" className="text-center pt-3">
-                    <button 
-                      onClick={() => setShowFullSpecs(true)} 
-                      className="text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center w-full"
-                    >
-                      Đọc tiếp bài viết ▼
+                  <td colSpan="2" className="pt-3 text-center">
+                    <button onClick={() => setShowFullSpecs(true)} className="text-blue-600 hover:underline font-medium">
+                      Xem thêm cấu hình chi tiết ▼
                     </button>
                   </td>
                 </tr>
               )}
-              
-              {/* Show extended information if expanded */}
               {showFullSpecs && extendedInfo.map((info, index) => (
-                info.value !== null && info.value !== "N/A" && info.value !== undefined ? (
-                  <tr key={`extended-${index}`}>
-                    <td className="px-2 py-2.5 border-b border-solid border-b-zinc-100 font-medium w-1/3">
-                      {info.label}
-                    </td>
-                    <td className="px-2 py-2.5 border-b border-solid border-b-zinc-100">
-                      {info.value}
-                    </td>
+                 info.value && info.value !== "N/A" && (
+                  <tr key={`extended-${index}`} className="border-b border-gray-200 last:border-b-0">
+                    <td className="py-2.5 pr-3 font-medium text-gray-600 w-1/3">{info.label}</td>
+                    <td className="py-2.5 text-gray-800">{info.value}</td>
                   </tr>
-                ) : null
+                )
               ))}
+               {showFullSpecs && item?.detailedReview && (
+                <tr>
+                    <td colSpan="2" className="pt-4">
+                        <h3 className="text-lg font-semibold mb-1 text-gray-800">Đánh giá chi tiết</h3>
+                        <p className="text-gray-700 whitespace-pre-line">{item.detailedReview}</p>
+                    </td>
+                </tr>
+              )}
+              {showFullSpecs && item?.powerfulPerformance && (
+                <tr>
+                    <td colSpan="2" className="pt-4">
+                        <h3 className="text-lg font-semibold mb-1 text-gray-800">Hiệu năng</h3>
+                        <p className="text-gray-700 whitespace-pre-line">{item.powerfulPerformance}</p>
+                    </td>
+                </tr>
+              )}
+              {showFullSpecs && (
+                <tr>
+                  <td colSpan="2" className="pt-4 text-center">
+                    <button onClick={() => setShowFullSpecs(false)} className="text-blue-600 hover:underline font-medium">
+                      Thu gọn ▲
+                    </button>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
-          
-          {/* Đánh giá chi tiết và hiệu năng hiển thị khi mở rộng */}
-          {showFullSpecs && (
-            <div className="mt-6">
-              {item.detailedReview && (
-                <div className="mb-6">
-                  <h3 className="text-2xl font-bold mb-2">Đánh giá chi tiết {item.title}</h3>
-                  <p className="text-gray-700">{item.detailedReview}</p>
-                </div>
-              )}
-              
-              {item.powerfulPerformance && (
-                <div className="mb-4">
-                  <h3 className="text-2xl font-bold mb-2">Hiệu năng của {item.title}</h3>
-                  <p className="text-gray-700">{item.powerfulPerformance}</p>
-                </div>
-              )}
-              
-              {/* Show "Thu gọn" button at the bottom */}
-              <div className="text-center pt-4">
-                <button 
-                  onClick={() => setShowFullSpecs(false)} 
-                  className="text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center w-full"
-                >
-                  Thu gọn ▲
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </section>
     </div>
   );
 };
-
 export default ProductInfo;

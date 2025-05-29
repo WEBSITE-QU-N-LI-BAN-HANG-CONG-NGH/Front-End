@@ -1,64 +1,139 @@
+// src/services/order.service.js
 import { api } from "../config/ApiConfig";
-import { API_BASE_URL } from "../config/ApiConfig";
-
+// import { API_BASE_URL } from "../config/ApiConfig"; // Không cần nếu api instance đã có baseURL
 
 export const orderService = {
-    // createOrder: (addressId) => 
-    //     api.post(`/orders/create/${addressId}`),
     createOrder: async (addressId) => {
-    try {
-        const response = await api.post(`/orders/create/${addressId}`);
-        return response;
-    } catch (error) {
-        console.error('Error creating order:', error);
-        // Đảm bảo chúng ta xử lý lỗi một cách thích hợp và trả về lỗi để component xử lý
-        throw error;
-    }
+        try {
+            // API endpoint của bạn là /orders/create/{addressId}
+            // không phải /api/order/create/{addressId} như trong Redux action cũ
+            const response = await api.post(`/orders/create/${addressId}`);
+            return response; // Trả về response, Context sẽ lấy response.data
+        } catch (error) {
+            console.error('Lỗi khi tạo đơn hàng (Service):', error.response || error);
+            throw error;
+        }
     },
-    
-    getOrderById: (orderId) => 
-        api.get(`/orders/${orderId}`),
-    
-    getAddresses: () => 
-        api.get("/users/address"),
-    
-    addAddress: (addressData) => 
-        api.post("users/addresses", addressData),
 
-    createVNPayPayment: (orderId) => 
-        api.post(`/payment/create/${orderId}`),
+    getOrderById: async (orderId) => {
+        try {
+            const response = await api.get(`/orders/${orderId}`);
+            return response;
+        } catch (error) {
+            console.error(`Lỗi khi lấy đơn hàng ${orderId} (Service):`, error.response || error);
+            throw error;
+        }
+    },
 
-    // Hàm gọi API callback VNPAY (POST /api/v1/payment/vnpay-callback)
-    handleVNPayCallback: (vnpayParams) => {
+    getAddresses: async () => {
+        try {
+            const response = await api.get("/users/address");
+            return response;
+        } catch (error) {
+            console.error('Lỗi khi lấy địa chỉ (Service):', error.response || error);
+            throw error;
+        }
+    },
+
+    addAddress: async (addressData) => {
+        try {
+            // API endpoint của bạn là users/addresses, không phải /api/user/addresses
+            const response = await api.post("/users/addresses", addressData);
+            return response;
+        } catch (error) {
+            console.error('Lỗi khi thêm địa chỉ (Service):', error.response || error);
+            throw error;
+        }
+    },
+
+    createVNPayPayment: async (orderId) => {
+        try {
+            const response = await api.post(`/payment/create/${orderId}`);
+            return response;
+        } catch (error) {
+            console.error(`Lỗi khi tạo thanh toán VNPAY cho đơn ${orderId} (Service):`, error.response || error);
+            throw error;
+        }
+    },
+
+    handleVNPayCallback: async (vnpayParams) => {
         if (!vnpayParams) {
              return Promise.reject(new Error("VNPAY parameters are required for callback"));
         }
-        return api.post(`/payment/vnpay-callback`, null, {
-            params: vnpayParams  // Correctly send as query params
-          });
+        try {
+            // Body có thể là null nếu backend không yêu cầu body cho POST này
+            const response = await api.post(`/payment/vnpay-callback`, null, {
+                params: vnpayParams
+            });
+            return response;
+        } catch (error) {
+            console.error('Lỗi khi xử lý VNPAY callback (Service):', error.response || error);
+            throw error;
+        }
     },
 
-    getAllOrders: () => 
-        api.get("/orders/user"),
-
-    getPendingOrders: () => 
-        api.get("/orders/pending"),
-
-    getShippingOrders: () =>
-        api.get("/orders/shipped"),
-
-    getDeliveredOrders: () =>
-        api.get("/orders/delivered"),
-
-    getCancelledOrders: () =>
-        api.get("/orders/cancelled"),
-
-    getConfirmedOrders: () =>
-        api.get("/orders/confirmed"),
-
-    cancelOrder: (orderId) => 
-        api.put(`/orders/cancel/${orderId}`),
-
-    sendOrderToEmail: (orderId) =>
-        api.post(`/orders/send-mail/${orderId}`),
+    getAllOrders: async () => {
+        try {
+            const response = await api.get("/orders/user");
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+    getPendingOrders: async () => {
+        try {
+            const response = await api.get("/orders/pending");
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+    getShippingOrders: async () => {
+        try {
+            const response = await api.get("/orders/shipped");
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+    getDeliveredOrders: async () => {
+        try {
+            const response = await api.get("/orders/delivered");
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+    getCancelledOrders: async () => {
+        try {
+            const response = await api.get("/orders/cancelled");
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+    getConfirmedOrders: async () => {
+        try {
+            const response = await api.get("/orders/confirmed");
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+    cancelOrder: async (orderId) => {
+        try {
+            const response = await api.put(`/orders/cancel/${orderId}`);
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+    sendOrderToEmail: async (orderId) => {
+        try {
+            const response = await api.post(`/orders/send-mail/${orderId}`);
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
 };

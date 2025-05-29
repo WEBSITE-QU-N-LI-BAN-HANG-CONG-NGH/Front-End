@@ -1,77 +1,76 @@
-// src/pages/OAuthRedirect.jsx
 import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CircularProgress, Typography, Box, Alert } from '@mui/material';
-import { loginSuccess, getUser } from '../../State/Auth/Action';
-import { saveTokenToLocalStorage } from '../../services/util'; // Chỉ cần saveToken
+import { useAuthContext } from '../../contexts/AuthContext'; // Sử dụng AuthContext
+import { saveTokenToLocalStorage, getTokenFromLocalStorage } from '../../services/util'; // getToken có thể không cần ở đây nữa
 
 const OAuthRedirect = () => {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation(); // Dùng để lấy search params
-  const [status, setStatus] = useState('loading'); // loading, success, error
-  const [error, setError] = useState('');
+  const location = useLocation();
+  // Lấy hàm setAuthTokenAndFetchUser (hoặc tên tương tự) từ AuthContext
+  // Giả sử bạn đã tạo hàm này trong AuthContext để xử lý token từ bên ngoài
+  const { setAuthTokenAndFetchUser } = useAuthContext();
+
+  const [status, setStatus] = useState('loading'); // 'loading', 'success', 'error'
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    // ** Hàm xử lý token từ URL **
-    const handleOAuthRedirect = () => {
-      // Sử dụng URLSearchParams để lấy tham số từ query string
+    const handleOAuthRedirect = async () => {
       const params = new URLSearchParams(location.search);
-      const token = params.get('token'); // ** Lấy tham số 'token' **
-      const oauthError = params.get('error'); // ** Kiểm tra xem có tham số 'error' không **
+      const token = params.get('token');
+      const oauthError = params.get('error');
 
       if (oauthError) {
-        // Nếu backend redirect về với lỗi
+        // Xử lý lỗi từ server OAuth
         console.error("Lỗi OAuth từ backend:", oauthError);
         setStatus('error');
-        setError(`Đăng nhập thất bại: ${oauthError}`);
-        // Chuyển hướng về trang đăng nhập/trang chủ sau khi báo lỗi
-        setTimeout(() => {
-          navigate('/'); // Hoặc '/login' tùy bạn muốn
-        }, 3000);
+        setErrorMessage(`Đăng nhập thất bại: ${oauthError}`);
+        setTimeout(() => navigate('/'), 3000); // Chuyển hướng về trang chủ sau 3 giây
         return;
       }
 
       if (token) {
-        // ** Tìm thấy token **
+        // Nếu có token, xử lý nó
         try {
-          // Lưu token vào localStorage
-          saveTokenToLocalStorage(token);
-          // Dispatch action báo đăng nhập thành công với token mới
-          dispatch(loginSuccess(token));
-          // Dispatch action để lấy thông tin user với token vừa lưu
-          // dispatch(getUser()); // getUser sẽ sử dụng token từ localStorage thông qua interceptor
-
-          setStatus('success');
-          // Chuyển hướng đến trang chủ ngay lập tức hoặc sau một khoảng ngắn
-          setTimeout(() => {
-            navigate('/');
-          }, 1500); // Giảm thời gian chờ
-
+          if (typeof setAuthTokenAndFetchUser === 'function') {
+            // Gọi hàm từ AuthContext để lưu token và fetch user
+            await setAuthTokenAndFetchUser(token);
+            setStatus('success');
+            // AuthContext sẽ xử lý việc cập nhật isAuthenticated và user
+            // Sau đó, useEffect trong các component khác (ví dụ Header, AuthForms)
+            // sẽ nhận biết sự thay đổi và có thể tự động đóng modal hoặc cập nhật UI
+            setTimeout(() => {
+              navigate('/'); // Chuyển hướng về trang chủ
+            }, 1500); // Đợi một chút để người dùng thấy thông báo
+          } else {
+            // Fallback nếu hàm trong context chưa sẵn sàng (cần kiểm tra lại AuthContext)
+            console.error("Hàm setAuthTokenAndFetchUser không tồn tại trong AuthContext.");
+            saveTokenToLocalStorage(token); // Lưu tạm token
+            setStatus('success'); // Vẫn báo thành công ở UI
+            setTimeout(() => {
+              window.location.href = '/'; // Reload để AuthProvider đọc token từ localStorage
+            }, 1500);
+          }
         } catch (e) {
-            console.error("Lỗi khi xử lý token hoặc dispatch:", e);
-            setStatus('error');
-            setError('Có lỗi xảy ra khi xử lý thông tin đăng nhập.');
-            setTimeout(() => { navigate('/'); }, 3000);
+          // Xử lý lỗi trong quá trình set token hoặc fetch user
+          console.error("Lỗi khi xử lý token hoặc fetch user:", e);
+          setStatus('error');
+          setErrorMessage('Có lỗi xảy ra khi xử lý thông tin đăng nhập.');
+          setTimeout(() => navigate('/'), 3000);
         }
       } else {
-        // ** Không tìm thấy token trong URL **
+        // Không tìm thấy token
         console.error("Không tìm thấy tham số 'token' trong URL redirect.");
         setStatus('error');
-        setError('Thông tin đăng nhập không hợp lệ từ máy chủ.');
-        // Chuyển hướng về trang đăng nhập/trang chủ
-        setTimeout(() => {
-          navigate('/'); // Hoặc '/login'
-        }, 3000);
+        setErrorMessage('Thông tin đăng nhập không hợp lệ từ máy chủ.');
+        setTimeout(() => navigate('/'), 3000);
       }
     };
 
     handleOAuthRedirect();
-    // Chỉ cần chạy một lần khi component mount và location.search thay đổi
-  }, [dispatch, navigate, location.search]);
+    // Dependencies: navigate, location.search và hàm từ context
+  }, [navigate, location.search, setAuthTokenAndFetchUser]);
 
-  // --- Render Component ---
   return (
     <Box
       sx={{
@@ -79,7 +78,7 @@ const OAuthRedirect = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '80vh',
+        minHeight: '80vh', // Chiều cao tối thiểu để căn giữa trang
         padding: 3,
       }}
     >
@@ -87,7 +86,7 @@ const OAuthRedirect = () => {
         <>
           <CircularProgress size={60} thickness={4} />
           <Typography variant="h6" sx={{ mt: 4 }}>
-            Đang xác thực... {/* Thay đổi text */}
+            Đang xác thực...
           </Typography>
         </>
       )}
@@ -106,7 +105,7 @@ const OAuthRedirect = () => {
           severity="error"
           sx={{ width: '100%', maxWidth: 500, marginTop: 2 }}
         >
-          {error}. Đang chuyển hướng...
+          {errorMessage || 'Đã có lỗi xảy ra.'}. Đang chuyển hướng...
         </Alert>
       )}
     </Box>
