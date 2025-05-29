@@ -122,7 +122,7 @@ const Footer = () => {
       <FooterLinkSection title="Liên hệ" links={informationLinks} pathPrefix="/information" />
       <FooterCopyright />
       <div className="flex shrink-0 mt-14 max-w-full h-px bg-white w-full max-md:mt-10" />
-        <div className="flex flex-wrap gap-10 items-start mt-9 w-full max-w-[1360px] max-md:max-w-full">
+        <div className="flex flex-wrap gap-10 items-start mt-9 w-full max-w-[1360px] max-md:max-w-full ml-170">
           <div className="flex gap-10">
           <FooterAddressSection />
             <a href="https://www.facebook.com/EdenHoangKim/">
