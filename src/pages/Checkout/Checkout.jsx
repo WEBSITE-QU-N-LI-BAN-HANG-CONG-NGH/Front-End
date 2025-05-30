@@ -79,7 +79,10 @@ const Checkout = () => {
             const params = new URLSearchParams(location.search);
             if (!params.has('addressId')) { // Chỉ set nếu chưa có
                 params.set('addressId', defaultAddress.id);
-                navigate(`<span class="math-inline">\{location\.pathname\}?</span>{params.toString()}`, { replace: true });
+                navigate({
+                  pathname: location.pathname,
+                  search: params.toString()
+                }, { replace: true });
             }
         }
       }
@@ -227,7 +230,10 @@ const Checkout = () => {
     const params = new URLSearchParams(location.search);
     params.set('addressId', address.id);
     params.delete('step'); // Xóa step cũ nếu có để handleNextStep set lại
-    navigate(`<span class="math-inline">\{location\.pathname\}?</span>{params.toString()}`, { replace: true });
+    navigate({
+      pathname: location.pathname,
+      search: params.toString()
+    }, { replace: true });
   };
 
   const handleNextStep = () => {
@@ -252,7 +258,10 @@ const Checkout = () => {
             const params = new URLSearchParams(location.search);
             params.set('step', '3');
             params.set('addressId', selectedAddress.id);
-            navigate(`<span class="math-inline">\{location\.pathname\}?</span>{params.toString()}`);
+            navigate({
+              pathname: location.pathname,
+              search: params.toString()
+            });
         }
          setStep(3);
     } else if (step === 3) {
@@ -300,7 +309,10 @@ const Checkout = () => {
              const params = new URLSearchParams(location.search);
              params.set('step', '3');
              params.set('addressId', newAddedAddress.data.id);
-             navigate(`<span class="math-inline">\{location\.pathname\}?</span>{params.toString()}`);
+             navigate({
+              pathname: location.pathname,
+              search: params.toString()
+            });
              setStep(3);
              window.scrollTo(0,0);
         } else {
@@ -355,7 +367,10 @@ const Checkout = () => {
         const params = new URLSearchParams();
         params.set('step', '4');
         params.set('orderId', createdOrder.id);
-        navigate(`<span class="math-inline">\{location\.pathname\}?</span>{params.toString()}`, { replace: true });
+        navigate({
+          pathname: location.pathname,
+          search: params.toString()
+        }, { replace: true });
         setStep(4);
         // Không cần reload, vì useEffect của step=4 sẽ fetch order
       }
