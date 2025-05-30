@@ -1,40 +1,44 @@
-"use client";
+// src/components/features/user/AccountForm.jsx
 import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+// Xóa: import { useSelector } from "react-redux";
+import { useAuthContext } from "../../../contexts/AuthContext"; // THAY ĐỔI
 import { authService } from "../../../services/auth.service";
 import { useToast } from "../../../contexts/ToastContext";
 
-const AccountForm = () => {  // Lấy thông tin người dùng từ redux store
-  const userStore = useSelector((store) => store?.auth?.user) || {};
+const AccountForm = () => {
+  // THAY ĐỔI: Sử dụng useAuthContext
+  const { user: userFromContext, isLoading: authContextLoading, fetchUserProfile, clearAuthError } = useAuthContext();
   const { showToast } = useToast();
 
-  // State ban đầu
   const [user, setUser] = useState({
     fullName: "",
     phone: "",
     email: ""
   });
-  
-  // State để theo dõi dữ liệu ban đầu để so sánh thay đổi
-  const [initialData, setInitialData] = useState({});
-  const [loading, setLoading] = useState(false);
 
-  // Cập nhật form khi userStore thay đổi
+  const [initialData, setInitialData] = useState({});
+  const [isUpdating, setIsUpdating] = useState(false); // State loading riêng cho việc cập nhật
+
   useEffect(() => {
-    if (userStore) {
-      const fullName = userStore.firstName || ""; // Chỉ lấy firstName để hiển thị
+    // THAY ĐỔI: Sử dụng userFromContext
+    if (userFromContext) {
+      const fullName = userFromContext.firstName || ""; // Chỉ lấy firstName
       const formData = {
         fullName: fullName,
-        phone: userStore.mobile || "",
-        email: userStore.email || ""
+        phone: userFromContext.mobile || "",
+        email: userFromContext.email || ""
       };
-      
       setUser(formData);
-      setInitialData(formData); // Lưu trạng thái ban đầu để kiểm tra thay đổi
+      setInitialData(formData);
+    } else {
+      // Nếu không có userFromContext (ví dụ, chưa đăng nhập hoặc đang load)
+      // Bạn có thể reset form hoặc giữ nguyên, tùy theo logic mong muốn
+      const defaultForm = { fullName: "", phone: "", email: "" };
+      setUser(defaultForm);
+      setInitialData(defaultForm);
     }
-  }, [userStore]);
+  }, [userFromContext]);
 
-  // Xử lý thay đổi input
   const handleChange = (e) => {
     const { name, value } = e.target;
     setUser({
@@ -43,54 +47,57 @@ const AccountForm = () => {  // Lấy thông tin người dùng từ redux store
     });
   };
 
-  // Kiểm tra xem form có thay đổi không
   const hasChanges = () => {
-    return user.fullName !== initialData.fullName || 
+    return user.fullName !== initialData.fullName ||
            user.phone !== initialData.phone;
   };
 
-  // Xử lý gửi form
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!hasChanges()) return;
-    
+    if (!hasChanges() || isUpdating) return;
+
+    clearAuthError(); // Xóa lỗi cũ từ context nếu có
+    setIsUpdating(true);
     try {
-      setLoading(true);
-      
-      // Chuẩn bị dữ liệu theo yêu cầu API
       const userData = {
-        firstName: user.fullName, // Lưu toàn bộ họ tên vào firstName
-        lastName: "", // Để trống lastName
+        firstName: user.fullName,
+        lastName: "", // Backend có thể yêu cầu lastName, nếu không thì bỏ trống
         phoneNumber: user.phone
       };
-      
-      // Gọi API cập nhật thông tin
-      // Thay thế phần này bằng cách gọi hàm cập nhật từ service hoặc redux action
-      const response = await authService.updateProfile(userData);
 
-      console.log("Phản hồi từ API:", response);
-      
-      setInitialData({...user});       // Cập nhật dữ liệu ban đầu sau khi lưu thành công
+      await authService.updateProfile(userData); // Gọi service
+      await fetchUserProfile(); // THAY ĐỔI: Fetch lại user profile từ context để cập nhật state global
+
+      // Cập nhật initialData sau khi lưu thành công
+      setInitialData({
+        fullName: user.fullName,
+        phone: user.phone,
+        email: user.email // Giữ lại email vì nó không thay đổi
+      });
       showToast("Cập nhật thông tin thành công", "success");
-      
+
     } catch (error) {
       console.error("Lỗi khi cập nhật thông tin:", error);
-      // Hiển thị thông báo lỗi (có thể thêm state để hiển thị lỗi)
+      const errorMessage = error.response?.data?.message || error.message || "Cập nhật thất bại";
+      showToast(errorMessage, "error");
     } finally {
-      setLoading(false);
+      setIsUpdating(false);
     }
   };
 
+  // Disable form khi context đang load user ban đầu hoặc khi đang update
+  const formDisabled = authContextLoading || isUpdating;
 
   return (
     <div className="flex-1">
-      <h1 className="mb-6 text-3xl font-bold text-black">{user.fullName || "Tài khoản của tôi"}</h1>
+      <h1 className="mb-6 text-3xl font-bold text-black">
+        {/* Sử dụng initialData.fullName để tránh FOUC khi userFromContext chưa load */}
+        {initialData.fullName || user.fullName || "Tài khoản của tôi"}
+      </h1>
       <h2 className="mb-4 text-lg font-bold text-neutral-800">
         Thông tin tài khoản
       </h2>
-      
-      
+
       <form className="pt-6" onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">
@@ -107,6 +114,7 @@ const AccountForm = () => {  // Lấy thông tin người dùng từ redux store
               value={user.fullName}
               onChange={handleChange}
               className="p-3 w-full rounded border border-gray-300"
+              disabled={formDisabled}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -121,6 +129,7 @@ const AccountForm = () => {  // Lấy thông tin người dùng từ redux store
               onChange={handleChange}
               className="p-3 w-full rounded border border-gray-300"
               placeholder="Vui lòng nhập số điện thoại"
+              disabled={formDisabled}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -131,23 +140,25 @@ const AccountForm = () => {  // Lấy thông tin người dùng từ redux store
               type="email"
               id="email"
               name="email"
-              readOnly
+              readOnly // Email không nên cho sửa ở đây
               value={user.email}
-              className="p-3 w-full rounded border border-gray-300 bg-gray-50"
+              className="p-3 w-full rounded border border-gray-300 bg-gray-100 cursor-not-allowed" // Style cho trường readonly
+              disabled={formDisabled} // Vẫn disable cùng form
             />
           </div>
         </div>
-        
-          <button
-            type="submit"
-            disabled={loading || !hasChanges()}
-            className={`px-6 py-3 mt-6 font-semibold text-white rounded ${
-              loading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
-            }  ${!hasChanges() ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            {loading ? "ĐANG LƯU..." : "LƯU THAY ĐỔI"}
-          </button>
 
+        <button
+          type="submit"
+          disabled={formDisabled || !hasChanges()} // Disable cả khi không có thay đổi
+          className={`px-6 py-3 mt-6 font-semibold text-white rounded transition-colors duration-150
+            ${(formDisabled || !hasChanges())
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+            }`}
+        >
+          {isUpdating ? "ĐANG LƯU..." : "LƯU THAY ĐỔI"}
+        </button>
       </form>
     </div>
   );

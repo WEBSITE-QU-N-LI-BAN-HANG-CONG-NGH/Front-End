@@ -1,48 +1,60 @@
+// src/contexts/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { authService } from '../services/auth.service'; // Đảm bảo đường dẫn đúng
+import { authService } from '../services/auth.service';
 import {
   saveTokenToLocalStorage,
   getTokenFromLocalStorage,
   clearAllTokens,
   extractTokensFromResponse
-} from '../services/util'; // Đảm bảo đường dẫn đúng
+} from '../services/util';
 
-// Tạo Context
 const AuthContext = createContext(null);
 
-// Tạo Provider Component
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [jwt, setJwt] = useState(getTokenFromLocalStorage());
-  const [isLoading, setIsLoading] = useState(true); // Bắt đầu với isLoading true để checkAuthStatus
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Hàm checkAuthStatus được gọi khi provider mount
+  const fetchUserProfileInternal = useCallback(async (currentToken) => {
+    if (!currentToken) {
+      setUser(null);
+      setJwt(null); // Đảm bảo jwt cũng null nếu không có token
+      // Không cần setError ở đây trừ khi muốn báo lỗi "không có token"
+      return; // Thoát sớm nếu không có token
+    }
+    // setIsLoading(true); // Không set loading ở đây để tránh nhấp nháy khi chỉ fetch user
+    // setError(null); // Không reset error ở đây để giữ lại lỗi từ login/register nếu có
+    try {
+      const response = await authService.getUserProfile(); // getUserProfile sẽ dùng token từ interceptor
+      setUser(response.data?.data || response.data);
+    } catch (err) {
+      console.error("Lỗi khi lấy thông tin người dùng (fetchUserProfileInternal):", err);
+      // Nếu lỗi khi fetch user (ví dụ token hết hạn sau khi đã set), thì logout
+      clearAllTokens();
+      setJwt(null);
+      setUser(null);
+      setError("Phiên làm việc hết hạn hoặc token không hợp lệ.");
+    } finally {
+      // setIsLoading(false); // Không set loading ở đây
+    }
+  }, []);
+
+
   const checkAuthStatus = useCallback(async () => {
-    setIsLoading(true);
+    setIsLoading(true); // Bắt đầu loading chính cho việc kiểm tra auth ban đầu
     setError(null);
     const token = getTokenFromLocalStorage();
     if (token) {
-      setJwt(token); // Cập nhật jwt state nếu nó chưa được set từ initialState
-      try {
-        const response = await authService.getUserProfile();
-        setUser(response.data?.data || response.data); // API của bạn có thể trả về user trong data.data
-      } catch (err) {
-        console.error("Lỗi khi lấy thông tin người dùng lúc khởi tạo:", err);
-        // Nếu lỗi (ví dụ token hết hạn), xóa token và user
-        clearAllTokens();
-        setJwt(null);
-        setUser(null);
-        setError("Phiên đăng nhập đã hết hạn hoặc không hợp lệ.");
-      }
+      setJwt(token);
+      await fetchUserProfileInternal(token); // Gọi hàm nội bộ
     }
-    setIsLoading(false);
-  }, []);
+    setIsLoading(false); // Kết thúc loading chính
+  }, [fetchUserProfileInternal]);
 
   useEffect(() => {
     checkAuthStatus();
   }, [checkAuthStatus]);
-
 
   const login = async (userData) => {
     setIsLoading(true);
@@ -54,30 +66,25 @@ export const AuthProvider = ({ children }) => {
       if (accessToken) {
         saveTokenToLocalStorage(accessToken);
         setJwt(accessToken);
-        // Sau khi login thành công, gọi getUserProfile để lấy thông tin user
-        const userProfileResponse = await authService.getUserProfile();
-        setUser(userProfileResponse.data?.data || userProfileResponse.data);
+        await fetchUserProfileInternal(accessToken); // Gọi hàm nội bộ sau khi có token mới
 
-        // Kiểm tra role SELLER và chuyển hướng (logic này đã có trong Redux action của bạn)
         const responseData = response.data.data || response.data;
         const userFromLogin = responseData.user || responseData;
         const roles = userFromLogin?.roles || (userFromLogin?.authorities?.map(auth => auth.authority.replace("ROLE_", ""))) || [];
 
         if (roles.includes("SELLER")) {
-            // Thêm token vào URL khi chuyển hướng
             window.location.href = `http://localhost:5174/dashboard?token=${encodeURIComponent(accessToken)}`;
-            return; // Dừng execution
+            return;
         }
-
       } else {
         throw new Error("Đăng nhập thành công nhưng không nhận được token.");
       }
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Đăng nhập thất bại.";
       setError(errorMessage);
-      setUser(null); // Đảm bảo user là null khi đăng nhập thất bại
-      setJwt(null);   // Và jwt cũng là null
-      throw err; // Ném lỗi ra để component có thể bắt và hiển thị
+      setUser(null);
+      setJwt(null);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -87,11 +94,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Logic đăng ký (gửi OTP, etc.) nằm trong authService.register
-      // AuthContext không cần trực tiếp xử lý token ở bước này,
-      // vì sau khi verify OTP thành công, người dùng sẽ login.
       await authService.register(userData);
-      // Bạn có thể set một message thành công ở đây nếu muốn, hoặc để component xử lý
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Đăng ký thất bại.";
       setError(errorMessage);
@@ -105,7 +108,7 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      await authService.logout(); // Gọi API logout nếu có
+      await authService.logout();
     } catch (err) {
       console.error("Lỗi trong quá trình gọi API logout (có thể bỏ qua):", err);
     } finally {
@@ -113,58 +116,49 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setJwt(null);
       setIsLoading(false);
-      // Chuyển hướng về trang chủ sau khi logout
       if (window.location.pathname !== '/') {
          window.location.href = "/";
       }
     }
   };
 
-  // Hàm này có thể không cần thiết nếu checkAuthStatus đã đủ,
-  // nhưng giữ lại nếu bạn muốn có một cách fetch user thủ công.
-  const fetchUserProfile = async () => {
-    if (!jwt) {
-        // Nếu không có jwt, không thể fetch user, reset state
-        setUser(null);
-        setError(null); // Hoặc set một lỗi cụ thể
-        setIsLoading(false);
-        return;
-    }
+  // HÀM MỚI ĐƯỢC THÊM
+  const setAuthTokenAndFetchUser = useCallback(async (token) => {
     setIsLoading(true);
     setError(null);
-    try {
-      const response = await authService.getUserProfile();
-      setUser(response.data?.data || response.data);
-    } catch (err) {
-      console.error("Lỗi khi lấy thông tin người dùng:", err);
-      setError("Không thể tải thông tin người dùng.");
-      // Nếu lỗi, có thể token không hợp lệ, xóa đi
+    if (token) {
+      saveTokenToLocalStorage(token);
+      setJwt(token);
+      await fetchUserProfileInternal(token); // Sử dụng hàm nội bộ
+    } else {
+      // Nếu không có token được truyền vào, coi như là lỗi hoặc logout
       clearAllTokens();
-      setJwt(null);
       setUser(null);
-    } finally {
-      setIsLoading(false);
+      setJwt(null);
+      setError("Không nhận được token xác thực.");
     }
-  };
+    setIsLoading(false);
+  }, [fetchUserProfileInternal]);
+
 
   const value = {
     user,
     jwt,
     isLoading,
     error,
-    isAuthenticated: !!jwt && !!user, // Chính xác hơn khi cả jwt và user đều có
+    isAuthenticated: !!jwt && !!user,
     login,
     register,
     logout,
-    fetchUserProfile, // Nếu bạn cần
-    checkAuthStatus, // Để có thể gọi lại nếu cần từ bên ngoài
-    clearAuthError: () => setError(null) // Thêm hàm để xóa lỗi
+    fetchUserProfile: () => fetchUserProfileInternal(jwt), // fetchUserProfile giờ sẽ gọi hàm nội bộ với jwt hiện tại
+    checkAuthStatus,
+    clearAuthError: () => setError(null),
+    setAuthTokenAndFetchUser, // Cung cấp hàm mới
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Tạo Custom Hook
 export const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
