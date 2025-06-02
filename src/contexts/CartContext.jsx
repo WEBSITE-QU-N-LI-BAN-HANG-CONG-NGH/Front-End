@@ -21,7 +21,7 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       const response = await cartService.getCart();
-      setCart(response.data);
+      setCart(response.data.data || response.data);
     } catch (err) {
       console.error("[CartContext] Lỗi khi lấy giỏ hàng:", err);
       setError(err.response?.data?.message || err.message || "Không thể tải giỏ hàng.");
@@ -50,44 +50,47 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       const response = await cartService.addToCart(cartData);
-      setCart(response.data);
-      return response.data;
+      setCart(response.data.data || response.data);
+      return response.data.data || response.data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể thêm vào giỏ hàng.";
       setError(errorMessage);
+      console.error("[CartContext] Lỗi khi thêm vào giỏ hàng:", err);
       throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const removeItemFromCart = async (itemId) => {
+  const removeItemFromCart = async (cartItemId) => {
     if (!isAuthenticated) return;
     setIsLoading(true);
     setError(null);
     try {
-      const response = await cartService.removeFromCart(itemId);
-      setCart(response.data);
+      const response = await cartService.removeFromCart(cartItemId);
+      setCart(response.data.data || response.data);
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể xóa sản phẩm.";
       setError(errorMessage);
+      console.error("[CartContext] Lỗi khi xóa khỏi giỏ hàng:", err);
       throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateCartItem = async (itemId, newQuantity) => {
+  const updateCartItem = async (cartItemId, newQuantity) => {
     if (!isAuthenticated) return;
     setIsLoading(true);
     setError(null);
     try {
       const payload = { quantity: newQuantity };
-      const response = await cartService.updateCartItem(payload, itemId);
-      setCart(response.data);
+      const response = await cartService.updateCartItem(payload, cartItemId);
+      setCart(response.data.data || response.data);
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể cập nhật số lượng.";
       setError(errorMessage);
+      console.error("[CartContext] Lỗi khi cập nhật giỏ hàng:", err);
       throw err;
     } finally {
       setIsLoading(false);
@@ -100,17 +103,18 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       await cartService.clearCart();
-      setCart(prevCart => ({
-        ...(prevCart || {}),
+      setCart({
         cartItems: [],
         totalOriginalPrice: 0,
         totalDiscountedPrice: 0,
         discount: 0,
         totalItems: 0,
-      }));
+        id: cart?.id
+      });
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể xóa giỏ hàng.";
       setError(errorMessage);
+      console.error("[CartContext] Lỗi khi xóa sạch giỏ hàng:", err);
       throw err;
     } finally {
       setIsLoading(false);
