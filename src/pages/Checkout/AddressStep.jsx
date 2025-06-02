@@ -8,29 +8,27 @@ const AddressStep = ({
   handleAddressSelect,
   shippingInfo,
   handleShippingChange,
-  selectedProvinceId,
-  selectedDistrictId,
-  selectedWardId,
+  selectedProvinceId, // This is selectedProvinceCode from Checkout.jsx
+  selectedDistrictId, // This is selectedDistrictCode from Checkout.jsx
+  selectedWardId,     // This is selectedWardCode from Checkout.jsx
   handleProvinceChange,
   handleDistrictChange,
   handleWardChange,
-  provinces,
-  districts,
-  wards,
+  provinces, // Array of { code: '01', name: 'Hà Nội', ... }
+  districts, // Array of { code: '001', name: 'Ba Đình', ... }
+  wards,     // Array of { code: '00001', name: 'Phúc Xá', ... }
   isLoadingProvinces,
   isLoadingDistricts,
   isLoadingWards,
   handlePrevStep,
-  onAddAddressAndContinue, // Đã đổi tên
-  handleNextStep,         // Thêm prop này
+  onAddAddressAndContinue,
+  handleNextStep,
   isAddingAddress
 }) => {
   const canProceedWithNewAddress = shippingInfo.fullName && shippingInfo.phone && shippingInfo.address && selectedProvinceId && selectedDistrictId && selectedWardId;
-  const canProceed = selectedAddress || canProceedWithNewAddress;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white p-6 md:p-8 rounded-lg shadow-lg">
-      {/* Phần địa chỉ đã lưu */}
       <div>
         <h2 className="text-xl font-bold mb-6 text-gray-800">Chọn địa chỉ đã lưu</h2>
         {savedAddresses.length > 0 ? (
@@ -61,7 +59,6 @@ const AddressStep = ({
         )}
       </div>
 
-      {/* Form điền thông tin mới */}
       <div>
         <h2 className="text-xl font-bold mb-6 text-gray-800">Hoặc nhập địa chỉ mới</h2>
         <form className="space-y-4">
@@ -78,14 +75,14 @@ const AddressStep = ({
               <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-1">Tỉnh/Thành phố *</label>
               <select id="province" name="province" value={selectedProvinceId} onChange={handleProvinceChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" disabled={isLoadingProvinces} required >
                 <option value="">{isLoadingProvinces ? 'Đang tải...' : 'Chọn Tỉnh/Thành'}</option>
-                {provinces.map(province => (<option key={province.id} value={province.id}>{province.name}</option>))}
+                {provinces.map(province => (<option key={province.code} value={province.code}>{province.name}</option>))}
               </select>
             </div>
             <div>
               <label htmlFor="district" className="block text-sm font-medium text-gray-700 mb-1">Quận/Huyện *</label>
               <select id="district" name="district" value={selectedDistrictId} onChange={handleDistrictChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" disabled={!selectedProvinceId || isLoadingDistricts} required >
                 <option value="">{isLoadingDistricts ? 'Đang tải...' : 'Chọn Quận/Huyện'}</option>
-                {districts.map(district => (<option key={district.id} value={district.id}>{district.name}</option>))}
+                {districts.map(district => (<option key={district.code} value={district.code}>{district.name}</option>))}
               </select>
             </div>
           </div>
@@ -93,7 +90,7 @@ const AddressStep = ({
             <label htmlFor="ward" className="block text-sm font-medium text-gray-700 mb-1">Phường/Xã *</label>
             <select id="ward" name="ward" value={selectedWardId} onChange={handleWardChange} className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" disabled={!selectedDistrictId || isLoadingWards} required >
               <option value="">{isLoadingWards ? 'Đang tải...' : 'Chọn Phường/Xã'}</option>
-              {wards.map(ward => (<option key={ward.id} value={ward.id}>{ward.name}</option>))}
+              {wards.map(ward => (<option key={ward.code} value={ward.code}>{ward.name}</option>))}
             </select>
           </div>
           <div>
@@ -107,7 +104,6 @@ const AddressStep = ({
         </form>
       </div>
 
-      {/* Nút bấm */}
       <div className="col-span-1 md:col-span-2 flex flex-col sm:flex-row justify-between mt-8 pt-6 border-t border-gray-200">
         <MuiButton variant="outlined" onClick={handlePrevStep} sx={{ mb: { xs: 2, sm: 0 } }}>
           QUAY LẠI GIỎ HÀNG
@@ -116,7 +112,7 @@ const AddressStep = ({
           <MuiButton
             variant="contained"
             color="secondary"
-            onClick={onAddAddressAndContinue} // Sử dụng prop mới
+            onClick={onAddAddressAndContinue}
             disabled={!canProceedWithNewAddress || isAddingAddress}
             sx={{bgcolor: 'rgb(79 70 229)', '&:hover': {bgcolor: 'rgb(67 56 202)'}}}
           >
@@ -125,8 +121,8 @@ const AddressStep = ({
           <MuiButton
             variant="contained"
             color="primary"
-            onClick={handleNextStep} // Sử dụng prop này
-            disabled={!selectedAddress} // Chỉ enable khi đã chọn một địa chỉ từ danh sách
+            onClick={handleNextStep}
+            disabled={!selectedAddress}
             sx={{bgcolor: 'rgb(220 38 38)', '&:hover': {bgcolor: 'rgb(185 28 28)'}}}
           >
             TIẾP TỤC VỚI ĐỊA CHỈ ĐÃ CHỌN

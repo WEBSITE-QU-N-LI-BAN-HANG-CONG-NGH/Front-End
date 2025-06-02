@@ -7,22 +7,20 @@ const CartContext = createContext(null);
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // Nên là true ban đầu nếu bạn muốn fetch ngay
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { isAuthenticated, jwt, user } = useAuthContext(); // Thêm user để theo dõi thay đổi user
+  const { isAuthenticated, user } = useAuthContext();
 
   const fetchCart = useCallback(async () => {
-    if (!isAuthenticated || !user) { // Thêm điều kiện !user
+    if (!isAuthenticated || !user) {
       setCart(null);
-      setIsLoading(false); // Dừng loading nếu không authenticated
+      setIsLoading(false);
       return;
     }
-    console.log("[CartContext] Fetching cart..."); // Log khi bắt đầu fetch
     setIsLoading(true);
     setError(null);
     try {
       const response = await cartService.getCart();
-      console.log("[CartContext] Cart data fetched:", response.data); // Log dữ liệu nhận được
       setCart(response.data);
     } catch (err) {
       console.error("[CartContext] Lỗi khi lấy giỏ hàng:", err);
@@ -30,19 +28,17 @@ export const CartProvider = ({ children }) => {
       setCart(null);
     } finally {
       setIsLoading(false);
-      console.log("[CartContext] Finished fetching cart. Loading:", false); // Log khi kết thúc fetch
     }
-  }, [isAuthenticated, user]); // Thêm user vào dependencies
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
-    if (isAuthenticated && user) { // Chỉ fetch khi đã authenticated và có user
+    if (isAuthenticated && user) {
       fetchCart();
     } else {
-      setCart(null); // Xóa giỏ hàng nếu không authenticated hoặc không có user
-      setIsLoading(false); // Đảm bảo loading được set false
-      console.log("[CartContext] User not authenticated or no user, cart cleared.");
+      setCart(null);
+      setIsLoading(false);
     }
-  }, [isAuthenticated, user, fetchCart]); // jwt có thể không cần thiết nếu user đã đủ
+  }, [isAuthenticated, user, fetchCart]);
 
 
   const addItemToCart = async (cartData) => {
@@ -54,13 +50,11 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       const response = await cartService.addToCart(cartData);
-      setCart(response.data); // Cập nhật state giỏ hàng sau khi thêm thành công
-      console.log("[CartContext] Item added, cart updated:", response.data);
+      setCart(response.data);
       return response.data;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể thêm vào giỏ hàng.";
       setError(errorMessage);
-      console.error("[CartContext] Error adding item to cart:", err);
       throw err;
     } finally {
       setIsLoading(false);
@@ -74,38 +68,31 @@ export const CartProvider = ({ children }) => {
     try {
       const response = await cartService.removeFromCart(itemId);
       setCart(response.data);
-      console.log("[CartContext] Item removed, cart updated:", response.data);
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể xóa sản phẩm.";
       setError(errorMessage);
-      console.error("[CartContext] Error removing item from cart:", err);
       throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const updateCartItem = async (itemId, cartUpdateData) => {
+  const updateCartItem = async (itemId, newQuantity) => {
     if (!isAuthenticated) return;
     setIsLoading(true);
     setError(null);
     try {
-      // Trong CartContext.jsx, hàm updateCartItem
-      // Đảm bảo cartUpdateData chỉ chứa quantity
-      const payload = { quantity: cartUpdateData.quantity };
+      const payload = { quantity: newQuantity };
       const response = await cartService.updateCartItem(payload, itemId);
       setCart(response.data);
-      console.log("[CartContext] Item updated, cart updated:", response.data);
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể cập nhật số lượng.";
       setError(errorMessage);
-      console.error("[CartContext] Error updating cart item:", err);
       throw err;
     } finally {
       setIsLoading(false);
     }
   };
-
 
   const clearCartContext = async () => {
     if (!isAuthenticated) return;
@@ -113,20 +100,17 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       await cartService.clearCart();
-      // Cập nhật state ở client để phản ánh giỏ hàng rỗng ngay lập tức
       setCart(prevCart => ({
-        ...(prevCart || {}), // Giữ lại cấu trúc cũ nếu có, hoặc tạo object mới
+        ...(prevCart || {}),
         cartItems: [],
         totalOriginalPrice: 0,
         totalDiscountedPrice: 0,
         discount: 0,
         totalItems: 0,
       }));
-      console.log("[CartContext] Cart cleared.");
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể xóa giỏ hàng.";
       setError(errorMessage);
-      console.error("[CartContext] Error clearing cart:", err);
       throw err;
     } finally {
       setIsLoading(false);
