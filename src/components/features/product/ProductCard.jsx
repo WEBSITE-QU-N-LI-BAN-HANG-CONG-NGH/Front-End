@@ -114,52 +114,6 @@ const ProductCard = ({
             )}
           </div>
 
-          {!isOutOfStock && (
-            <div className="flex flex-col gap-1"> {/* Giảm gap */}
-              <MuiButton
-                variant="contained"
-                fullWidth
-                size="small"
-                onClick={handleAddToCart}
-                disabled={isCartContextLoading}
-                sx={{
-                  bgcolor: 'rgb(37 99 235)',
-                  '&:hover': { bgcolor: 'rgb(29 78 216)' },
-                  color: 'white',
-                  textTransform: 'none',
-                  fontSize: '0.65rem', // Giảm font
-                  py: 0.5 // Giảm padding
-                }}
-              >
-                {isCartContextLoading ? <CircularProgress size={14} color="inherit" /> : "Thêm vào giỏ"}
-              </MuiButton>
-              <MuiButton
-                variant="outlined"
-                fullWidth
-                size="small"
-                onClick={handleBuyNow}
-                disabled={isCartContextLoading}
-                sx={{
-                  borderColor: 'rgb(220 38 38)',
-                  color: 'rgb(220 38 38)',
-                  '&:hover': {
-                    borderColor: 'rgb(185 28 28)',
-                    backgroundColor: 'rgba(220, 38, 38, 0.04)'
-                  },
-                  textTransform: 'none',
-                  fontSize: '0.65rem', // Giảm font
-                  py: 0.5 // Giảm padding
-                }}
-              >
-                Mua ngay
-              </MuiButton>
-            </div>
-          )}
-          {isOutOfStock && (
-            <div className="text-center text-[10px] text-red-500 font-medium py-1 border border-red-200 rounded-md bg-red-50"> {/* Giảm font, padding */}
-              Sản phẩm tạm hết hàng
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -211,9 +211,6 @@ const OrderDetail = () => {
                   {isLoading ? <CircularProgress size={20} color="inherit"/> : "Hủy đơn hàng"}
                 </MuiButton>
               )}
-              <MuiButton variant="outlined" onClick={() => navigate(`/information/contact-us?orderId=${order.id}`)}>
-                Khiếu nại/Hỗ trợ
-              </MuiButton>
             </div>
           </div>
         </div>

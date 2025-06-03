@@ -144,7 +144,7 @@ const Header = () => {
           <Link to="/accessories" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Phụ kiện</Link>
           <Link to="/phone" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Điện thoại</Link>
           <Link to="/computer-parts" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Linh kiện máy tính</Link>
-          <Link to="/other-products" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Sản phẩm khác</Link>
+          <Link to="/product/all" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Tất cả sản phẩm</Link>
           <Link to="/my-order" className="gap-2.5 self-stretch my-auto px-7 py-2 text-blue-600 border-2 border-solid border-[color:var(--Color---3,#0156FF)] rounded-[50px] max-md:px-5 hover:bg-blue-600 hover:text-white transition-colors duration-300 cursor-pointer">Đơn hàng của tôi</Link>
 
           <SearchBar />

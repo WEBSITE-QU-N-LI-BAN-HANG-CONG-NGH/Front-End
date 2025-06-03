@@ -7,8 +7,6 @@ import OrderDetail from '../pages/UserAccount/OrderDetail';
 import Cart from '../pages/Cart/Cart';
 import Catalog from '../pages/Catalog/Catalog';
 import ProductDetail from '../pages/ProductDetail/ProductDetail';
-import ContactUs from '../pages/Contact/ContactUs';
-import ContactedUs from '../pages/Contact/ContactedUs';
 import AppLayout from '../components/layout/AppLayout';
 import { FilterProvider } from '../components/features/catalog/FilterContext';
 import ForgotPassword from '../pages/Auth/ForgotPassword';
@@ -44,10 +42,6 @@ const CustomerRouters = () => {
             <Route path="my-order/:orderId" element={<OrderDetail />} />
 
             <Route path="cart" element={<Cart />} />
-
-            <Route path="information/contact-us" element={<ContactUs />} />
-
-            <Route path="information/contact-us/done" element={<ContactedUs />} />
 
             <Route path="forgot-password" element={<ForgotPassword />} />
 

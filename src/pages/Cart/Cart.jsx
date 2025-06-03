@@ -1,43 +1,50 @@
 // src/pages/Cart/Cart.jsx
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react"; // Bỏ useEffect nếu không dùng nữa
 import { useNavigate } from "react-router-dom";
 import { useCartContext } from "../../contexts/CartContext";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from "@mui/material";
 
-// --- Component CartItem (Giữ nguyên) ---
-// ... (Mã CartItem của bạn)
-const CartItem = ({ item, onRemove, formatCurrency, isLoading }) => {
-    const { updateCartItem: contextUpdateCartItem } = useCartContext();
+// --- Component CartItem ---
+const CartItem = ({ item, onRemove, formatCurrency, isLoading: isActionLoading }) => { // Đổi tên isLoading để rõ ràng hơn
+    const { updateCartItem: contextUpdateCartItem, isLoading: isCartContextUpdating } = useCartContext();
     const [quantity, setQuantity] = useState(item.quantity);
     const { showToast } = useToast();
+
+    // Cập nhật quantity state nếu item.quantity từ context thay đổi (ví dụ sau khi fetch lại cart)
+    useEffect(() => {
+        setQuantity(item.quantity);
+    }, [item.quantity]);
+
 
     const handleLocalQuantityChange = async (changeValue) => {
         const newQuantity = Math.max(1, quantity + changeValue);
         if (newQuantity === quantity && changeValue !== 0) return;
 
         const oldQuantity = quantity;
-        setQuantity(newQuantity);
+        setQuantity(newQuantity); // Cập nhật UI ngay
 
         try {
             await contextUpdateCartItem(item.id, newQuantity);
+            // Không cần showToast ở đây nếu context đã xử lý
         } catch (error) {
             console.error("Error updating cart item quantity (CartItem):", error);
             showToast(error.message || "Lỗi cập nhật số lượng", "error");
-            setQuantity(oldQuantity);
+            setQuantity(oldQuantity); // Rollback nếu lỗi
         }
     };
 
     const handleInputChange = (e) => {
         const value = e.target.value;
-            if (value === "") {
-            setQuantity("");
+        if (value === "") {
+            setQuantity(""); // Cho phép input rỗng tạm thời
         } else {
             const numValue = parseInt(value, 10);
             if (!isNaN(numValue) && numValue > 0) {
                 setQuantity(numValue);
             } else if (isNaN(numValue) && value !== "") {
+                // Nếu nhập chữ hoặc ký tự không phải số, giữ nguyên giá trị cũ
                 setQuantity(prev => prev);
             }
         }
@@ -47,24 +54,27 @@ const CartItem = ({ item, onRemove, formatCurrency, isLoading }) => {
         let finalQuantity = parseInt(quantity, 10);
 
         if (isNaN(finalQuantity) || finalQuantity <= 0) {
+            // Nếu giá trị không hợp lệ (rỗng, chữ, số âm, 0), rollback về giá trị từ context (item.quantity)
             finalQuantity = item.quantity;
-            setQuantity(finalQuantity);
+            setQuantity(finalQuantity); // Cập nhật UI
             if (item.quantity.toString() !== quantity.toString() && quantity !== "") {
-                    showToast("Số lượng không hợp lệ.", "warning");
+                 // Chỉ thông báo nếu người dùng đã nhập gì đó không hợp lệ và nó khác với giá trị gốc
+                 showToast("Số lượng không hợp lệ. Đã khôi phục số lượng trước đó.", "warning");
             }
-            return;
+            return; // Không gọi API nếu không có thay đổi hợp lệ
         }
 
-        if (finalQuantity === item.quantity) return;
+        if (finalQuantity === item.quantity) return; // Không gọi API nếu không có thay đổi
 
         try {
             await contextUpdateCartItem(item.id, finalQuantity);
         } catch (error) {
             console.error("Error updating cart item quantity on blur (CartItem):", error);
             showToast(error.message || "Lỗi cập nhật số lượng", "error");
-            setQuantity(item.quantity);
+            setQuantity(item.quantity); // Rollback về giá trị gốc từ context nếu API lỗi
         }
     };
+    const currentLoadingState = isActionLoading || isCartContextUpdating;
 
     return (
         <article className="flex flex-col sm:flex-row justify-between items-center p-4 md:p-6 mb-4 border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white">
@@ -80,7 +90,7 @@ const CartItem = ({ item, onRemove, formatCurrency, isLoading }) => {
                     <button
                         className="text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors font-medium disabled:opacity-50"
                         onClick={() => onRemove(item.id)}
-                        disabled={isLoading}
+                        disabled={currentLoadingState}
                     >
                         Xoá
                     </button>
@@ -99,22 +109,22 @@ const CartItem = ({ item, onRemove, formatCurrency, isLoading }) => {
                     <button
                         className="px-3 py-1 sm:py-2 text-base hover:bg-gray-100 disabled:opacity-50"
                         onClick={() => handleLocalQuantityChange(-1)}
-                        disabled={isLoading || quantity <= 1}
+                        disabled={currentLoadingState || quantity <= 1}
                     >
                         -
                     </button>
                     <input
-                        type="text"
-                        value={quantity}
+                        type="text" // Giữ type text để cho phép input rỗng tạm thời
+                        value={quantity} // Hiển thị quantity từ state
                         onChange={handleInputChange}
-                        onBlur={handleInputBlur}
+                        onBlur={handleInputBlur} // Xử lý logic khi focus ra ngoài
                         className="w-10 text-center border-x border-gray-300 py-1 sm:py-2 focus:outline-none bg-white"
-                        disabled={isLoading}
+                        disabled={currentLoadingState}
                     />
                     <button
                         className="px-3 py-1 sm:py-2 text-base hover:bg-gray-100 disabled:opacity-50"
                         onClick={() => handleLocalQuantityChange(1)}
-                        disabled={isLoading}
+                        disabled={currentLoadingState}
                     >
                         +
                     </button>
@@ -123,8 +133,8 @@ const CartItem = ({ item, onRemove, formatCurrency, isLoading }) => {
         </article>
     );
 };
-// --- Component CartSummary (Giữ nguyên) ---
-// ... (Mã CartSummary của bạn)
+
+// --- Component CartSummary ---
 const CartSummary = ({ cartData, formatCurrency, onCheckout, isLoading }) => {
     if (!cartData) return null;
     return (
@@ -159,9 +169,9 @@ const CartSummary = ({ cartData, formatCurrency, onCheckout, isLoading }) => {
                         py: 1.5,
                         fontSize: '1rem',
                         fontWeight: 'bold',
-                        bgcolor: 'rgb(220 38 38)',
-                        '&:hover': { bgcolor: 'rgb(185 28 28)' },
-                        '&.Mui-disabled': { bgcolor: 'rgb(209 213 219)', color: 'rgb(107 114 128)' }
+                        bgcolor: 'rgb(220 38 38)', // Tailwind red-600
+                        '&:hover': { bgcolor: 'rgb(185 28 28)' }, // Tailwind red-700
+                        '&.Mui-disabled': { bgcolor: 'rgb(209 213 219)', color: 'rgb(107 114 128)' } // Tailwind gray-300 and gray-500
                     }}
                 >
                     {isLoading ? <CircularProgress size={24} color="inherit" /> : "ĐẶT HÀNG"}
@@ -170,27 +180,29 @@ const CartSummary = ({ cartData, formatCurrency, onCheckout, isLoading }) => {
         </div>
     );
 };
+
 // --- Component Cart ---
 const Cart = () => {
     const navigate = useNavigate();
     const {
         cart,
-        isLoading: isCartContextLoading,
+        isLoading: isCartContextLoading, // Đây là loading của context (ví dụ: khi fetch toàn bộ cart)
         error: cartContextError,
-        fetchCart,
+        // fetchCart, // Không cần gọi fetchCart từ đây nữa
         removeItemFromCart,
         clearCartError
     } = useCartContext();
     const { showToast } = useToast();
-    const { isAuthenticated } = useAuthContext();
+    // const { isAuthenticated } = useAuthContext(); // Không cần isAuthenticated nếu fetchCart đã bị loại bỏ
 
-    const [isProcessingAction, setIsProcessingAction] = useState(false);
+    const [isProcessingAction, setIsProcessingAction] = useState(false); // Loading cho từng action (remove, update)
 
-    useEffect(() => {
-        if (isAuthenticated && !isCartContextLoading && (!cart || cart.cartItems.length === 0) && !cartContextError) {
-            fetchCart();
-        }
-    }, [isAuthenticated, isCartContextLoading, cart, cartContextError, fetchCart]);
+    // Loại bỏ useEffect gọi fetchCart từ đây. CartContext sẽ tự xử lý việc fetch.
+    // useEffect(() => {
+    //     if (isAuthenticated && !isCartContextLoading && (!cart || cart.cartItems.length === 0) && !cartContextError) {
+    //         fetchCart();
+    //     }
+    // }, [isAuthenticated, isCartContextLoading, cart, cartContextError, fetchCart]);
 
     const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
 
@@ -207,15 +219,14 @@ const Cart = () => {
 
     const handleCheckout = () => navigate('/checkout?step=2');
 
-    // **THAY ĐỔI BẮT ĐẦU TỪ ĐÂY: Component Thanh Tiến Trình**
     const CheckoutProgress = () => {
-        const currentStepInCart = 1; // Trang giỏ hàng luôn là bước 1
+        const currentStepInCart = 1;
         return (
             <div className="flex items-center justify-between mb-10 w-full max-w-3xl mx-auto px-2 sm:px-0">
                 {["Giỏ hàng", "Thông tin", "Thanh toán", "Hoàn tất"].map((label, index) => {
                     const stepNumber = index + 1;
-                    const isActive = stepNumber <= currentStepInCart; // Chỉ 'Giỏ hàng' active
-                    const isNextConnectorActive = stepNumber < currentStepInCart; // Không có connector nào active
+                    const isActive = stepNumber <= currentStepInCart;
+                    const isNextConnectorActive = stepNumber < currentStepInCart;
 
                     return (
                         <React.Fragment key={label}>
@@ -225,7 +236,7 @@ const Cart = () => {
                                 </div>
                                 <div className={`mt-1 text-xs sm:text-sm font-medium ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>{label}</div>
                             </div>
-                            {index < 3 && ( // Luôn hiển thị 3 đường nối
+                            {index < 3 && (
                                 <div className={`flex-1 h-0.5 mx-1 sm:mx-2 ${isNextConnectorActive ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
                             )}
                         </React.Fragment>
@@ -234,10 +245,9 @@ const Cart = () => {
             </div>
         );
     };
-    // **KẾT THÚC THAY ĐỔI: Component Thanh Tiến Trình**
 
-
-    if (isCartContextLoading && (!cart || !cartContextError)) {
+    // Hiển thị loading toàn cục nếu context đang fetch lần đầu VÀ chưa có lỗi
+    if (isCartContextLoading && (!cart || cart.cartItems.length === 0) && !cartContextError) {
         return (
             <Box className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] py-10">
                 <CircularProgress size={60} thickness={4} />
@@ -251,7 +261,20 @@ const Cart = () => {
             <Box className="text-center py-10 min-h-[calc(100vh-200px)] flex flex-col justify-center items-center px-4">
                 <Alert
                     severity="error" sx={{ width: '100%', maxWidth: 'md', mb: 2 }}
-                    action={<MuiButton color="inherit" size="small" onClick={() => { clearCartError(); fetchCart(); }}>Thử lại</MuiButton>}
+                    action={
+                        <MuiButton
+                            color="inherit"
+                            size="small"
+                            onClick={() => {
+                                clearCartError();
+                                // Không gọi fetchCart() trực tiếp ở đây nữa,
+                                // CartContext sẽ tự fetch nếu cần sau khi lỗi được clear
+                                // Hoặc, bạn có thể có một hàm refreshCart trong context
+                            }}
+                        >
+                            Thử lại
+                        </MuiButton>
+                    }
                 >
                     <Typography variant="h6" component="div">Đã xảy ra lỗi</Typography>
                     <Typography>{cartContextError}</Typography>
@@ -266,8 +289,6 @@ const Cart = () => {
         <main className="flex flex-col pt-3 bg-gray-50 min-h-screen">
             <section className="flex flex-col items-center px-4 md:px-10 lg:px-16 xl:px-24 py-10">
                 <h1 className="mb-8 text-3xl sm:text-4xl font-bold text-gray-800">Giỏ hàng của bạn</h1>
-                
-                {/* **SỬ DỤNG THANH TIẾN TRÌNH MỚI** */}
                 <CheckoutProgress />
                 
                 {!hasItems && !isCartContextLoading ? (
@@ -285,11 +306,12 @@ const Cart = () => {
                 ) : cart && cart.cartItems ? (
                     <div className="w-full flex flex-col md:flex-row gap-6">
                         <div className="w-full md:flex-grow">
+                            {/* Hiển thị loading nhỏ nếu context đang update (sau action) nhưng vẫn có items */}
                             {isCartContextLoading && hasItems && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
                             {cart.cartItems.map((cartItem) => (
                                 <CartItem
                                     key={cartItem.id} item={cartItem} onRemove={handleRemoveItem}
-                                    formatCurrency={formatCurrency} isLoading={isProcessingAction || isCartContextLoading}
+                                    formatCurrency={formatCurrency} isLoading={isProcessingAction || isCartContextLoading} // item loading + context loading
                                 />
                             ))}
                         </div>

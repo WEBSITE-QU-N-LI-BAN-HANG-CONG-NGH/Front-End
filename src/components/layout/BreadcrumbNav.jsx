@@ -18,7 +18,6 @@ const BreadcrumbNav = () => {
     'account': 'Tài khoản',
     'cart': 'Giỏ hàng',
     'information': 'Thông tin',
-    'contact-us': 'Liên hệ',
     'review': 'Đánh giá',
     'all': 'Tất cả sản phẩm'
   };
