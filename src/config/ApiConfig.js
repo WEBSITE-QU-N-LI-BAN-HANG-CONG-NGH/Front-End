@@ -99,9 +99,6 @@ api.interceptors.response.use(
                 // Cả access token và refresh token đều hết hạn
                 // Chuyển hướng đến trang đăng nhập
                 removeTokenFromLocalStorage();
-                if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-                    window.location.href = "/";
-                }
 
                 return Promise.reject(refreshError);
             } finally {
