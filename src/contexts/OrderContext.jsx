@@ -53,55 +53,93 @@ export const OrderProvider = ({ children }) => {
     setError(null);
     try {
       const response = await orderService.createOrder(addressId);
-      console.log("[OrderContext] Phản hồi từ orderService.createOrder:", response);
       
-      let newOrderData = response.data?.data || response.data;
-      console.log("[OrderContext] Dữ liệu đơn hàng được trích xuất (newOrderData):", newOrderData); 
+      console.log("[OrderContext] RAW API Response for Create Order:", response);
+      const responseBody = response.data; // Đây là đối tượng JSON từ console log của bạn
+      console.log("[OrderContext] API Response Body for Create Order (response.data):", JSON.stringify(responseBody, null, 2));
+
+      let actualOrderObject = null;
+
+      // Logic mới dựa trên cấu trúc bạn cung cấp
+      if (responseBody && Array.isArray(responseBody.orders) && responseBody.orders.length > 0) {
+        actualOrderObject = responseBody.orders[0]; // Lấy đơn hàng đầu tiên trong mảng "orders"
+        console.log("[OrderContext] Extracted order object from responseBody.orders[0]:", JSON.stringify(actualOrderObject, null, 2));
+      } else {
+        // Nếu cấu trúc không như mong đợi (ví dụ, backend thay đổi response)
+        const errorMsg = `Cấu trúc phản hồi API tạo đơn hàng không đúng. Mảng "orders" không tìm thấy hoặc rỗng. Dữ liệu nhận được: ${JSON.stringify(responseBody, null, 2)}`;
+        console.error("[OrderContext]", errorMsg);
+        throw new Error(errorMsg);
+      }
       
-      if (!newOrderData || typeof newOrderData !== 'object') {
-           console.error("[OrderContext] Dữ liệu đơn hàng không phải là object:", newOrderData);
-           throw new Error("Dữ liệu đơn hàng trả về không hợp lệ.");
+      if (!actualOrderObject || typeof actualOrderObject !== 'object') {
+           const errorMsg = `Đối tượng đơn hàng (actualOrderObject) không hợp lệ sau khi trích xuất. Giá trị: ${JSON.stringify(actualOrderObject)}`;
+           console.error("[OrderContext]", errorMsg);
+           throw new Error(errorMsg);
       }
 
-      // Cố gắng tìm ID đơn hàng với các tên phổ biến
-      // *** QUAN TRỌNG: Điều chỉnh các tên trường này (id, orderId, order_id) 
-      // *** cho phù hợp với response thực tế từ backend của bạn
-      const orderIdValue = newOrderData.id || newOrderData.orderId || newOrderData.order_id;
+      // Lấy ID từ actualOrderObject
+      const orderIdValue = actualOrderObject.id || actualOrderObject.orderId || actualOrderObject.order_id;
 
       if (!orderIdValue) {
-           console.error("[OrderContext] ID đơn hàng không tìm thấy trong newOrderData. Các trường đã kiểm tra: id, orderId, order_id. Dữ liệu:", newOrderData);
-           throw new Error("ID đơn hàng không tồn tại trong dữ liệu trả về.");
+           const errorMessage = `ID đơn hàng không tồn tại trong đối tượng đơn hàng đã trích xuất. Các trường đã kiểm tra: id, orderId, order_id. Đối tượng đơn hàng: ${JSON.stringify(actualOrderObject, null, 2)}`;
+           console.error("[OrderContext]", errorMessage);
+           throw new Error(errorMessage);
       }
       
-      // Đảm bảo newOrderData.id luôn tồn tại để các component khác sử dụng thống nhất
-      if (!newOrderData.id) {
-        newOrderData.id = orderIdValue;
-      }
+      // Đảm bảo đối tượng trả về có thuộc tính 'id' là ID chính
+      actualOrderObject.id = orderIdValue; 
 
-      setCurrentOrder(newOrderData);
-      return newOrderData;
+      setCurrentOrder(actualOrderObject);
+      console.log("[OrderContext] Order created and context updated successfully:", actualOrderObject);
+      return actualOrderObject; // Trả về đối tượng đơn hàng đã có ID
     } catch (err) {
-      console.error("Lỗi khi tạo đơn hàng (OrderContext):", err);
-      const errorMessage = err.message || err.response?.data?.message || err.response?.data?.error || "Không thể tạo đơn hàng.";
+      console.error("[OrderContext] Error in createNewOrder function:", err);
+      const errorMessage = err.message || err.response?.data?.message || err.response?.data?.error || "Không thể tạo đơn hàng do lỗi không xác định.";
       setError(errorMessage);
       setCurrentOrder(null);
-      throw new Error(errorMessage);
+      throw err; 
     } finally {
       setIsLoading(false);
     }
   };
 
   const fetchOrderById = async (orderId) => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !orderId) return;
     setIsLoading(true);
     setError(null);
     try {
       const response = await orderService.getOrderById(orderId);
-      const orderData = response.data?.data || response.data;
-      // Cũng chuẩn hóa ID ở đây nếu cần
-      if (orderData && typeof orderData === 'object' && !orderData.id && (orderData.orderId || orderData.order_id)) {
-        orderData.id = orderData.orderId || orderData.order_id;
+      const responseBody = response.data;
+      console.log(`[OrderContext] Raw API Response for Get Order By ID ${orderId}:`, JSON.stringify(responseBody, null, 2));
+
+      let orderData = null;
+
+      // Giả sử API getOrderById có thể trả về đơn hàng trực tiếp hoặc lồng trong 'data'
+      // hoặc có cấu trúc tương tự như createOrder (có mảng 'orders')
+      if (responseBody && Array.isArray(responseBody.orders) && responseBody.orders.length > 0) {
+          orderData = responseBody.orders[0]; // Nếu nó trả về mảng orders
+      } else if (responseBody && typeof responseBody.data === 'object' && responseBody.data !== null && responseBody.data.id) {
+          orderData = responseBody.data; // Nếu nó nằm trong responseBody.data
+      } else if (responseBody && typeof responseBody === 'object' && responseBody !== null && responseBody.id) {
+          orderData = responseBody; // Nếu nó là đối tượng gốc
+      } else {
+          throw new Error(`Cấu trúc dữ liệu chi tiết đơn hàng ${orderId} không hợp lệ hoặc không tìm thấy đơn hàng.`);
       }
+      
+      console.log(`[OrderContext] Extracted orderData for Get Order By ID ${orderId}:`, JSON.stringify(orderData, null, 2));
+
+      if (!orderData || typeof orderData !== 'object') {
+        throw new Error(`Dữ liệu chi tiết đơn hàng ${orderId} nhận được không phải là object.`);
+      }
+
+      const idValue = orderData.id || orderData.orderId || orderData.order_id;
+      if (!idValue) {
+        console.warn(`[OrderContext] Order ID missing in getOrderById response for order ${orderId}. Data:`, JSON.stringify(orderData, null, 2));
+        // throw new Error(`Không tìm thấy ID trong dữ liệu chi tiết đơn hàng ${orderId}`);
+      } else {
+        orderData.id = idValue;
+      }
+
       setCurrentOrder(orderData);
     } catch (err) {
       console.error(`Lỗi khi lấy chi tiết đơn hàng ${orderId} (Context):`, err);
@@ -111,7 +149,7 @@ export const OrderProvider = ({ children }) => {
       setIsLoading(false);
     }
   };
-
+  
   const addNewAddress = async (addressData) => {
     if (!isAuthenticated) {
       setError("Vui lòng đăng nhập để thêm địa chỉ.");
@@ -151,7 +189,7 @@ export const OrderProvider = ({ children }) => {
           case "all": default: response = await orderService.getAllOrders(); break;
         }
         const fetchedOrders = response.data?.data || response.data || [];
-        // Chuẩn hóa ID cho từng đơn hàng trong danh sách nếu cần
+        
         const normalizedOrders = fetchedOrders.map(order => {
             if (order && typeof order === 'object' && !order.id && (order.orderId || order.order_id)) {
                 return { ...order, id: order.orderId || order.order_id };
@@ -177,15 +215,15 @@ export const OrderProvider = ({ children }) => {
     setError(null);
     try {
         const response = await orderService.cancelOrder(orderId);
-        // Cập nhật currentOrder nếu nó là đơn hàng vừa hủy
+        
         if (currentOrder && (currentOrder.id === orderId || currentOrder.orderId === orderId || currentOrder.order_id === orderId)) {
              const actualId = currentOrder.id || currentOrder.orderId || currentOrder.order_id;
              if (actualId.toString() === orderId.toString()) {
                 setCurrentOrder(prev => ({ ...prev, orderStatus: "CANCELLED", id: actualId }));
              }
         }
-        // Fetch lại danh sách đơn hàng để cập nhật UI
-        await fetchUserOrders(); // Hoặc trạng thái cụ thể nếu bạn muốn
+        
+        await fetchUserOrders(); 
         return response.data;
     } catch (err) {
         console.error(`Lỗi khi hủy đơn hàng ${orderId} (Context):`, err);
@@ -196,6 +234,7 @@ export const OrderProvider = ({ children }) => {
         setIsLoading(false);
     }
   };
+
 
   const value = {
     orders,

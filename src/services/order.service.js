@@ -1,16 +1,14 @@
 // src/services/order.service.js
 import { api } from "../config/ApiConfig";
-// import { API_BASE_URL } from "../config/ApiConfig"; // Không cần nếu api instance đã có baseURL
 
 export const orderService = {
-    createOrder: async (addressId) => { // Chỉ nhận addressId
+    createOrder: async (addressId) => {
         try {
             if (!addressId) {
                 throw new Error("Address ID is required to create an order.");
             }
-            // API endpoint của bạn là /orders/create/{addressId}
             const response = await api.post(`/orders/create/${addressId}`);
-            return response; // Trả về response, Context sẽ lấy response.data
+            return response; 
         } catch (error) {
             console.error('Lỗi khi tạo đơn hàng (Service):', error.response || error);
             throw error;
@@ -39,7 +37,6 @@ export const orderService = {
 
     addAddress: async (addressData) => {
         try {
-            // API endpoint của bạn là users/addresses, không phải /api/user/addresses
             const response = await api.post("/users/addresses", addressData);
             return response;
         } catch (error) {
@@ -50,7 +47,6 @@ export const orderService = {
 
     createVNPayPayment: async (orderId) => {
         try {
-            // Backend endpoint: /payment/create/{orderId}
             const response = await api.post(`/payment/create/${orderId}`);
             return response;
         } catch (error) {
@@ -64,76 +60,80 @@ export const orderService = {
              return Promise.reject(new Error("VNPAY parameters are required for callback"));
         }
         try {
-            // Body có thể là null nếu backend không yêu cầu body cho POST này
-            const response = await api.post(`/payment/vnpay-callback`, null, { //
-                params: vnpayParams
+            // SỬA ĐỔI CHÍNH: Đổi từ POST sang GET
+            // Axios GET request gửi params trong config object.
+            // Không cần truyền body (null) nữa.
+            console.log("[OrderService] Calling VNPAY Callback with params:", vnpayParams);
+            const response = await api.get(`/payment/vnpay-callback`, { 
+                params: vnpayParams 
             });
+            console.log("[OrderService] VNPAY Callback response:", response);
             return response;
         } catch (error) {
-            console.error('Lỗi khi xử lý VNPAY callback (Service):', error.response || error);
+            console.error('Lỗi khi xử lý VNPAY callback (Service):', error.response || error.message, error);
             throw error;
         }
     },
 
-    getAllOrders: async () => {
+    getAllOrders: async () => { /* ... Giữ nguyên ... */ 
         try {
-            const response = await api.get("/orders/user"); //
+            const response = await api.get("/orders/user");
             return response;
         } catch (error) {
             throw error;
         }
     },
-    getPendingOrders: async () => {
+    getPendingOrders: async () => { /* ... Giữ nguyên ... */ 
         try {
-            const response = await api.get("/orders/pending"); //
+            const response = await api.get("/orders/pending");
             return response;
         } catch (error) {
             throw error;
         }
     },
-    getShippingOrders: async () => {
+    getShippingOrders: async () => { /* ... Giữ nguyên ... */ 
         try {
-            const response = await api.get("/orders/shipped"); //
+            const response = await api.get("/orders/shipped");
             return response;
         } catch (error) {
             throw error;
         }
     },
-    getDeliveredOrders: async () => {
+    getDeliveredOrders: async () => { /* ... Giữ nguyên ... */ 
         try {
-            const response = await api.get("/orders/delivered"); //
+            const response = await api.get("/orders/delivered");
             return response;
         } catch (error) {
             throw error;
         }
     },
-    getCancelledOrders: async () => {
+    getCancelledOrders: async () => { /* ... Giữ nguyên ... */ 
         try {
-            const response = await api.get("/orders/cancelled"); //
+            const response = await api.get("/orders/cancelled");
             return response;
         } catch (error) {
             throw error;
         }
     },
-    getConfirmedOrders: async () => {
+    getConfirmedOrders: async () => { /* ... Giữ nguyên ... */ 
         try {
-            const response = await api.get("/orders/confirmed"); //
+            const response = await api.get("/orders/confirmed");
             return response;
         } catch (error) {
             throw error;
         }
     },
-    cancelOrder: async (orderId) => {
+    cancelOrder: async (orderId) => { /* ... Giữ nguyên ... */ 
         try {
-            const response = await api.put(`/orders/cancel/${orderId}`); //
+            const response = await api.put(`/orders/cancel/${orderId}`);
             return response;
         } catch (error) {
             throw error;
         }
     },
-    sendOrderToEmail: async (orderId) => {
+    sendOrderToEmail: async (orderId) => { /* ... Giữ nguyên ... */ 
         try {
-            const response = await api.post(`/orders/send-mail/${orderId}`); //
+            const response = await api.post(`/orders/send-mail/${orderId}`);
             return response;
         } catch (error) {
             throw error;

@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useOrderContext } from '../../contexts/OrderContext';
 import { useCartContext } from '../../contexts/CartContext';
 import { orderService } from '../../services/order.service';
+import { useAuthContext } from '../../contexts/AuthContext'; // Đã import
 import { useToast } from '../../contexts/ToastContext';
 import AddressStep from './AddressStep';
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from '@mui/material';
@@ -21,8 +22,8 @@ const Checkout = () => {
 
     const {
         addresses: savedAddressesContext,
-        currentOrder: orderFromContext,
-        isLoading: isOrderContextLoadingGlobal, // Đổi tên để tránh nhầm lẫn
+        currentOrder: orderFromContext, // Đây là đơn hàng hiện tại từ context
+        isLoading: isOrderContextLoadingGlobal,
         error: orderContextError, 
         fetchAddresses,
         addNewAddress: addNewAddressContext,
@@ -55,7 +56,7 @@ const Checkout = () => {
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
     const [vnpayStatus, setVnpayStatus] = useState(null);
     const [vnpayMessage, setVnpayMessage] = useState('');
-    const [processedOrderId, setProcessedOrderId] = useState(orderIdFromUrl);
+    const [processedOrderId, setProcessedOrderId] = useState(orderIdFromUrl); // Lưu ID đơn hàng đã xử lý
     const emailSentRef = useRef(false);
 
     useEffect(() => {
@@ -73,14 +74,17 @@ const Checkout = () => {
     }, [savedAddressesContext, locationHook.search, step]);
 
 
+    // Effect để fetch order details khi ở step 4 hoặc khi orderId từ URL thay đổi
     useEffect(() => {
-        const orderIdForStep4 = queryParams.get('orderId');
-        // Sử dụng processedOrderId để đảm bảo chỉ fetch một lần cho mỗi orderId ở step 4
-        if (step === 4 && orderIdForStep4 && orderIdForStep4 !== processedOrderId) {
-            setProcessedOrderId(orderIdForStep4); // Cập nhật orderId đang xử lý
-            fetchOrderByIdContext(orderIdForStep4);
+        const currentOrderIdFromUrl = queryParams.get('orderId');
+        if (step === 4 && currentOrderIdFromUrl) {
+            // Chỉ fetch nếu orderId này chưa được fetch hoặc chưa có trong context
+            if (currentOrderIdFromUrl !== processedOrderId || !orderFromContext || orderFromContext.id?.toString() !== currentOrderIdFromUrl) {
+                setProcessedOrderId(currentOrderIdFromUrl);
+                fetchOrderByIdContext(currentOrderIdFromUrl);
+            }
         }
-    }, [step, locationHook.search, fetchOrderByIdContext, processedOrderId]);
+    }, [step, locationHook.search, fetchOrderByIdContext, processedOrderId, orderFromContext, queryParams]);
 
 
     useEffect(() => {
@@ -143,12 +147,14 @@ const Checkout = () => {
             const extractedOrderId = vnp_TxnRef ? vnp_TxnRef.split('_')[0] : null;
             
             if (extractedOrderId) {
-                setProcessedOrderId(extractedOrderId);
-                fetchOrderByIdContext(extractedOrderId);
+                setProcessedOrderId(extractedOrderId); // Lưu lại ID đơn hàng VNPAY
+                // fetchOrderByIdContext(extractedOrderId); // Fetch ngay lập tức
 
                 const processCallback = async () => {
                     try {
                         await orderService.handleVNPayCallback(paramsObject);
+                        // Sau khi callback, fetch lại thông tin đơn hàng để cập nhật trạng thái mới nhất
+                        await fetchOrderByIdContext(extractedOrderId); 
                         if (vnp_ResponseCode === '00') {
                             setVnpayStatus('success');
                             setVnpayMessage('Thanh toán qua VNPAY thành công!');
@@ -168,6 +174,8 @@ const Checkout = () => {
                         setVnpayStatus('failed');
                         setVnpayMessage('Lỗi khi xác nhận kết quả thanh toán.');
                         showToast('Lỗi xác nhận thanh toán.', 'error');
+                         // Vẫn fetch order để hiển thị thông tin nếu có
+                        fetchOrderByIdContext(extractedOrderId);
                     }
                 };
                 processCallback();
@@ -178,10 +186,11 @@ const Checkout = () => {
                 showToast('Lỗi xử lý thanh toán VNPAY.', 'error');
             }
         } else if (currentStepFromUrl === 4 && !isVNPayReturn && orderIdFromUrl && orderIdFromUrl !== processedOrderId) {
+            // Trường hợp COD hoặc quay lại trang hoàn tất
             setProcessedOrderId(orderIdFromUrl);
-            fetchOrderByIdContext(orderIdFromUrl);
+            // fetchOrderByIdContext(orderIdFromUrl); // Sẽ được xử lý bởi useEffect ở trên
         }
-    }, [locationHook.search, vnpayStatus, showToast, clearCartContext, fetchOrderByIdContext, processedOrderId]);
+    }, [locationHook.search, vnpayStatus, showToast, clearCartContext, fetchOrderByIdContext, queryParams]); // Bỏ processedOrderId
 
 
     const handleShippingChange = (e) => { const { name, value } = e.target; setShippingInfo(prev => ({ ...prev, [name]: value })); };
@@ -256,8 +265,27 @@ const Checkout = () => {
             navigate('/cart');
         } else if (step > 2) {
             params.set('step', (step - 1).toString());
+            params.delete('vnp_Amount'); // Xóa các param VNPAY nếu quay lại từ bước 4
+            params.delete('vnp_BankCode');
+            params.delete('vnp_OrderInfo');
+            params.delete('vnp_PayDate');
+            params.delete('vnp_ResponseCode');
+            params.delete('vnp_SecureHash');
+            params.delete('vnp_TmnCode');
+            params.delete('vnp_TransactionNo');
+            params.delete('vnp_TransactionStatus');
+            params.delete('vnp_TxnRef');
+            // Không xóa orderId nếu nó tồn tại và là COD, để có thể quay lại xem
+            // if (paymentMethod === "COD" && params.has('orderId')) {
+            //    // giữ lại orderId
+            // } else {
+            //    params.delete('orderId');
+            // }
+            
             navigate({ pathname: locationHook.pathname, search: params.toString() });
             setStep(step - 1);
+            if (vnpayStatus) setVnpayStatus(null); // Reset VNPAY status
+            if (emailSentRef.current) emailSentRef.current = false;
         }
         window.scrollTo(0, 0);
     };
@@ -318,18 +346,20 @@ const Checkout = () => {
         const finalAddressId = Number(addressIdFromUrl);
 
         try {
-            const createdOrder = await createNewOrderContext(finalAddressId);
+            const createdOrder = await createNewOrderContext(finalAddressId); // createdOrder.id nên đã được đảm bảo bởi OrderContext
             
-            // Nếu createNewOrderContext không throw lỗi, createdOrder.id được đảm bảo hợp lệ
-            // do đã có kiểm tra trong OrderContext.jsx
-            setProcessedOrderId(createdOrder.id.toString());
+            if (!createdOrder || !createdOrder.id) { // Kiểm tra lại cẩn thận
+                throw new Error("Không nhận được ID đơn hàng sau khi tạo.");
+            }
+
+            setProcessedOrderId(createdOrder.id.toString()); // Lưu ID đơn hàng vừa tạo
 
             if (paymentMethod === "VNPAY") {
                 const paymentResponse = await orderService.createVNPayPayment(createdOrder.id);
                 if (paymentResponse.data?.paymentUrl) {
                     window.location.href = paymentResponse.data.paymentUrl;
                     // Không set isPlacingOrder = false ở đây vì trang sẽ redirect
-                    return;
+                    return; 
                 } else {
                     throw new Error("Không nhận được link thanh toán VNPAY.");
                 }
@@ -342,13 +372,14 @@ const Checkout = () => {
                 params.set('orderId', createdOrder.id.toString());
                 navigate({ pathname: locationHook.pathname, search: params.toString() }, { replace: true });
                 setStep(4);
+                // fetchOrderByIdContext(createdOrder.id.toString()); // fetchOrderByIdContext sẽ được gọi bởi useEffect
             }
         } catch (err) {
             console.error("[Checkout] Lỗi trong quá trình đặt hàng:", err.message, err);
+            // orderContextError đã được set trong createNewOrderContext nếu có lỗi API
             const apiErrorMessage = orderContextError || err.message || "Đặt hàng thất bại. Vui lòng thử lại.";
             showToast(apiErrorMessage, "error");
         } finally {
-            // Chỉ set isPlacingOrder = false nếu không phải là redirect VNPAY hoặc nếu có lỗi xảy ra
              if (paymentMethod !== 'VNPAY' || (err && !err.message?.toLowerCase().includes("vnpay"))) {
                  setIsPlacingOrder(false);
             }
@@ -436,22 +467,30 @@ const Checkout = () => {
     );
 
     const CompleteStep = () => {
-        const orderDetails = orderFromContext;
+        // Sử dụng orderFromContext đã được fetch bởi useEffect ở trên
+        const orderDetails = orderFromContext; 
+        // orderIdToDisplay sẽ là processedOrderId (từ URL hoặc từ đơn hàng mới tạo)
+        // hoặc orderDetails.id nếu orderDetails đã được load
+        const orderIdToDisplay = processedOrderId || orderDetails?.id;
+
+
         useEffect(() => {
-            if (orderDetails && orderDetails.paymentMethod === "COD" && (orderDetails.id?.toString() === processedOrderId) && !emailSentRef.current) {
+            // Chỉ gửi mail cho COD nếu đơn hàng đã được fetch và là COD
+            if (orderDetails && orderDetails.id?.toString() === orderIdToDisplay && orderDetails.paymentMethod === "COD" && !emailSentRef.current) {
                 const completeCODOrder = async () => {
                     try {
-                        await clearCartContext();
+                        // clearCartContext có thể đã được gọi trong handlePlaceOrder
+                        // await clearCartContext(); 
                         await orderService.sendOrderToEmail(orderDetails.id);
                         emailSentRef.current = true;
                     } catch (err) {
-                        console.error("Lỗi khi hoàn tất đơn COD:", err);
-                        showToast("Có lỗi xảy ra khi hoàn tất đơn hàng COD.", "error");
+                        console.error("Lỗi khi hoàn tất đơn COD (CompleteStep):", err);
+                        showToast("Có lỗi xảy ra khi gửi email xác nhận đơn hàng COD.", "error");
                     }
                 };
                 completeCODOrder();
             }
-        }, [orderDetails, processedOrderId, clearCartContext, showToast]);
+        }, [orderDetails, orderIdToDisplay, showToast]); // Bỏ clearCartContext
 
         if (vnpayStatus === 'processing' || (isOrderContextLoadingGlobal && !orderDetails && !orderContextError && step === 4)) {
             return (
@@ -469,27 +508,30 @@ const Checkout = () => {
                     </svg>
                     <Typography variant="h5" component="h2" sx={{ mb: 1, fontWeight: 'bold', color: 'error.main' }}>Thanh toán thất bại</Typography>
                     <Typography sx={{ mb: 3, color: 'text.secondary' }}>{vnpayMessage || "Đã có lỗi xảy ra với thanh toán VNPAY."}</Typography>
-                    <MuiButton variant="outlined" onClick={() => navigate(`/my-order/${processedOrderId || ''}`)}>Xem chi tiết đơn hàng</MuiButton>
+                    <MuiButton variant="outlined" onClick={() => navigate(`/my-order/${orderIdToDisplay || ''}`)}>Xem chi tiết đơn hàng</MuiButton>
                 </Box>
             );
         }
+        // Hiển thị lỗi nếu có lỗi từ context VÀ không có orderDetails
         if (orderContextError && !orderDetails && step === 4) {
             return (
                 <Box sx={{ textAlign: 'center', py: 10 }}>
                     <Typography variant="h5" color="error" gutterBottom>Không thể tải thông tin đơn hàng</Typography>
                     <Typography sx={{ mb: 2 }}>{orderContextError}</Typography>
-                    {processedOrderId && <MuiButton variant="outlined" onClick={() => fetchOrderByIdContext(processedOrderId)}>Thử lại</MuiButton>}
+                    {orderIdToDisplay && <MuiButton variant="outlined" onClick={() => fetchOrderByIdContext(orderIdToDisplay)}>Thử lại</MuiButton>}
                 </Box>
             );
         }
+        // Nếu đang không loading, không có lỗi, nhưng vẫn không có orderDetails (sau khi đã cố gắng fetch)
         if (!orderDetails && !isOrderContextLoadingGlobal && !orderContextError && step === 4 && vnpayStatus !== 'success') {
             return (
                  <Box sx={{ textAlign: 'center', py: 10 }}>
-                    <Typography sx={{ mb: 2 }}>Không tìm thấy thông tin cho đơn hàng #{processedOrderId}.</Typography>
+                    <Typography sx={{ mb: 2 }}>Không tìm thấy thông tin cho đơn hàng #{orderIdToDisplay}.</Typography>
                     <MuiButton variant="outlined" onClick={() => navigate('/my-order')}>Xem lịch sử đơn hàng</MuiButton>
                  </Box>
             );
         }
+        // VNPAY thành công nhưng chi tiết đơn hàng đang tải
         if (vnpayStatus === 'success' && isOrderContextLoadingGlobal && !orderDetails) {
             return (
                 <Box sx={{ textAlign: 'center', py: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -498,7 +540,7 @@ const Checkout = () => {
                 </Box>
             );
         }
-
+        // Khi đã có orderDetails (từ fetch hoặc VNPAY đã xong và fetch xong)
         return (
             <div className="text-center py-10 bg-white p-6 md:p-10 rounded-lg shadow-xl max-w-2xl mx-auto">
                 <div className="mb-6">
@@ -512,7 +554,7 @@ const Checkout = () => {
                     </h2>
                     <p className="text-lg text-gray-600 mb-6">Cảm ơn bạn đã đặt hàng tại Tech Shop.</p>
                     <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 text-left space-y-3 text-sm sm:text-base">
-                        <h3 className="text-xl font-semibold mb-3 text-gray-700">Thông tin đơn hàng #{processedOrderId || orderDetails?.id}</h3>
+                        <h3 className="text-xl font-semibold mb-3 text-gray-700">Thông tin đơn hàng #{orderIdToDisplay}</h3>
                         <p><strong>Ngày đặt:</strong> {orderDetails?.orderDate ? new Date(orderDetails.orderDate).toLocaleString('vi-VN') : "Đang cập nhật..."}</p>
                         <p><strong>Phương thức:</strong> {orderDetails?.paymentMethod === "COD" ? "Thanh toán khi nhận hàng (COD)" : (orderDetails?.paymentMethod || (vnpayStatus === 'success' ? "VNPAY" : "Đang cập nhật..."))}</p>
                         <p><strong>Địa chỉ giao:</strong> {`${orderDetails?.shippingAddress?.street || ''}, ${orderDetails?.shippingAddress?.ward || ''}, ${orderDetails?.shippingAddress?.district || ''}, ${orderDetails?.shippingAddress?.province || ''}`}</p>
@@ -521,7 +563,7 @@ const Checkout = () => {
                     <p className="mb-8 text-gray-600">Chúng tôi sẽ xử lý đơn hàng của bạn trong thời gian sớm nhất.</p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <MuiButton variant="contained" color="primary" onClick={() => navigate('/')} sx={{ py: 1.5, px: 5 }}>TIẾP TỤC MUA SẮM</MuiButton>
-                        <MuiButton variant="outlined" color="primary" onClick={() => navigate(`/my-order/${processedOrderId || (orderDetails?.id || '')}`)} sx={{ py: 1.5, px: 5 }}>XEM ĐƠN HÀNG</MuiButton>
+                        <MuiButton variant="outlined" color="primary" onClick={() => navigate(`/my-order/${orderIdToDisplay || ''}`)} sx={{ py: 1.5, px: 5 }}>XEM ĐƠN HÀNG</MuiButton>
                     </div>
                 </div>
             </div>
@@ -544,7 +586,7 @@ const Checkout = () => {
                     {step === 2 ? "Thông tin đặt hàng" : step === 3 ? "Thanh Toán" : step === 4 ? "Hoàn tất đơn hàng" : "Thanh Toán"}
                 </h1>
                 <CheckoutProgress />
-                {orderContextError && step < 4 && (
+                {orderContextError && step < 4 && !isPlacingOrder && ( // Chỉ hiển thị lỗi nếu không phải đang đặt hàng
                     <Alert severity="error" sx={{ mb: 2 }} onClose={clearOrderError}>
                         {orderContextError}
                     </Alert>
@@ -571,7 +613,7 @@ const Checkout = () => {
                         handlePrevStep={handlePrevStep}
                         onAddAddressAndContinue={handleAddAddressAndContinue}
                         handleNextStep={handleNextStep}
-                        isAddingAddress={isPlacingOrder} // isPlacingOrder được dùng chung cho các hành động tốn thời gian ở bước này
+                        isAddingAddress={isPlacingOrder}
                     />
                 )}
                 {step === 3 && <PaymentStep />}
