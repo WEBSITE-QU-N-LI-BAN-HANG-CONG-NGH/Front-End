@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useOrderContext } from '../../contexts/OrderContext';
 import { useCartContext } from '../../contexts/CartContext';
 import { orderService } from '../../services/order.service';
-import { useAuthContext } from '../../contexts/AuthContext'; // Đã import
+import { useAuthContext } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import AddressStep from './AddressStep';
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from '@mui/material';
@@ -22,9 +22,9 @@ const Checkout = () => {
 
     const {
         addresses: savedAddressesContext,
-        currentOrder: orderFromContext, // Đây là đơn hàng hiện tại từ context
+        currentOrder: orderFromContext,
         isLoading: isOrderContextLoadingGlobal,
-        error: orderContextError, 
+        error: orderContextError,
         fetchAddresses,
         addNewAddress: addNewAddressContext,
         createNewOrder: createNewOrderContext,
@@ -33,6 +33,7 @@ const Checkout = () => {
     } = useOrderContext();
 
     const { cart: cartData, isLoading: isCartContextLoading, clearCartContext } = useCartContext();
+    const { isLoading: authIsLoading } = useAuthContext(); // Lấy authIsLoading
 
     const [step, setStep] = useState(initialStep < 2 ? 2 : initialStep);
     const [selectedAddress, setSelectedAddress] = useState(null);
@@ -54,10 +55,14 @@ const Checkout = () => {
     const [isLoadingWards, setIsLoadingWards] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState("COD");
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-    const [vnpayStatus, setVnpayStatus] = useState(null);
+
+    // State cho xử lý VNPAY và hoàn tất đơn hàng
+    const [vnpayStatus, setVnpayStatus] = useState(null); // null, 'processing', 'success', 'failed'
     const [vnpayMessage, setVnpayMessage] = useState('');
-    const [processedOrderId, setProcessedOrderId] = useState(orderIdFromUrl); // Lưu ID đơn hàng đã xử lý
-    const emailSentRef = useRef(false);
+    const [processedOrderId, setProcessedOrderId] = useState(orderIdFromUrl);
+    const [orderIdForPostProcessing, setOrderIdForPostProcessing] = useState(null);
+    const [orderProcessedForEmailAndCartClear, setOrderProcessedForEmailAndCartClear] = useState(false);
+
 
     useEffect(() => {
         fetchAddresses();
@@ -74,11 +79,9 @@ const Checkout = () => {
     }, [savedAddressesContext, locationHook.search, step]);
 
 
-    // Effect để fetch order details khi ở step 4 hoặc khi orderId từ URL thay đổi
     useEffect(() => {
         const currentOrderIdFromUrl = queryParams.get('orderId');
         if (step === 4 && currentOrderIdFromUrl) {
-            // Chỉ fetch nếu orderId này chưa được fetch hoặc chưa có trong context
             if (currentOrderIdFromUrl !== processedOrderId || !orderFromContext || orderFromContext.id?.toString() !== currentOrderIdFromUrl) {
                 setProcessedOrderId(currentOrderIdFromUrl);
                 fetchOrderByIdContext(currentOrderIdFromUrl);
@@ -133,6 +136,7 @@ const Checkout = () => {
         fetchWardsAPI();
     }, [selectedDistrictCode]);
 
+    // Effect xử lý callback VNPAY ban đầu
     useEffect(() => {
         const searchParams = new URLSearchParams(locationHook.search);
         const isVNPayReturn = searchParams.has('vnp_ResponseCode');
@@ -145,37 +149,31 @@ const Checkout = () => {
             const vnp_ResponseCode = paramsObject['vnp_ResponseCode'];
             const vnp_TxnRef = paramsObject['vnp_TxnRef'];
             const extractedOrderId = vnp_TxnRef ? vnp_TxnRef.split('_')[0] : null;
-            
+
             if (extractedOrderId) {
-                setProcessedOrderId(extractedOrderId); // Lưu lại ID đơn hàng VNPAY
-                // fetchOrderByIdContext(extractedOrderId); // Fetch ngay lập tức
+                setProcessedOrderId(extractedOrderId); // Lưu ID để CompleteStep có thể dùng
 
                 const processCallback = async () => {
                     try {
                         await orderService.handleVNPayCallback(paramsObject);
-                        // Sau khi callback, fetch lại thông tin đơn hàng để cập nhật trạng thái mới nhất
-                        await fetchOrderByIdContext(extractedOrderId); 
+                        await fetchOrderByIdContext(extractedOrderId); // Fetch thông tin đơn hàng
                         if (vnp_ResponseCode === '00') {
                             setVnpayStatus('success');
-                            setVnpayMessage('Thanh toán qua VNPAY thành công!');
-                            showToast('Thanh toán thành công!', 'success');
-                            if (!emailSentRef.current) {
-                                await clearCartContext();
-                                await orderService.sendOrderToEmail(extractedOrderId);
-                                emailSentRef.current = true;
-                            }
+                            setVnpayMessage('Thanh toán VNPAY thành công!');
+                            showToast('Thanh toán VNPAY thành công!', 'success');
+                            setOrderIdForPostProcessing(extractedOrderId); // Đặt ID để effect sau xử lý
+                            setOrderProcessedForEmailAndCartClear(false); // Reset để effect sau chạy
                         } else {
                             setVnpayStatus('failed');
                             setVnpayMessage(`Thanh toán qua VNPAY thất bại. Mã lỗi: ${vnp_ResponseCode}.`);
-                            showToast('Thanh toán thất bại.', 'error');
+                            showToast('Thanh toán VNPAY thất bại.', 'error');
                         }
                     } catch (error) {
                         console.error("Lỗi khi xử lý VNPAY callback:", error);
                         setVnpayStatus('failed');
-                        setVnpayMessage('Lỗi khi xác nhận kết quả thanh toán.');
-                        showToast('Lỗi xác nhận thanh toán.', 'error');
-                         // Vẫn fetch order để hiển thị thông tin nếu có
-                        fetchOrderByIdContext(extractedOrderId);
+                        setVnpayMessage('Lỗi khi xác nhận kết quả thanh toán VNPAY.');
+                        showToast('Lỗi xác nhận thanh toán VNPAY.', 'error');
+                        fetchOrderByIdContext(extractedOrderId); // Vẫn fetch để hiển thị thông tin nếu có
                     }
                 };
                 processCallback();
@@ -185,12 +183,76 @@ const Checkout = () => {
                 setVnpayMessage('Lỗi: Không tìm thấy mã đơn hàng từ VNPAY.');
                 showToast('Lỗi xử lý thanh toán VNPAY.', 'error');
             }
-        } else if (currentStepFromUrl === 4 && !isVNPayReturn && orderIdFromUrl && orderIdFromUrl !== processedOrderId) {
-            // Trường hợp COD hoặc quay lại trang hoàn tất
+        } else if (currentStepFromUrl === 4 && !isVNPayReturn && orderIdFromUrl) {
+            // Xử lý khi vào trang complete cho COD hoặc quay lại trang VNPAY đã thành công
             setProcessedOrderId(orderIdFromUrl);
-            // fetchOrderByIdContext(orderIdFromUrl); // Sẽ được xử lý bởi useEffect ở trên
+            if (orderFromContext && orderFromContext.id?.toString() === orderIdFromUrl) {
+                 if (orderFromContext.paymentMethod === 'COD') {
+                    setOrderIdForPostProcessing(orderIdFromUrl);
+                    setOrderProcessedForEmailAndCartClear(false); // Đảm bảo effect sau chạy cho COD
+                } else if (orderFromContext.paymentMethod === 'VNPAY' && orderFromContext.paymentStatus === 'COMPLETED') {
+                    // Nếu VNPAY đã thành công và đã xử lý, không cần làm gì thêm
+                    setOrderProcessedForEmailAndCartClear(true);
+                }
+            } else if (!orderFromContext && !isOrderContextLoadingGlobal) {
+                // Nếu orderFromContext chưa có, fetch nó
+                fetchOrderByIdContext(orderIdFromUrl);
+            }
         }
-    }, [locationHook.search, vnpayStatus, showToast, clearCartContext, fetchOrderByIdContext, queryParams]); // Bỏ processedOrderId
+    }, [locationHook.search, vnpayStatus, showToast, fetchOrderByIdContext, orderIdFromUrl, orderFromContext, isOrderContextLoadingGlobal]);
+
+
+    // Effect xử lý clear cart và gửi email SAU KHI authIsLoading là false
+    useEffect(() => {
+        const performPostProcessing = async () => {
+            if (orderIdForPostProcessing && !authIsLoading && !orderProcessedForEmailAndCartClear) {
+                console.log(`[Checkout PostProcessing] Auth loaded. Order ID: ${orderIdForPostProcessing}. Current Order in Context:`, orderFromContext);
+                
+                if (orderFromContext && orderFromContext.id?.toString() === orderIdForPostProcessing) {
+                    const isVNPaySuccess = vnpayStatus === 'success' && orderFromContext.paymentMethod === 'VNPAY';
+                    const isCOD = orderFromContext.paymentMethod === 'COD';
+
+                    if (isVNPaySuccess || isCOD) {
+                        try {
+                            console.log(`Attempting to clear cart and send email for order ${orderIdForPostProcessing}`);
+                            await clearCartContext();
+                            await orderService.sendOrderToEmail(orderIdForPostProcessing);
+                            setOrderProcessedForEmailAndCartClear(true);
+                            console.log(`Cart cleared and email sent for order ${orderIdForPostProcessing}`);
+                        } catch (error) {
+                            console.error(`Error during post-processing for order ${orderIdForPostProcessing}:`, error);
+                            if (error.message && error.message.includes("Authentication in progress")) {
+                                 showToast("Đang hoàn tất xác thực, vui lòng chờ giây lát...", "info");
+                                 // Không setOrderProcessedForEmailAndCartClear(true) để effect có thể thử lại
+                            } else {
+                                showToast(error.message || "Lỗi khi hoàn tất đơn hàng.", "error");
+                                setOrderProcessedForEmailAndCartClear(true); // Đánh dấu đã cố xử lý
+                            }
+                        }
+                    }
+                } else if (!orderFromContext && !isOrderContextLoadingGlobal && orderIdForPostProcessing) {
+                    // Nếu orderFromContext chưa được load cho orderIdForPostProcessing, hãy fetch nó.
+                    console.warn(`[Checkout PostProcessing] Order context not matching or not loaded for ${orderIdForPostProcessing}. Fetching details.`);
+                    fetchOrderByIdContext(orderIdForPostProcessing);
+                }
+            }
+        };
+
+        if (step === 4) { // Chỉ chạy khi ở bước 4 (Hoàn tất)
+            performPostProcessing();
+        }
+    }, [
+        step,
+        vnpayStatus,
+        orderIdForPostProcessing,
+        authIsLoading,
+        orderProcessedForEmailAndCartClear,
+        clearCartContext,
+        showToast,
+        orderFromContext, // Quan trọng: lắng nghe thay đổi của orderFromContext
+        fetchOrderByIdContext,
+        isOrderContextLoadingGlobal
+    ]);
 
 
     const handleShippingChange = (e) => { const { name, value } = e.target; setShippingInfo(prev => ({ ...prev, [name]: value })); };
@@ -265,27 +327,19 @@ const Checkout = () => {
             navigate('/cart');
         } else if (step > 2) {
             params.set('step', (step - 1).toString());
-            params.delete('vnp_Amount'); // Xóa các param VNPAY nếu quay lại từ bước 4
-            params.delete('vnp_BankCode');
-            params.delete('vnp_OrderInfo');
-            params.delete('vnp_PayDate');
-            params.delete('vnp_ResponseCode');
-            params.delete('vnp_SecureHash');
-            params.delete('vnp_TmnCode');
-            params.delete('vnp_TransactionNo');
-            params.delete('vnp_TransactionStatus');
-            params.delete('vnp_TxnRef');
-            // Không xóa orderId nếu nó tồn tại và là COD, để có thể quay lại xem
-            // if (paymentMethod === "COD" && params.has('orderId')) {
-            //    // giữ lại orderId
-            // } else {
-            //    params.delete('orderId');
-            // }
+            // Xóa các params không cần thiết khi quay lại
+            const paramsToRemove = ['vnp_Amount', 'vnp_BankCode', 'vnp_OrderInfo', 'vnp_PayDate', 'vnp_ResponseCode', 'vnp_SecureHash', 'vnp_TmnCode', 'vnp_TransactionNo', 'vnp_TransactionStatus', 'vnp_TxnRef'];
+            paramsToRemove.forEach(p => params.delete(p));
+
+            if(step === 4 && paymentMethod !== "COD") { // Nếu quay lại từ trang hoàn tất của VNPAY
+                 params.delete('orderId'); // Xóa orderId vì nó sẽ được tạo lại nếu người dùng thanh toán lại
+            }
             
             navigate({ pathname: locationHook.pathname, search: params.toString() });
             setStep(step - 1);
-            if (vnpayStatus) setVnpayStatus(null); // Reset VNPAY status
-            if (emailSentRef.current) emailSentRef.current = false;
+            if (vnpayStatus) setVnpayStatus(null);
+            setOrderProcessedForEmailAndCartClear(false); // Cho phép xử lý lại nếu cần
+            setOrderIdForPostProcessing(null); // Reset
         }
         window.scrollTo(0, 0);
     };
@@ -295,22 +349,22 @@ const Checkout = () => {
             showToast("Vui lòng điền đầy đủ thông tin địa chỉ.", "error");
             return;
         }
-        setIsPlacingOrder(true); 
+        setIsPlacingOrder(true);
         const addressData = {
             fullName: shippingInfo.fullName,
             phoneNumber: shippingInfo.phone,
-            email: shippingInfo.email, 
+            email: shippingInfo.email,
             street: shippingInfo.address,
-            province: shippingInfo.city, 
-            district: shippingInfo.district, 
-            ward: shippingInfo.ward, 
+            province: shippingInfo.city,
+            district: shippingInfo.district,
+            ward: shippingInfo.ward,
             note: shippingInfo.note,
         };
         try {
             const newAddedAddressResponse = await addNewAddressContext(addressData);
             const newAddedAddress = newAddedAddressResponse.data || newAddedAddressResponse;
             if (newAddedAddress && newAddedAddress.id) {
-                setSelectedAddress(newAddedAddress); 
+                setSelectedAddress(newAddedAddress);
                 showToast("Địa chỉ đã được thêm và chọn thành công!", "success");
                 const params = new URLSearchParams(locationHook.search);
                 params.set('step', '3');
@@ -320,7 +374,7 @@ const Checkout = () => {
                 window.scrollTo(0, 0);
             } else {
                 showToast("Thêm địa chỉ thành công nhưng có lỗi khi tự động chọn. Vui lòng chọn lại từ danh sách.", "info");
-                fetchAddresses(); 
+                fetchAddresses();
                 setShippingInfo({ fullName: "", phone: "", email: "", address: "", city: "", district: "", ward: "", note: "" });
                 setSelectedProvinceCode(''); setSelectedDistrictCode(''); setSelectedWardCode('');
             }
@@ -332,60 +386,61 @@ const Checkout = () => {
     };
 
     const handlePlaceOrder = async () => {
+        if (authIsLoading) {
+            showToast("Hệ thống đang xử lý thông tin đăng nhập, vui lòng thử lại sau giây lát.", "warning");
+            return;
+        }
+
         setIsPlacingOrder(true);
         clearOrderError();
-
         const addressIdFromUrl = queryParams.get('addressId');
-
         if (!addressIdFromUrl) {
             showToast("Vui lòng chọn hoặc lưu địa chỉ giao hàng hợp lệ ở bước trước.", "error");
             setIsPlacingOrder(false);
             return;
         }
-
         const finalAddressId = Number(addressIdFromUrl);
 
         try {
-            const createdOrder = await createNewOrderContext(finalAddressId); // createdOrder.id nên đã được đảm bảo bởi OrderContext
-            
-            if (!createdOrder || !createdOrder.id) { // Kiểm tra lại cẩn thận
+            const createdOrder = await createNewOrderContext(finalAddressId);
+            if (!createdOrder || !createdOrder.id) {
                 throw new Error("Không nhận được ID đơn hàng sau khi tạo.");
             }
 
-            setProcessedOrderId(createdOrder.id.toString()); // Lưu ID đơn hàng vừa tạo
+            setProcessedOrderId(createdOrder.id.toString());
 
             if (paymentMethod === "VNPAY") {
                 const paymentResponse = await orderService.createVNPayPayment(createdOrder.id);
                 if (paymentResponse.data?.paymentUrl) {
                     window.location.href = paymentResponse.data.paymentUrl;
-                    // Không set isPlacingOrder = false ở đây vì trang sẽ redirect
-                    return; 
+                    return;
                 } else {
                     throw new Error("Không nhận được link thanh toán VNPAY.");
                 }
             } else { // COD
-                await clearCartContext();
-                await orderService.sendOrderToEmail(createdOrder.id);
-                emailSentRef.current = true;
+                setOrderIdForPostProcessing(createdOrder.id.toString());
+                setOrderProcessedForEmailAndCartClear(false); // Để effect sau xử lý
+
                 const params = new URLSearchParams();
                 params.set('step', '4');
                 params.set('orderId', createdOrder.id.toString());
                 navigate({ pathname: locationHook.pathname, search: params.toString() }, { replace: true });
                 setStep(4);
-                // fetchOrderByIdContext(createdOrder.id.toString()); // fetchOrderByIdContext sẽ được gọi bởi useEffect
             }
         } catch (err) {
             console.error("[Checkout] Lỗi trong quá trình đặt hàng:", err.message, err);
-            // orderContextError đã được set trong createNewOrderContext nếu có lỗi API
             const apiErrorMessage = orderContextError || err.message || "Đặt hàng thất bại. Vui lòng thử lại.";
-            showToast(apiErrorMessage, "error");
+            if (err.message && err.message.includes("Authentication in progress")) {
+                showToast("Hệ thống đang xử lý thông tin đăng nhập, vui lòng thử lại sau giây lát.", "warning");
+            } else {
+                showToast(apiErrorMessage, "error");
+            }
         } finally {
              if (paymentMethod !== 'VNPAY' || (err && !err.message?.toLowerCase().includes("vnpay"))) {
                  setIsPlacingOrder(false);
             }
         }
     };
-
 
     const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
 
@@ -394,7 +449,6 @@ const Checkout = () => {
             {["Giỏ hàng", "Thông tin", "Thanh toán", "Hoàn tất"].map((label, index) => {
                 const isActive = (index + 1) <= step;
                 const isNextConnectorActive = (index + 1) < step;
-
                 return (
                     <React.Fragment key={label}>
                         <div className="flex flex-col items-center text-center">
@@ -411,7 +465,6 @@ const Checkout = () => {
             })}
         </div>
     );
-
 
     const PaymentStep = () => (
         <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
@@ -459,38 +512,16 @@ const Checkout = () => {
             {orderContextError && <Alert severity="error" sx={{ mb: 2 }} onClose={clearOrderError}>{orderContextError}</Alert>}
             <div className="flex justify-between mt-8">
                 <MuiButton variant="outlined" onClick={handlePrevStep} disabled={isPlacingOrder} sx={{ py: 1.5, px: 4 }}>Quay Lại</MuiButton>
-                <MuiButton variant="contained" onClick={handlePlaceOrder} disabled={isPlacingOrder || isCartContextLoading || !cartData?.cartItems?.length} sx={{ py: 1.5, px: 6, bgcolor: 'rgb(220 38 38)', '&:hover': { bgcolor: 'rgb(185 28 28)' } }}>
-                    {isPlacingOrder ? <CircularProgress size={24} color="inherit" /> : 'Hoàn tất đặt hàng'}
+                <MuiButton variant="contained" onClick={handlePlaceOrder} disabled={isPlacingOrder || isCartContextLoading || !cartData?.cartItems?.length || authIsLoading} sx={{ py: 1.5, px: 6, bgcolor: 'rgb(220 38 38)', '&:hover': { bgcolor: 'rgb(185 28 28)' } }}>
+                    {isPlacingOrder || authIsLoading ? <CircularProgress size={24} color="inherit" /> : 'Hoàn tất đặt hàng'}
                 </MuiButton>
             </div>
         </div>
     );
 
     const CompleteStep = () => {
-        // Sử dụng orderFromContext đã được fetch bởi useEffect ở trên
-        const orderDetails = orderFromContext; 
-        // orderIdToDisplay sẽ là processedOrderId (từ URL hoặc từ đơn hàng mới tạo)
-        // hoặc orderDetails.id nếu orderDetails đã được load
+        const orderDetails = orderFromContext;
         const orderIdToDisplay = processedOrderId || orderDetails?.id;
-
-
-        useEffect(() => {
-            // Chỉ gửi mail cho COD nếu đơn hàng đã được fetch và là COD
-            if (orderDetails && orderDetails.id?.toString() === orderIdToDisplay && orderDetails.paymentMethod === "COD" && !emailSentRef.current) {
-                const completeCODOrder = async () => {
-                    try {
-                        // clearCartContext có thể đã được gọi trong handlePlaceOrder
-                        // await clearCartContext(); 
-                        await orderService.sendOrderToEmail(orderDetails.id);
-                        emailSentRef.current = true;
-                    } catch (err) {
-                        console.error("Lỗi khi hoàn tất đơn COD (CompleteStep):", err);
-                        showToast("Có lỗi xảy ra khi gửi email xác nhận đơn hàng COD.", "error");
-                    }
-                };
-                completeCODOrder();
-            }
-        }, [orderDetails, orderIdToDisplay, showToast]); // Bỏ clearCartContext
 
         if (vnpayStatus === 'processing' || (isOrderContextLoadingGlobal && !orderDetails && !orderContextError && step === 4)) {
             return (
@@ -512,7 +543,6 @@ const Checkout = () => {
                 </Box>
             );
         }
-        // Hiển thị lỗi nếu có lỗi từ context VÀ không có orderDetails
         if (orderContextError && !orderDetails && step === 4) {
             return (
                 <Box sx={{ textAlign: 'center', py: 10 }}>
@@ -522,7 +552,6 @@ const Checkout = () => {
                 </Box>
             );
         }
-        // Nếu đang không loading, không có lỗi, nhưng vẫn không có orderDetails (sau khi đã cố gắng fetch)
         if (!orderDetails && !isOrderContextLoadingGlobal && !orderContextError && step === 4 && vnpayStatus !== 'success') {
             return (
                  <Box sx={{ textAlign: 'center', py: 10 }}>
@@ -531,7 +560,6 @@ const Checkout = () => {
                  </Box>
             );
         }
-        // VNPAY thành công nhưng chi tiết đơn hàng đang tải
         if (vnpayStatus === 'success' && isOrderContextLoadingGlobal && !orderDetails) {
             return (
                 <Box sx={{ textAlign: 'center', py: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -540,11 +568,10 @@ const Checkout = () => {
                 </Box>
             );
         }
-        // Khi đã có orderDetails (từ fetch hoặc VNPAY đã xong và fetch xong)
         return (
             <div className="text-center py-10 bg-white p-6 md:p-10 rounded-lg shadow-xl max-w-2xl mx-auto">
                 <div className="mb-6">
-                    {(vnpayStatus === 'success' || orderDetails?.paymentMethod === 'COD') && (
+                    {(vnpayStatus === 'success' || (orderDetails?.paymentMethod === 'COD' && orderDetails?.id?.toString() === orderIdToDisplay) ) && (
                         <svg className="mx-auto mb-4 h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -586,7 +613,7 @@ const Checkout = () => {
                     {step === 2 ? "Thông tin đặt hàng" : step === 3 ? "Thanh Toán" : step === 4 ? "Hoàn tất đơn hàng" : "Thanh Toán"}
                 </h1>
                 <CheckoutProgress />
-                {orderContextError && step < 4 && !isPlacingOrder && ( // Chỉ hiển thị lỗi nếu không phải đang đặt hàng
+                {orderContextError && step < 4 && !isPlacingOrder && (
                     <Alert severity="error" sx={{ mb: 2 }} onClose={clearOrderError}>
                         {orderContextError}
                     </Alert>
