@@ -65,22 +65,32 @@ export const AuthProvider = ({ children }) => {
       if (accessToken) {
         saveTokenToLocalStorage(accessToken);
         setJwt(accessToken);
-        // Quan trọng: fetch user profile NGAY SAU KHI có token mới
-        await fetchUserProfileInternal(accessToken);
 
+        // Get user data from response
         const responseData = response.data.data || response.data;
         const userFromLogin = responseData.user || responseData;
-        const roles = userFromLogin?.roles || (userFromLogin?.authorities?.map(auth => auth.authority.replace("ROLE_", ""))) || [];
 
-        if (roles.includes("SELLER")) {
-            window.location.href = `http://localhost:5174/dashboard?token=${encodeURIComponent(accessToken)}`;
-            // Không setIsLoading(false) ở đây vì đã chuyển trang
-            return;
+        // Check seller role before setting user state
+        const roles = userFromLogin?.roles ||
+            (userFromLogin?.authorities?.map(auth => auth.authority.replace("ROLE_", ""))) ||
+            [];
+
+        // Check if user is seller
+        if (roles.includes("SELLER") || userFromLogin?.role === "SELLER") {
+          console.log("Seller detected, redirecting to seller app");
+
+          // Redirect to seller app with token
+          const sellerUrl = `http://localhost:5174/dashboard?token=${encodeURIComponent(accessToken)}`;
+          window.location.href = sellerUrl;
+          return; // Exit early, don't continue customer flow
         }
+
+        // Continue normal customer flow
+        await fetchUserProfileInternal(accessToken);
       } else {
         throw new Error("Đăng nhập thành công nhưng không nhận được token.");
       }
-      setIsLoading(false); // Set loading false sau khi hoàn tất login và fetch user (nếu không redirect)
+      setIsLoading(false);
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Đăng nhập thất bại.";
       setError(errorMessage);
@@ -89,7 +99,6 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(false);
       throw err;
     }
-    // Không gọi setIsLoading(false) ở đây nữa nếu có redirect
   };
 
   const register = async (userData) => {
