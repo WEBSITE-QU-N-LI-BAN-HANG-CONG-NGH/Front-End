@@ -1,20 +1,18 @@
+// src/contexts/OrderContext.jsx
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { orderService } from '../services/order.service'; // Đảm bảo đường dẫn đúng
-import { useAuthContext } from './AuthContext'; // Để kiểm tra trạng thái đăng nhập và lấy token
+import { orderService } from '../services/order.service';
+import { useAuthContext } from './AuthContext';
 
-// Tạo Context
 const OrderContext = createContext(null);
 
-// Tạo Provider Component
 export const OrderProvider = ({ children }) => {
-  const [orders, setOrders] = useState([]); // Danh sách đơn hàng của người dùng
-  const [currentOrder, setCurrentOrder] = useState(null); // Đơn hàng đang được xem chi tiết hoặc vừa tạo
-  const [addresses, setAddresses] = useState([]); // Danh sách địa chỉ của người dùng
+  const [orders, setOrders] = useState([]);
+  const [currentOrder, setCurrentOrder] = useState(null);
+  const [addresses, setAddresses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const { isAuthenticated, jwt } = useAuthContext();
 
-  // Fetch danh sách địa chỉ của người dùng
   const fetchAddresses = useCallback(async () => {
     if (!isAuthenticated) {
       setAddresses([]);
@@ -24,7 +22,7 @@ export const OrderProvider = ({ children }) => {
     setError(null);
     try {
       const response = await orderService.getAddresses();
-      setAddresses(response.data?.data || response.data || []); // API có thể trả về trong response.data hoặc response.data.data
+      setAddresses(response.data?.data || response.data || []);
     } catch (err) {
       console.error("Lỗi khi lấy danh sách địa chỉ (Context):", err);
       setError(err.response?.data?.message || err.message || "Không thể tải danh sách địa chỉ.");
@@ -34,37 +32,31 @@ export const OrderProvider = ({ children }) => {
     }
   }, [isAuthenticated]);
 
-  // Fetch địa chỉ khi người dùng đăng nhập/thay đổi
   useEffect(() => {
     if (isAuthenticated) {
       fetchAddresses();
     } else {
-      setAddresses([]); // Xóa địa chỉ nếu không authenticated
+      setAddresses([]);
     }
-  }, [isAuthenticated, jwt, fetchAddresses]); // Thêm jwt làm dependency
+  }, [isAuthenticated, jwt, fetchAddresses]);
 
-  // Tạo đơn hàng mới
-  const createNewOrder = async (addressId) => {
+  const createNewOrder = async (addressId) => { // Chỉ nhận addressId
     if (!isAuthenticated) {
       setError("Vui lòng đăng nhập để đặt hàng.");
       throw new Error("User not authenticated");
     }
-    if (!addressId) {
+    if (!addressId) { // Kiểm tra addressId
         setError("Vui lòng chọn địa chỉ giao hàng hợp lệ.");
         throw new Error("Address ID is required");
     }
     setIsLoading(true);
     setError(null);
     try {
-      const response = await orderService.createOrder(addressId);
-      setCurrentOrder(response.data); // Lưu đơn hàng vừa tạo
-      // Gọi API gửi mail sau khi tạo đơn hàng thành công (nếu là COD)
-      // Việc này có thể cần thêm logic kiểm tra phương thức thanh toán
-      // Ví dụ, nếu response.data có paymentMethod === "COD"
-      // if (response.data?.paymentMethod === "COD" && response.data?.id) {
-      //   await orderService.sendOrderToEmail(response.data.id);
-      // }
-      return response.data; // Trả về dữ liệu đơn hàng
+      // Truyền addressId cho service
+      const response = await orderService.createOrder(addressId); //
+      const newOrderData = response.data?.data || response.data;
+      setCurrentOrder(newOrderData);
+      return newOrderData;
     } catch (err) {
       console.error("Lỗi khi tạo đơn hàng (Context):", err);
       const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || "Không thể tạo đơn hàng.";
@@ -76,14 +68,13 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  // Lấy chi tiết một đơn hàng bằng ID
   const fetchOrderById = async (orderId) => {
     if (!isAuthenticated) return;
     setIsLoading(true);
     setError(null);
     try {
       const response = await orderService.getOrderById(orderId);
-      setCurrentOrder(response.data);
+      setCurrentOrder(response.data?.data || response.data);
     } catch (err) {
       console.error(`Lỗi khi lấy chi tiết đơn hàng ${orderId} (Context):`, err);
       setError(err.response?.data?.message || err.message || "Không thể tải chi tiết đơn hàng.");
@@ -93,7 +84,6 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  // Thêm địa chỉ mới
   const addNewAddress = async (addressData) => {
     if (!isAuthenticated) {
       setError("Vui lòng đăng nhập để thêm địa chỉ.");
@@ -103,10 +93,7 @@ export const OrderProvider = ({ children }) => {
     setError(null);
     try {
       const response = await orderService.addAddress(addressData);
-      // Sau khi thêm thành công, fetch lại danh sách địa chỉ
-      // Hoặc có thể cập nhật state addresses trực tiếp nếu API trả về địa chỉ vừa thêm
-      // setAddresses(prev => [...prev, response.data]);
-      await fetchAddresses(); // Fetch lại để đảm bảo đồng bộ
+      await fetchAddresses();
       return response.data;
     } catch (err) {
       console.error("Lỗi khi thêm địa chỉ (Context):", err);
@@ -118,8 +105,6 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  // Lấy tất cả đơn hàng của người dùng (hoặc các loại đơn hàng khác nhau)
-  // Các hàm này có thể được gộp lại hoặc tách riêng tùy theo nhu cầu hiển thị
   const fetchUserOrders = async (status = "all") => {
     if (!isAuthenticated) {
         setOrders([]);
@@ -130,25 +115,12 @@ export const OrderProvider = ({ children }) => {
     try {
         let response;
         switch (status) {
-          case "PENDING":
-            response = await orderService.getPendingOrders();
-            break;
-          case "SHIPPED":
-            response = await orderService.getShippingOrders();
-            break;
-          case "DELIVERED":
-            response = await orderService.getDeliveredOrders();
-            break;
-          case "CANCELLED":
-            response = await orderService.getCancelledOrders();
-            break;
-          case "CONFIRMED":
-            response = await orderService.getConfirmedOrders();
-            break;
-          case "all":
-          default:
-            response = await orderService.getAllOrders();
-            break;
+          case "PENDING": response = await orderService.getPendingOrders(); break;
+          case "SHIPPED": response = await orderService.getShippingOrders(); break;
+          case "DELIVERED": response = await orderService.getDeliveredOrders(); break;
+          case "CANCELLED": response = await orderService.getCancelledOrders(); break;
+          case "CONFIRMED": response = await orderService.getConfirmedOrders(); break;
+          case "all": default: response = await orderService.getAllOrders(); break;
         }
         setOrders(response.data?.data || response.data || []);
     } catch (err) {
@@ -160,7 +132,6 @@ export const OrderProvider = ({ children }) => {
     }
   };
 
-  // Hủy đơn hàng
   const cancelUserOrder = async (orderId) => {
     if (!isAuthenticated) {
         setError("Vui lòng đăng nhập để thực hiện thao tác này.");
@@ -170,15 +141,10 @@ export const OrderProvider = ({ children }) => {
     setError(null);
     try {
         const response = await orderService.cancelOrder(orderId);
-        // Sau khi hủy, cập nhật lại danh sách đơn hàng hoặc đơn hàng cụ thể
-        // Ví dụ, nếu đang xem chi tiết đơn hàng đó:
         if (currentOrder && currentOrder.id === orderId) {
-            setCurrentOrder(prev => ({ ...prev, orderStatus: "CANCELLED" })); // Cập nhật trạng thái tạm thời
+            setCurrentOrder(prev => ({ ...prev, orderStatus: "CANCELLED" }));
         }
-        // Hoặc fetch lại danh sách đơn hàng đang hiển thị
-        // await fetchUserOrders(hiện tại_filter_status);
-        // Tốt nhất là để component gọi lại fetchUserOrders
-        return response.data; // Trả về message từ API
+        return response.data;
     } catch (err) {
         console.error(`Lỗi khi hủy đơn hàng ${orderId} (Context):`, err);
         const errorMessage = err.response?.data?.message || err.message || "Không thể hủy đơn hàng.";
@@ -188,7 +154,6 @@ export const OrderProvider = ({ children }) => {
         setIsLoading(false);
     }
   };
-
 
   const value = {
     orders,
@@ -208,7 +173,6 @@ export const OrderProvider = ({ children }) => {
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;
 };
 
-// Tạo Custom Hook
 export const useOrderContext = () => {
   const context = useContext(OrderContext);
   if (context === undefined) {

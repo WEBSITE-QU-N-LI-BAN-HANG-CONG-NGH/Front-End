@@ -3,10 +3,12 @@ import { api } from "../config/ApiConfig";
 // import { API_BASE_URL } from "../config/ApiConfig"; // Không cần nếu api instance đã có baseURL
 
 export const orderService = {
-    createOrder: async (addressId) => {
+    createOrder: async (addressId) => { // Chỉ nhận addressId
         try {
+            if (!addressId) {
+                throw new Error("Address ID is required to create an order.");
+            }
             // API endpoint của bạn là /orders/create/{addressId}
-            // không phải /api/order/create/{addressId} như trong Redux action cũ
             const response = await api.post(`/orders/create/${addressId}`);
             return response; // Trả về response, Context sẽ lấy response.data
         } catch (error) {
@@ -48,6 +50,7 @@ export const orderService = {
 
     createVNPayPayment: async (orderId) => {
         try {
+            // Backend endpoint: /payment/create/{orderId}
             const response = await api.post(`/payment/create/${orderId}`);
             return response;
         } catch (error) {
@@ -62,7 +65,7 @@ export const orderService = {
         }
         try {
             // Body có thể là null nếu backend không yêu cầu body cho POST này
-            const response = await api.post(`/payment/vnpay-callback`, null, {
+            const response = await api.post(`/payment/vnpay-callback`, null, { //
                 params: vnpayParams
             });
             return response;
@@ -74,7 +77,7 @@ export const orderService = {
 
     getAllOrders: async () => {
         try {
-            const response = await api.get("/orders/user");
+            const response = await api.get("/orders/user"); //
             return response;
         } catch (error) {
             throw error;
@@ -82,7 +85,7 @@ export const orderService = {
     },
     getPendingOrders: async () => {
         try {
-            const response = await api.get("/orders/pending");
+            const response = await api.get("/orders/pending"); //
             return response;
         } catch (error) {
             throw error;
@@ -90,7 +93,7 @@ export const orderService = {
     },
     getShippingOrders: async () => {
         try {
-            const response = await api.get("/orders/shipped");
+            const response = await api.get("/orders/shipped"); //
             return response;
         } catch (error) {
             throw error;
@@ -98,7 +101,7 @@ export const orderService = {
     },
     getDeliveredOrders: async () => {
         try {
-            const response = await api.get("/orders/delivered");
+            const response = await api.get("/orders/delivered"); //
             return response;
         } catch (error) {
             throw error;
@@ -106,7 +109,7 @@ export const orderService = {
     },
     getCancelledOrders: async () => {
         try {
-            const response = await api.get("/orders/cancelled");
+            const response = await api.get("/orders/cancelled"); //
             return response;
         } catch (error) {
             throw error;
@@ -114,7 +117,7 @@ export const orderService = {
     },
     getConfirmedOrders: async () => {
         try {
-            const response = await api.get("/orders/confirmed");
+            const response = await api.get("/orders/confirmed"); //
             return response;
         } catch (error) {
             throw error;
@@ -122,7 +125,7 @@ export const orderService = {
     },
     cancelOrder: async (orderId) => {
         try {
-            const response = await api.put(`/orders/cancel/${orderId}`);
+            const response = await api.put(`/orders/cancel/${orderId}`); //
             return response;
         } catch (error) {
             throw error;
@@ -130,7 +133,7 @@ export const orderService = {
     },
     sendOrderToEmail: async (orderId) => {
         try {
-            const response = await api.post(`/orders/send-mail/${orderId}`);
+            const response = await api.post(`/orders/send-mail/${orderId}`); //
             return response;
         } catch (error) {
             throw error;
