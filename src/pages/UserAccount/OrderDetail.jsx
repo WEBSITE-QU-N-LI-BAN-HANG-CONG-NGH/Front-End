@@ -202,7 +202,7 @@ const OrderDetail = () => {
 
             <div className="mt-8 flex flex-wrap gap-3 justify-end">
               {order.orderStatus === "DELIVERED" && (
-                <MuiButton variant="contained" color="success" onClick={() => showToast("Chức năng đánh giá sắp ra mắt!", "info")}>
+                <MuiButton variant="contained" color="success" onClick={() => showToast("Bây giờ bạn có thể đánh giá sản phẩm tại trang chi tiết sản phẩm!", "info")}>
                   Đánh giá
                 </MuiButton>
               )}

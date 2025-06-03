@@ -10,7 +10,7 @@ import { useToast } from '../../contexts/ToastContext';
 import AddressStep from './AddressStep';
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from '@mui/material';
 
-const API_LOCATION_BASE_URL = "https://open.oapi.vn/location"; 
+const API_LOCATION_BASE_URL = "https://provinces.open-api.vn/api";
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -87,71 +87,51 @@ const Checkout = () => {
         }
     }, [step, locationHook.search, queryParams, fetchOrderByIdContext, processedOrderId, orderFromContext]); // Thêm queryParams
 
-useEffect(() => {
-    const fetchProvinces = async () => {
-        setIsLoadingProvinces(true);
-        try {
-            // The new API endpoint is typically just /provinces
-            const response = await axios.get(`${API_LOCATION_BASE_URL}/provinces`);
-            setProvinces(response.data || []); // Data is directly in response.data
-        } catch (error) {
-            console.error("Error fetching provinces:", error);
-            setProvinces([]); // Set to empty array on error
-        } finally {
-            setIsLoadingProvinces(false);
-        }
-    };
-    fetchProvinces();
-}, []); // API_LOCATION_BASE_URL is a const, so no need to add it as a dependency here
+    useEffect(() => {
+        const fetchProvincesAPI = async () => {
+            setIsLoadingProvinces(true);
+            try {
+                const response = await axios.get(`${API_LOCATION_BASE_URL}/p/`);
+                setProvinces(response.data || []);
+            } catch (error) { console.error("Error fetching provinces:", error); setProvinces([]); }
+            finally { setIsLoadingProvinces(false); }
+        };
+        fetchProvincesAPI();
+    }, []);
 
     useEffect(() => {
-    if (!selectedProvinceCode) { // selectedProvinceCode will hold the province 'id'
-        setDistricts([]);
-        setSelectedDistrictCode('');
-        setWards([]);
-        setSelectedWardCode('');
-        return;
-    }
-    const fetchDistricts = async () => {
-        setIsLoadingDistricts(true);
-        setWards([]);
-        setSelectedWardCode('');
-        try {
-            // New API uses provinceId as a query parameter
-            const response = await axios.get(`${API_LOCATION_BASE_URL}/districts?provinceId=${selectedProvinceCode}`);
-            setDistricts(response.data || []); // Data is directly in response.data
-        } catch (error) {
-            console.error("Error fetching districts:", error);
-            setDistricts([]); // Set to empty array on error
-        } finally {
-            setIsLoadingDistricts(false);
+        if (!selectedProvinceCode) {
+            setDistricts([]); setSelectedDistrictCode('');
+            setWards([]); setSelectedWardCode('');
+            return;
         }
-    };
-    fetchDistricts();
-}, [selectedProvinceCode]);
+        const fetchDistrictsAPI = async () => {
+            setIsLoadingDistricts(true);
+            setWards([]); setSelectedWardCode('');
+            try {
+                const response = await axios.get(`${API_LOCATION_BASE_URL}/p/${selectedProvinceCode}?depth=2`);
+                setDistricts(response.data?.districts || []);
+            } catch (error) { console.error("Error fetching districts:", error); setDistricts([]); }
+            finally { setIsLoadingDistricts(false); }
+        };
+        fetchDistrictsAPI();
+    }, [selectedProvinceCode]);
 
-// Corrected useEffect for fetching wards
-useEffect(() => {
-    if (!selectedDistrictCode) { // selectedDistrictCode will hold the district 'id'
-        setWards([]);
-        setSelectedWardCode('');
-        return;
-    }
-    const fetchWards = async () => {
-        setIsLoadingWards(true);
-        try {
-            // New API uses districtId as a query parameter
-            const response = await axios.get(`${API_LOCATION_BASE_URL}/wards?districtId=${selectedDistrictCode}`);
-            setWards(response.data || []); // Data is directly in response.data
-        } catch (error) {
-            console.error("Error fetching wards:", error);
-            setWards([]); // Set to empty array on error
-        } finally {
-            setIsLoadingWards(false);
+    useEffect(() => {
+        if (!selectedDistrictCode) {
+            setWards([]); setSelectedWardCode('');
+            return;
         }
-    };
-    fetchWards();
-}, [selectedDistrictCode]);
+        const fetchWardsAPI = async () => {
+            setIsLoadingWards(true);
+            try {
+                const response = await axios.get(`${API_LOCATION_BASE_URL}/d/${selectedDistrictCode}?depth=2`);
+                setWards(response.data?.wards || []);
+            } catch (error) { console.error("Error fetching wards:", error); setWards([]); }
+            finally { setIsLoadingWards(false); }
+        };
+        fetchWardsAPI();
+    }, [selectedDistrictCode]);
 
     useEffect(() => {
         const searchParams = new URLSearchParams(locationHook.search);
@@ -292,35 +272,9 @@ useEffect(() => {
     ]);
 
     const handleShippingChange = (e) => { const { name, value } = e.target; setShippingInfo(prev => ({ ...prev, [name]: value })); };
-const handleProvinceChange = (e) => {
-    const selectedId = e.target.value; // This 'value' from <option> should be the province 'id'
-    const selectedOption = provinces.find(p => p.id.toString() === selectedId); // Use p.id
-    const name = selectedOption ? selectedOption.name : '';
-    setSelectedProvinceCode(selectedId);
-    setShippingInfo(prev => ({ ...prev, city: name, district: '', ward: '' }));
-    setSelectedDistrictCode('');
-    setSelectedWardCode('');
-    setDistricts([]);
-    setWards([]);
-};
-
-const handleDistrictChange = (e) => {
-    const selectedId = e.target.value; // This 'value' from <option> should be the district 'id'
-    const selectedOption = districts.find(d => d.id.toString() === selectedId); // Use d.id
-    const name = selectedOption ? selectedOption.name : '';
-    setSelectedDistrictCode(selectedId);
-    setShippingInfo(prev => ({ ...prev, district: name, ward: '' }));
-    setSelectedWardCode('');
-    setWards([]);
-};
-
-const handleWardChange = (e) => {
-    const selectedId = e.target.value; // This 'value' from <option> should be the ward 'id'
-    const selectedOption = wards.find(w => w.id.toString() === selectedId); // Use w.id
-    const name = selectedOption ? selectedOption.name : '';
-    setSelectedWardCode(selectedId);
-    setShippingInfo(prev => ({ ...prev, ward: name }));
-};
+    const handleProvinceChange = (e) => { /* ... */ const code = e.target.value; const selectedOption = provinces.find(p => p.code.toString() === code); const name = selectedOption ? selectedOption.name : ''; setSelectedProvinceCode(code); setShippingInfo(prev => ({ ...prev, city: name, district: '', ward: '' })); setSelectedDistrictCode(''); setSelectedWardCode(''); setDistricts([]); setWards([]); };
+    const handleDistrictChange = (e) => { /* ... */ const code = e.target.value; const selectedOption = districts.find(d => d.code.toString() === code); const name = selectedOption ? selectedOption.name : ''; setSelectedDistrictCode(code); setShippingInfo(prev => ({ ...prev, district: name, ward: '' })); setSelectedWardCode(''); setWards([]); };
+    const handleWardChange = (e) => { /* ... */ const code = e.target.value; const selectedOption = wards.find(w => w.code.toString() === code); const name = selectedOption ? selectedOption.name : ''; setSelectedWardCode(code); setShippingInfo(prev => ({ ...prev, ward: name })); };
     const handleAddressSelect = (address) => { /* ... */ setSelectedAddress(address); setShippingInfo({ fullName: "", phone: "", email: "", address: "", city: "", district: "", ward: "", note: "" }); setSelectedProvinceCode(''); setSelectedDistrictCode(''); setSelectedWardCode(''); setDistricts([]); setWards([]); const params = new URLSearchParams(locationHook.search); params.set('addressId', address.id.toString()); navigate({ pathname: locationHook.pathname, search: params.toString() }, { replace: true }); };
 
     const handleNextStep = () => {
@@ -387,7 +341,7 @@ const handleWardChange = (e) => {
                 navigate({ pathname: locationHook.pathname, search: params.toString() });
                 setStep(3); window.scrollTo(0, 0);
             } else {
-                showToast("Thêm địa chỉ thành công nhưng có lỗi khi tự động chọn. Vui lòng chọn lại từ danh sách.", "info");
+                showToast("Thêm địa chỉ thành công. Vui lòng chọn lại từ danh sách.", "info");
                 fetchAddresses();
                 setShippingInfo({ fullName: "", phone: "", email: "", address: "", city: "", district: "", ward: "", note: "" });
                 setSelectedProvinceCode(''); setSelectedDistrictCode(''); setSelectedWardCode('');
