@@ -1,7 +1,7 @@
 // src/contexts/OrderContext.jsx
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { orderService } from '../services/order.service';
-import { useAuthContext } from './AuthContext';
+import { useAuthContext } from './AuthContext'; // Giả sử bạn có AuthContext
 
 const OrderContext = createContext(null);
 
@@ -11,8 +11,9 @@ export const OrderProvider = ({ children }) => {
   const [addresses, setAddresses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { isAuthenticated, jwt } = useAuthContext();
+  const { isAuthenticated, jwt } = useAuthContext(); // Lấy trạng thái xác thực
 
+  // fetchAddresses (giữ nguyên hoặc đảm bảo useCallback nếu cần)
   const fetchAddresses = useCallback(async () => {
     if (!isAuthenticated) {
       setAddresses([]);
@@ -30,17 +31,20 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated]); // Phụ thuộc vào isAuthenticated
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchAddresses();
     } else {
       setAddresses([]);
+      setOrders([]); // Reset orders khi không xác thực
+      setCurrentOrder(null);
     }
-  }, [isAuthenticated, jwt, fetchAddresses]);
+  }, [isAuthenticated, fetchAddresses]); // Thêm fetchAddresses
 
-  const createNewOrder = async (addressId) => {
+  // createNewOrder (giữ nguyên hoặc đảm bảo useCallback nếu cần)
+  const createNewOrder = useCallback(async (addressId) => {
     if (!isAuthenticated) {
       setError("Vui lòng đăng nhập để đặt hàng.");
       throw new Error("User not authenticated");
@@ -53,93 +57,64 @@ export const OrderProvider = ({ children }) => {
     setError(null);
     try {
       const response = await orderService.createOrder(addressId);
-      
-      console.log("[OrderContext] RAW API Response for Create Order:", response);
-      const responseBody = response.data; // Đây là đối tượng JSON từ console log của bạn
-      console.log("[OrderContext] API Response Body for Create Order (response.data):", JSON.stringify(responseBody, null, 2));
-
+      const responseBody = response.data;
       let actualOrderObject = null;
-
-      // Logic mới dựa trên cấu trúc bạn cung cấp
       if (responseBody && Array.isArray(responseBody.orders) && responseBody.orders.length > 0) {
-        actualOrderObject = responseBody.orders[0]; // Lấy đơn hàng đầu tiên trong mảng "orders"
-        console.log("[OrderContext] Extracted order object from responseBody.orders[0]:", JSON.stringify(actualOrderObject, null, 2));
+        actualOrderObject = responseBody.orders[0];
       } else {
-        // Nếu cấu trúc không như mong đợi (ví dụ, backend thay đổi response)
-        const errorMsg = `Cấu trúc phản hồi API tạo đơn hàng không đúng. Mảng "orders" không tìm thấy hoặc rỗng. Dữ liệu nhận được: ${JSON.stringify(responseBody, null, 2)}`;
-        console.error("[OrderContext]", errorMsg);
+        const errorMsg = `Cấu trúc phản hồi API tạo đơn hàng không đúng. Dữ liệu: ${JSON.stringify(responseBody, null, 2)}`;
         throw new Error(errorMsg);
       }
-      
       if (!actualOrderObject || typeof actualOrderObject !== 'object') {
-           const errorMsg = `Đối tượng đơn hàng (actualOrderObject) không hợp lệ sau khi trích xuất. Giá trị: ${JSON.stringify(actualOrderObject)}`;
-           console.error("[OrderContext]", errorMsg);
+           const errorMsg = `Đối tượng đơn hàng không hợp lệ. Giá trị: ${JSON.stringify(actualOrderObject)}`;
            throw new Error(errorMsg);
       }
-
-      // Lấy ID từ actualOrderObject
       const orderIdValue = actualOrderObject.id || actualOrderObject.orderId || actualOrderObject.order_id;
-
       if (!orderIdValue) {
-           const errorMessage = `ID đơn hàng không tồn tại trong đối tượng đơn hàng đã trích xuất. Các trường đã kiểm tra: id, orderId, order_id. Đối tượng đơn hàng: ${JSON.stringify(actualOrderObject, null, 2)}`;
-           console.error("[OrderContext]", errorMessage);
+           const errorMessage = `ID đơn hàng không tồn tại. Đối tượng: ${JSON.stringify(actualOrderObject, null, 2)}`;
            throw new Error(errorMessage);
       }
-      
-      // Đảm bảo đối tượng trả về có thuộc tính 'id' là ID chính
-      actualOrderObject.id = orderIdValue; 
-
+      actualOrderObject.id = orderIdValue;
       setCurrentOrder(actualOrderObject);
-      console.log("[OrderContext] Order created and context updated successfully:", actualOrderObject);
-      return actualOrderObject; // Trả về đối tượng đơn hàng đã có ID
+      return actualOrderObject;
     } catch (err) {
-      console.error("[OrderContext] Error in createNewOrder function:", err);
-      const errorMessage = err.message || err.response?.data?.message || err.response?.data?.error || "Không thể tạo đơn hàng do lỗi không xác định.";
+      const errorMessage = err.message || err.response?.data?.message || err.response?.data?.error || "Không thể tạo đơn hàng.";
       setError(errorMessage);
       setCurrentOrder(null);
-      throw err; 
+      throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated]); // Phụ thuộc vào isAuthenticated
 
-  const fetchOrderById = async (orderId) => {
-    if (!isAuthenticated || !orderId) return;
+  // fetchOrderById (giữ nguyên hoặc đảm bảo useCallback nếu cần)
+  const fetchOrderById = useCallback(async (orderId) => {
+    if (!isAuthenticated || !orderId) {
+        setCurrentOrder(null);
+        return;
+    }
     setIsLoading(true);
     setError(null);
     try {
       const response = await orderService.getOrderById(orderId);
       const responseBody = response.data;
-      console.log(`[OrderContext] Raw API Response for Get Order By ID ${orderId}:`, JSON.stringify(responseBody, null, 2));
-
       let orderData = null;
-
-      // Giả sử API getOrderById có thể trả về đơn hàng trực tiếp hoặc lồng trong 'data'
-      // hoặc có cấu trúc tương tự như createOrder (có mảng 'orders')
       if (responseBody && Array.isArray(responseBody.orders) && responseBody.orders.length > 0) {
-          orderData = responseBody.orders[0]; // Nếu nó trả về mảng orders
+          orderData = responseBody.orders[0];
       } else if (responseBody && typeof responseBody.data === 'object' && responseBody.data !== null && responseBody.data.id) {
-          orderData = responseBody.data; // Nếu nó nằm trong responseBody.data
+          orderData = responseBody.data;
       } else if (responseBody && typeof responseBody === 'object' && responseBody !== null && responseBody.id) {
-          orderData = responseBody; // Nếu nó là đối tượng gốc
+          orderData = responseBody;
       } else {
-          throw new Error(`Cấu trúc dữ liệu chi tiết đơn hàng ${orderId} không hợp lệ hoặc không tìm thấy đơn hàng.`);
+          throw new Error(`Cấu trúc dữ liệu chi tiết đơn hàng ${orderId} không hợp lệ.`);
       }
-      
-      console.log(`[OrderContext] Extracted orderData for Get Order By ID ${orderId}:`, JSON.stringify(orderData, null, 2));
-
       if (!orderData || typeof orderData !== 'object') {
-        throw new Error(`Dữ liệu chi tiết đơn hàng ${orderId} nhận được không phải là object.`);
+        throw new Error(`Dữ liệu chi tiết đơn hàng ${orderId} không phải là object.`);
       }
-
       const idValue = orderData.id || orderData.orderId || orderData.order_id;
-      if (!idValue) {
-        console.warn(`[OrderContext] Order ID missing in getOrderById response for order ${orderId}. Data:`, JSON.stringify(orderData, null, 2));
-        // throw new Error(`Không tìm thấy ID trong dữ liệu chi tiết đơn hàng ${orderId}`);
-      } else {
+      if (idValue) {
         orderData.id = idValue;
       }
-
       setCurrentOrder(orderData);
     } catch (err) {
       console.error(`Lỗi khi lấy chi tiết đơn hàng ${orderId} (Context):`, err);
@@ -148,9 +123,10 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-  
-  const addNewAddress = async (addressData) => {
+  }, [isAuthenticated]); // Phụ thuộc vào isAuthenticated
+
+  // addNewAddress (giữ nguyên hoặc đảm bảo useCallback nếu cần)
+  const addNewAddress = useCallback(async (addressData) => {
     if (!isAuthenticated) {
       setError("Vui lòng đăng nhập để thêm địa chỉ.");
       throw new Error("User not authenticated");
@@ -159,25 +135,26 @@ export const OrderProvider = ({ children }) => {
     setError(null);
     try {
       const response = await orderService.addAddress(addressData);
-      await fetchAddresses();
+      await fetchAddresses(); // Fetch lại danh sách địa chỉ sau khi thêm
       return response.data;
     } catch (err) {
-      console.error("Lỗi khi thêm địa chỉ (Context):", err);
       const errorMessage = err.response?.data?.message || err.message || "Không thể thêm địa chỉ mới.";
       setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, fetchAddresses]); // Thêm fetchAddresses
 
-  const fetchUserOrders = async (status = "all") => {
+  // **QUAN TRỌNG: Bọc fetchUserOrders trong useCallback**
+  const fetchUserOrders = useCallback(async (status = "all") => {
     if (!isAuthenticated) {
         setOrders([]);
         return;
     }
     setIsLoading(true);
     setError(null);
+    console.log(`[OrderContext] Fetching orders with status: ${status}`); // Thêm log
     try {
         let response;
         switch (status) {
@@ -189,13 +166,14 @@ export const OrderProvider = ({ children }) => {
           case "all": default: response = await orderService.getAllOrders(); break;
         }
         const fetchedOrders = response.data?.data || response.data || [];
+        console.log(`[OrderContext] Fetched orders for status ${status}:`, fetchedOrders); // Thêm log
         
         const normalizedOrders = fetchedOrders.map(order => {
             if (order && typeof order === 'object' && !order.id && (order.orderId || order.order_id)) {
                 return { ...order, id: order.orderId || order.order_id };
             }
             return order;
-        });
+        }).filter(Boolean); // Loại bỏ các giá trị null hoặc undefined nếu có
         setOrders(normalizedOrders);
     } catch (err) {
         console.error(`Lỗi khi lấy danh sách đơn hàng (${status}) (Context):`, err);
@@ -204,9 +182,10 @@ export const OrderProvider = ({ children }) => {
     } finally {
         setIsLoading(false);
     }
-  };
+  }, [isAuthenticated]); // Chỉ phụ thuộc vào isAuthenticated
 
-  const cancelUserOrder = async (orderId) => {
+  // cancelUserOrder (giữ nguyên hoặc đảm bảo useCallback nếu cần)
+  const cancelUserOrder = useCallback(async (orderId) => {
     if (!isAuthenticated) {
         setError("Vui lòng đăng nhập để thực hiện thao tác này.");
         throw new Error("User not authenticated");
@@ -222,19 +201,26 @@ export const OrderProvider = ({ children }) => {
                 setCurrentOrder(prev => ({ ...prev, orderStatus: "CANCELLED", id: actualId }));
              }
         }
-        
-        await fetchUserOrders(); 
+        // Gọi fetchUserOrders với status hiện tại để cập nhật danh sách
+        // Tuy nhiên, nếu đang ở trang chi tiết, có thể không cần gọi lại toàn bộ danh sách
+        // Thay vào đó, OrderManagement sẽ tự fetch lại khi quay về.
+        // Hoặc, bạn có thể truyền status hiện tại của OrderManagement vào đây.
+        // Để đơn giản, chúng ta sẽ để OrderManagement tự xử lý việc fetch lại.
+        // await fetchUserOrders(); // Tạm thời comment dòng này để tránh gọi thừa
         return response.data;
     } catch (err) {
-        console.error(`Lỗi khi hủy đơn hàng ${orderId} (Context):`, err);
         const errorMessage = err.response?.data?.message || err.message || "Không thể hủy đơn hàng.";
         setError(errorMessage);
         throw err;
     } finally {
         setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, currentOrder]); // Thêm currentOrder
 
+  // **QUAN TRỌNG: Bọc clearOrderError trong useCallback**
+  const clearOrderError = useCallback(() => {
+    setError(null);
+  }, []); // Không có dependency, hàm này sẽ ổn định
 
   const value = {
     orders,
@@ -248,7 +234,7 @@ export const OrderProvider = ({ children }) => {
     addNewAddress,
     fetchUserOrders,
     cancelUserOrder,
-    clearOrderError: () => setError(null)
+    clearOrderError
   };
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;

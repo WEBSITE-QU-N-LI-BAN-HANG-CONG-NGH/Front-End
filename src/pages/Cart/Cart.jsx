@@ -2,9 +2,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartContext } from "../../contexts/CartContext";
+import { useAuthContext } from "../../contexts/AuthContext";
 import { useToast } from "../../contexts/ToastContext";
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from "@mui/material";
 
+// --- Component CartItem (Giữ nguyên) ---
+// ... (Mã CartItem của bạn)
 const CartItem = ({ item, onRemove, formatCurrency, isLoading }) => {
     const { updateCartItem: contextUpdateCartItem } = useCartContext();
     const [quantity, setQuantity] = useState(item.quantity);
@@ -120,7 +123,8 @@ const CartItem = ({ item, onRemove, formatCurrency, isLoading }) => {
         </article>
     );
 };
-
+// --- Component CartSummary (Giữ nguyên) ---
+// ... (Mã CartSummary của bạn)
 const CartSummary = ({ cartData, formatCurrency, onCheckout, isLoading }) => {
     if (!cartData) return null;
     return (
@@ -166,7 +170,7 @@ const CartSummary = ({ cartData, formatCurrency, onCheckout, isLoading }) => {
         </div>
     );
 };
-
+// --- Component Cart ---
 const Cart = () => {
     const navigate = useNavigate();
     const {
@@ -178,14 +182,15 @@ const Cart = () => {
         clearCartError
     } = useCartContext();
     const { showToast } = useToast();
+    const { isAuthenticated } = useAuthContext();
 
     const [isProcessingAction, setIsProcessingAction] = useState(false);
 
     useEffect(() => {
-        if (cartContextError) {
-            console.warn("Cart page detected an error from context:", cartContextError);
+        if (isAuthenticated && !isCartContextLoading && (!cart || cart.cartItems.length === 0) && !cartContextError) {
+            fetchCart();
         }
-    }, [cartContextError]);
+    }, [isAuthenticated, isCartContextLoading, cart, cartContextError, fetchCart]);
 
     const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
 
@@ -195,7 +200,6 @@ const Cart = () => {
             await removeItemFromCart(itemId);
             showToast("Đã xóa sản phẩm khỏi giỏ hàng.", "success");
         } catch (err) {
-            console.error("UI: Lỗi khi xóa sản phẩm:", err);
             showToast(err.message || "Lỗi xóa sản phẩm", "error");
         }
         setIsProcessingAction(false);
@@ -203,7 +207,37 @@ const Cart = () => {
 
     const handleCheckout = () => navigate('/checkout?step=2');
 
-    if (isCartContextLoading && !cart && !cartContextError) {
+    // **THAY ĐỔI BẮT ĐẦU TỪ ĐÂY: Component Thanh Tiến Trình**
+    const CheckoutProgress = () => {
+        const currentStepInCart = 1; // Trang giỏ hàng luôn là bước 1
+        return (
+            <div className="flex items-center justify-between mb-10 w-full max-w-3xl mx-auto px-2 sm:px-0">
+                {["Giỏ hàng", "Thông tin", "Thanh toán", "Hoàn tất"].map((label, index) => {
+                    const stepNumber = index + 1;
+                    const isActive = stepNumber <= currentStepInCart; // Chỉ 'Giỏ hàng' active
+                    const isNextConnectorActive = stepNumber < currentStepInCart; // Không có connector nào active
+
+                    return (
+                        <React.Fragment key={label}>
+                            <div className="flex flex-col items-center text-center">
+                                <div className={`w-8 h-8 font-semibold text-white ${isActive ? "bg-blue-600" : "bg-gray-300"} rounded-full flex items-center justify-center z-10 text-sm`}>
+                                    {stepNumber}
+                                </div>
+                                <div className={`mt-1 text-xs sm:text-sm font-medium ${isActive ? 'text-blue-600' : 'text-gray-500'}`}>{label}</div>
+                            </div>
+                            {index < 3 && ( // Luôn hiển thị 3 đường nối
+                                <div className={`flex-1 h-0.5 mx-1 sm:mx-2 ${isNextConnectorActive ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
+                            )}
+                        </React.Fragment>
+                    );
+                })}
+            </div>
+        );
+    };
+    // **KẾT THÚC THAY ĐỔI: Component Thanh Tiến Trình**
+
+
+    if (isCartContextLoading && (!cart || !cartContextError)) {
         return (
             <Box className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] py-10">
                 <CircularProgress size={60} thickness={4} />
@@ -216,13 +250,8 @@ const Cart = () => {
         return (
             <Box className="text-center py-10 min-h-[calc(100vh-200px)] flex flex-col justify-center items-center px-4">
                 <Alert
-                    severity="error"
-                    sx={{ width: '100%', maxWidth: 'md', mb: 2 }}
-                    action={
-                        <MuiButton color="inherit" size="small" onClick={() => { clearCartError(); fetchCart(); }}>
-                            Thử lại
-                        </MuiButton>
-                    }
+                    severity="error" sx={{ width: '100%', maxWidth: 'md', mb: 2 }}
+                    action={<MuiButton color="inherit" size="small" onClick={() => { clearCartError(); fetchCart(); }}>Thử lại</MuiButton>}
                 >
                     <Typography variant="h6" component="div">Đã xảy ra lỗi</Typography>
                     <Typography>{cartContextError}</Typography>
@@ -230,35 +259,24 @@ const Cart = () => {
             </Box>
         );
     }
-
+    
     const hasItems = cart && cart.cartItems && cart.cartItems.length > 0;
 
     return (
         <main className="flex flex-col pt-3 bg-gray-50 min-h-screen">
             <section className="flex flex-col items-center px-4 md:px-10 lg:px-16 xl:px-24 py-10">
                 <h1 className="mb-8 text-3xl sm:text-4xl font-bold text-gray-800">Giỏ hàng của bạn</h1>
-                <div className="flex justify-between mb-10 w-full max-w-3xl mx-auto">
-                    {["Giỏ hàng", "Thông tin", "Thanh toán", "Hoàn tất"].map((label, index) => (
-                        <div key={label} className={`flex items-center ${index > 0 ? 'flex-1 justify-center relative' : ''}`}>
-                            {index > 0 && <div className={`absolute left-0 w-1/2 h-0.5 ${index <= 0 ? 'bg-blue-600' : 'bg-gray-300'}`}></div>}
-                            <div className={`w-8 h-8 font-semibold text-white ${index <= 0 ? "bg-blue-600" : "bg-gray-300"} rounded-full flex items-center justify-center z-10 text-sm`}>
-                                {index + 1}
-                            </div>
-                            {index < 3 && <div className={`absolute right-0 w-1/2 h-0.5 ${index < 0 ? 'bg-blue-600' : 'bg-gray-300'}`}></div>}
-                            <div className="ml-2 text-xs sm:text-sm font-medium hidden sm:block text-gray-700">{label}</div>
-                        </div>
-                    ))}
-                </div>
-
+                
+                {/* **SỬ DỤNG THANH TIẾN TRÌNH MỚI** */}
+                <CheckoutProgress />
+                
                 {!hasItems && !isCartContextLoading ? (
                     <div className="w-full py-16 text-center min-h-[40vh] flex flex-col justify-center items-center bg-white rounded-lg shadow-md">
                         <img src="/empty-cart.svg" alt="Empty Cart" className="w-48 h-48 mb-6 text-gray-400" />
                         <Typography variant="h5" className="mb-4 text-gray-700">Giỏ hàng của bạn trống</Typography>
                         <Typography variant="body1" className="mb-6 text-gray-500">Thêm sản phẩm vào giỏ để tiếp tục mua sắm.</Typography>
                         <MuiButton
-                            variant="contained"
-                            color="primary"
-                            onClick={() => navigate('/product/all')}
+                            variant="contained" color="primary" onClick={() => navigate('/product/all')}
                             sx={{ py: 1.5, px: 6, fontSize: '1rem', bgcolor: 'rgb(37 99 235)', '&:hover': { bgcolor: 'rgb(29 78 216)' } }}
                         >
                             Khám phá sản phẩm
@@ -267,22 +285,17 @@ const Cart = () => {
                 ) : cart && cart.cartItems ? (
                     <div className="w-full flex flex-col md:flex-row gap-6">
                         <div className="w-full md:flex-grow">
-                            {(isCartContextLoading || isProcessingAction) && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
+                            {isCartContextLoading && hasItems && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
                             {cart.cartItems.map((cartItem) => (
                                 <CartItem
-                                    key={cartItem.id}
-                                    item={cartItem}
-                                    onRemove={handleRemoveItem}
-                                    formatCurrency={formatCurrency}
-                                    isLoading={isCartContextLoading || isProcessingAction}
+                                    key={cartItem.id} item={cartItem} onRemove={handleRemoveItem}
+                                    formatCurrency={formatCurrency} isLoading={isProcessingAction || isCartContextLoading}
                                 />
                             ))}
                         </div>
                         <CartSummary
-                            cartData={cart}
-                            formatCurrency={formatCurrency}
-                            onCheckout={handleCheckout}
-                            isLoading={isCartContextLoading || isProcessingAction}
+                            cartData={cart} formatCurrency={formatCurrency} onCheckout={handleCheckout}
+                            isLoading={isProcessingAction || isCartContextLoading}
                         />
                     </div>
                 ) : null}

@@ -17,7 +17,7 @@ const Checkout = () => {
     const locationHook = useLocation();
     const { showToast } = useToast();
     const queryParams = new URLSearchParams(locationHook.search);
-    const initialStep = parseInt(queryParams.get('step') || '2');
+    const initialStep = parseInt(queryParams.get('step') || '2'); // Bắt đầu từ bước 2 (Địa chỉ)
     const orderIdFromUrl = queryParams.get('orderId');
 
     const {
@@ -33,7 +33,7 @@ const Checkout = () => {
     } = useOrderContext();
 
     const { cart: cartData, isLoading: isCartContextLoading, clearCartContext } = useCartContext();
-    const { isLoading: authIsLoading } = useAuthContext(); // Lấy authIsLoading
+    const { isLoading: authIsLoading } = useAuthContext();
 
     const [step, setStep] = useState(initialStep < 2 ? 2 : initialStep);
     const [selectedAddress, setSelectedAddress] = useState(null);
@@ -56,13 +56,12 @@ const Checkout = () => {
     const [paymentMethod, setPaymentMethod] = useState("COD");
     const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
-    // State cho xử lý VNPAY và hoàn tất đơn hàng
-    const [vnpayStatus, setVnpayStatus] = useState(null); // null, 'processing', 'success', 'failed'
+    const [vnpayStatus, setVnpayStatus] = useState(null);
     const [vnpayMessage, setVnpayMessage] = useState('');
     const [processedOrderId, setProcessedOrderId] = useState(orderIdFromUrl);
     const [orderIdForPostProcessing, setOrderIdForPostProcessing] = useState(null);
     const [orderProcessedForEmailAndCartClear, setOrderProcessedForEmailAndCartClear] = useState(false);
-
+    const [emailSentForOrderId, setEmailSentForOrderId] = useState(null); // Cờ theo dõi email đã gửi
 
     useEffect(() => {
         fetchAddresses();
@@ -76,8 +75,7 @@ const Checkout = () => {
                 setSelectedAddress(foundAddress);
             }
         }
-    }, [savedAddressesContext, locationHook.search, step]);
-
+    }, [savedAddressesContext, locationHook.search, queryParams, step]); // Thêm queryParams
 
     useEffect(() => {
         const currentOrderIdFromUrl = queryParams.get('orderId');
@@ -87,8 +85,7 @@ const Checkout = () => {
                 fetchOrderByIdContext(currentOrderIdFromUrl);
             }
         }
-    }, [step, locationHook.search, fetchOrderByIdContext, processedOrderId, orderFromContext, queryParams]);
-
+    }, [step, locationHook.search, queryParams, fetchOrderByIdContext, processedOrderId, orderFromContext]); // Thêm queryParams
 
     useEffect(() => {
         const fetchProvincesAPI = async () => {
@@ -136,7 +133,6 @@ const Checkout = () => {
         fetchWardsAPI();
     }, [selectedDistrictCode]);
 
-    // Effect xử lý callback VNPAY ban đầu
     useEffect(() => {
         const searchParams = new URLSearchParams(locationHook.search);
         const isVNPayReturn = searchParams.has('vnp_ResponseCode');
@@ -151,18 +147,19 @@ const Checkout = () => {
             const extractedOrderId = vnp_TxnRef ? vnp_TxnRef.split('_')[0] : null;
 
             if (extractedOrderId) {
-                setProcessedOrderId(extractedOrderId); // Lưu ID để CompleteStep có thể dùng
+                setProcessedOrderId(extractedOrderId);
+                setOrderIdForPostProcessing(extractedOrderId); // Quan trọng: Set để effect sau xử lý
+                setEmailSentForOrderId(null); // Reset cờ email cho order mới này (nếu là flow mới)
+                setOrderProcessedForEmailAndCartClear(false); // Reset cờ xử lý
 
                 const processCallback = async () => {
                     try {
                         await orderService.handleVNPayCallback(paramsObject);
-                        await fetchOrderByIdContext(extractedOrderId); // Fetch thông tin đơn hàng
+                        await fetchOrderByIdContext(extractedOrderId);
                         if (vnp_ResponseCode === '00') {
                             setVnpayStatus('success');
                             setVnpayMessage('Thanh toán VNPAY thành công!');
                             showToast('Thanh toán VNPAY thành công!', 'success');
-                            setOrderIdForPostProcessing(extractedOrderId); // Đặt ID để effect sau xử lý
-                            setOrderProcessedForEmailAndCartClear(false); // Reset để effect sau chạy
                         } else {
                             setVnpayStatus('failed');
                             setVnpayMessage(`Thanh toán qua VNPAY thất bại. Mã lỗi: ${vnp_ResponseCode}.`);
@@ -173,127 +170,112 @@ const Checkout = () => {
                         setVnpayStatus('failed');
                         setVnpayMessage('Lỗi khi xác nhận kết quả thanh toán VNPAY.');
                         showToast('Lỗi xác nhận thanh toán VNPAY.', 'error');
-                        fetchOrderByIdContext(extractedOrderId); // Vẫn fetch để hiển thị thông tin nếu có
+                        fetchOrderByIdContext(extractedOrderId);
                     }
                 };
                 processCallback();
             } else {
-                console.error("Không thể trích xuất OrderID từ vnp_TxnRef.");
                 setVnpayStatus('failed');
                 setVnpayMessage('Lỗi: Không tìm thấy mã đơn hàng từ VNPAY.');
                 showToast('Lỗi xử lý thanh toán VNPAY.', 'error');
             }
         } else if (currentStepFromUrl === 4 && !isVNPayReturn && orderIdFromUrl) {
-            // Xử lý khi vào trang complete cho COD hoặc quay lại trang VNPAY đã thành công
             setProcessedOrderId(orderIdFromUrl);
-            if (orderFromContext && orderFromContext.id?.toString() === orderIdFromUrl) {
-                 if (orderFromContext.paymentMethod === 'COD') {
-                    setOrderIdForPostProcessing(orderIdFromUrl);
-                    setOrderProcessedForEmailAndCartClear(false); // Đảm bảo effect sau chạy cho COD
-                } else if (orderFromContext.paymentMethod === 'VNPAY' && orderFromContext.paymentStatus === 'COMPLETED') {
-                    // Nếu VNPAY đã thành công và đã xử lý, không cần làm gì thêm
-                    setOrderProcessedForEmailAndCartClear(true);
-                }
-            } else if (!orderFromContext && !isOrderContextLoadingGlobal) {
-                // Nếu orderFromContext chưa có, fetch nó
+            if ((!orderFromContext || orderFromContext.id?.toString() !== orderIdFromUrl) && !isOrderContextLoadingGlobal) {
                 fetchOrderByIdContext(orderIdFromUrl);
             }
+            // Nếu là COD và chưa xử lý, set orderIdForPostProcessing
+            if (orderFromContext?.paymentMethod === 'COD' && orderFromContext?.id.toString() === orderIdFromUrl) {
+                setOrderIdForPostProcessing(orderIdFromUrl);
+                 // Không reset emailSentForOrderId ở đây vì có thể là refresh trang
+            }
         }
-    }, [locationHook.search, vnpayStatus, showToast, fetchOrderByIdContext, orderIdFromUrl, orderFromContext, isOrderContextLoadingGlobal]);
+    }, [locationHook.search, vnpayStatus, showToast, fetchOrderByIdContext, orderIdFromUrl, orderFromContext, isOrderContextLoadingGlobal, queryParams]);
 
 
-    // Effect xử lý clear cart và gửi email SAU KHI authIsLoading là false
     useEffect(() => {
         const performPostProcessing = async () => {
-            if (orderIdForPostProcessing && !authIsLoading && !orderProcessedForEmailAndCartClear) {
-                console.log(`[Checkout PostProcessing] Auth loaded. Order ID: ${orderIdForPostProcessing}. Current Order in Context:`, orderFromContext);
+            if (step === 4 && orderIdForPostProcessing && !authIsLoading && !orderProcessedForEmailAndCartClear) {
+                console.log(`[POST_PROCESSING_EFFECT] Triggered. Order ID: ${orderIdForPostProcessing}, authLoading: ${authIsLoading}, processedClear: ${orderProcessedForEmailAndCartClear}, emailSentId: ${emailSentForOrderId}, vnpayStatus: ${vnpayStatus}`);
                 
                 if (orderFromContext && orderFromContext.id?.toString() === orderIdForPostProcessing) {
-                    const isVNPaySuccess = vnpayStatus === 'success' && orderFromContext.paymentMethod === 'VNPAY';
+                    const isVNPaySuccessAndCompleted = orderFromContext.paymentMethod === 'VNPAY' && orderFromContext.paymentStatus === 'COMPLETED';
                     const isCOD = orderFromContext.paymentMethod === 'COD';
 
-                    if (isVNPaySuccess || isCOD) {
-                        try {
-                            console.log(`Attempting to clear cart and send email for order ${orderIdForPostProcessing}`);
-                            await clearCartContext();
-                            await orderService.sendOrderToEmail(orderIdForPostProcessing);
-                            setOrderProcessedForEmailAndCartClear(true);
-                            console.log(`Cart cleared and email sent for order ${orderIdForPostProcessing}`);
-                        } catch (error) {
-                            console.error(`Error during post-processing for order ${orderIdForPostProcessing}:`, error);
-                            if (error.message && error.message.includes("Authentication in progress")) {
-                                 showToast("Đang hoàn tất xác thực, vui lòng chờ giây lát...", "info");
-                                 // Không setOrderProcessedForEmailAndCartClear(true) để effect có thể thử lại
-                            } else {
-                                showToast(error.message || "Lỗi khi hoàn tất đơn hàng.", "error");
-                                setOrderProcessedForEmailAndCartClear(true); // Đánh dấu đã cố xử lý
+                    if (isVNPaySuccessAndCompleted || isCOD) {
+                        console.log(`[POST_PROCESSING_EFFECT] Conditions met for order ${orderIdForPostProcessing}. Checking emailSentForOrderId: ${emailSentForOrderId}`);
+                        if (emailSentForOrderId !== orderIdForPostProcessing) {
+                            try {
+                                console.log(`[POST_PROCESSING_EFFECT] ATTEMPTING TO SEND EMAIL AND CLEAR CART for order ${orderIdForPostProcessing}`);
+                                
+                                await orderService.sendOrderToEmail(orderIdForPostProcessing);
+                                showToast("Thông tin đơn hàng đã được gửi qua email.", "success");
+                                setEmailSentForOrderId(orderIdForPostProcessing); // Đánh dấu đã gửi email
+                                console.log(`[POST_PROCESSING_EFFECT] Email sent. Set emailSentForOrderId to ${orderIdForPostProcessing}`);
+
+                                await clearCartContext();
+                                showToast("Giỏ hàng đã được xóa.", "info");
+                                
+                                setOrderProcessedForEmailAndCartClear(true); // Đánh dấu toàn bộ quá trình xong
+                                console.log(`[POST_PROCESSING_EFFECT] Cart cleared. Set orderProcessedForEmailAndCartClear to true`);
+                            } catch (error) {
+                                console.error(`[POST_PROCESSING_EFFECT] Error during post-processing for order ${orderIdForPostProcessing}:`, error);
+                                const errorMessage = error.message || "Lỗi khi hoàn tất các bước cuối của đơn hàng.";
+                                showToast(errorMessage, "error");
+                                // Nếu gửi mail hoặc clear cart lỗi, không nên reset emailSentForOrderId nếu mail đã gửi thành công trước đó.
+                                // Chỉ reset orderProcessedForEmailAndCartClear nếu muốn thử lại toàn bộ (cẩn thận spam mail)
+                                // Hiện tại, nếu có lỗi, chúng ta vẫn để orderProcessedForEmailAndCartClear là false (do chưa set true)
+                                // và emailSentForOrderId có thể đã được set hoặc chưa.
+                                // Cần một logic rõ ràng hơn nếu muốn retry.
+                            }
+                        } else {
+                            console.log(`[POST_PROCESSING_EFFECT] Email already marked as sent for ${orderIdForPostProcessing}. Ensuring cart is cleared.`);
+                            // Email đã gửi, chỉ cần đảm bảo giỏ hàng đã được xóa
+                            if (!orderProcessedForEmailAndCartClear) { // Kiểm tra lại cờ này
+                                try {
+                                    await clearCartContext();
+                                    setOrderProcessedForEmailAndCartClear(true);
+                                } catch (cartError) {
+                                    console.error("[POST_PROCESSING_EFFECT] Error clearing cart (when email already sent):", cartError);
+                                    showToast("Lỗi làm trống giỏ hàng (kiểm tra lại).", "error");
+                                }
                             }
                         }
+                    } else {
+                         console.log(`[POST_PROCESSING_EFFECT] Order ${orderIdForPostProcessing} status not ready for post-processing. Method: ${orderFromContext.paymentMethod}, Status: ${orderFromContext.paymentStatus}`);
                     }
-                } else if (!orderFromContext && !isOrderContextLoadingGlobal && orderIdForPostProcessing) {
-                    // Nếu orderFromContext chưa được load cho orderIdForPostProcessing, hãy fetch nó.
-                    console.warn(`[Checkout PostProcessing] Order context not matching or not loaded for ${orderIdForPostProcessing}. Fetching details.`);
+                } else if (!orderFromContext && !isOrderContextLoadingGlobal) {
+                    console.warn(`[POST_PROCESSING_EFFECT] Order context not loaded for ${orderIdForPostProcessing}. Fetching details.`);
                     fetchOrderByIdContext(orderIdForPostProcessing);
+                } else if (orderFromContext && orderFromContext.id?.toString() !== orderIdForPostProcessing) {
+                     console.warn(`[POST_PROCESSING_EFFECT] Order context ID ${orderFromContext.id} MISMATCH with orderIdForPostProcessing ${orderIdForPostProcessing}. Fetching correct order.`);
+                    fetchOrderByIdContext(orderIdForPostProcessing);
+                } else if (isOrderContextLoadingGlobal) {
+                    console.log(`[POST_PROCESSING_EFFECT] Order context is loading for ${orderIdForPostProcessing}. Waiting.`);
                 }
             }
         };
 
-        if (step === 4) { // Chỉ chạy khi ở bước 4 (Hoàn tất)
-            performPostProcessing();
-        }
+        performPostProcessing();
     }, [
         step,
         vnpayStatus,
         orderIdForPostProcessing,
         authIsLoading,
         orderProcessedForEmailAndCartClear,
-        clearCartContext,
-        showToast,
-        orderFromContext, // Quan trọng: lắng nghe thay đổi của orderFromContext
+        emailSentForOrderId, // Quan trọng
+        orderFromContext,
+        isOrderContextLoadingGlobal,
         fetchOrderByIdContext,
-        isOrderContextLoadingGlobal
+        clearCartContext,
+        showToast
     ]);
 
-
     const handleShippingChange = (e) => { const { name, value } = e.target; setShippingInfo(prev => ({ ...prev, [name]: value })); };
-
-    const handleProvinceChange = (e) => {
-        const code = e.target.value;
-        const selectedOption = provinces.find(p => p.code.toString() === code);
-        const name = selectedOption ? selectedOption.name : '';
-        setSelectedProvinceCode(code);
-        setShippingInfo(prev => ({ ...prev, city: name, district: '', ward: '' }));
-        setSelectedDistrictCode(''); setSelectedWardCode('');
-        setDistricts([]); setWards([]);
-    };
-
-    const handleDistrictChange = (e) => {
-        const code = e.target.value;
-        const selectedOption = districts.find(d => d.code.toString() === code);
-        const name = selectedOption ? selectedOption.name : '';
-        setSelectedDistrictCode(code);
-        setShippingInfo(prev => ({ ...prev, district: name, ward: '' }));
-        setSelectedWardCode(''); setWards([]);
-    };
-
-    const handleWardChange = (e) => {
-        const code = e.target.value;
-        const selectedOption = wards.find(w => w.code.toString() === code);
-        const name = selectedOption ? selectedOption.name : '';
-        setSelectedWardCode(code);
-        setShippingInfo(prev => ({ ...prev, ward: name }));
-    };
-
-    const handleAddressSelect = (address) => {
-        setSelectedAddress(address);
-        setShippingInfo({ fullName: "", phone: "", email: "", address: "", city: "", district: "", ward: "", note: "" });
-        setSelectedProvinceCode(''); setSelectedDistrictCode(''); setSelectedWardCode('');
-        setDistricts([]); setWards([]);
-
-        const params = new URLSearchParams(locationHook.search);
-        params.set('addressId', address.id.toString());
-        navigate({ pathname: locationHook.pathname, search: params.toString() }, { replace: true });
-    };
+    const handleProvinceChange = (e) => { /* ... */ const code = e.target.value; const selectedOption = provinces.find(p => p.code.toString() === code); const name = selectedOption ? selectedOption.name : ''; setSelectedProvinceCode(code); setShippingInfo(prev => ({ ...prev, city: name, district: '', ward: '' })); setSelectedDistrictCode(''); setSelectedWardCode(''); setDistricts([]); setWards([]); };
+    const handleDistrictChange = (e) => { /* ... */ const code = e.target.value; const selectedOption = districts.find(d => d.code.toString() === code); const name = selectedOption ? selectedOption.name : ''; setSelectedDistrictCode(code); setShippingInfo(prev => ({ ...prev, district: name, ward: '' })); setSelectedWardCode(''); setWards([]); };
+    const handleWardChange = (e) => { /* ... */ const code = e.target.value; const selectedOption = wards.find(w => w.code.toString() === code); const name = selectedOption ? selectedOption.name : ''; setSelectedWardCode(code); setShippingInfo(prev => ({ ...prev, ward: name })); };
+    const handleAddressSelect = (address) => { /* ... */ setSelectedAddress(address); setShippingInfo({ fullName: "", phone: "", email: "", address: "", city: "", district: "", ward: "", note: "" }); setSelectedProvinceCode(''); setSelectedDistrictCode(''); setSelectedWardCode(''); setDistricts([]); setWards([]); const params = new URLSearchParams(locationHook.search); params.set('addressId', address.id.toString()); navigate({ pathname: locationHook.pathname, search: params.toString() }, { replace: true }); };
 
     const handleNextStep = () => {
         clearOrderError();
@@ -305,61 +287,48 @@ const Checkout = () => {
                 navigate({ pathname: locationHook.pathname, search: params.toString() });
                 setStep(3);
             } else if (!selectedAddress && (shippingInfo.fullName && shippingInfo.phone && shippingInfo.address && selectedProvinceCode && selectedDistrictCode && selectedWardCode)) {
-                showToast("Vui lòng 'Lưu & Sử dụng địa chỉ này' hoặc chọn một địa chỉ đã lưu.", "warning");
-                return;
-            }
-            else if (!addressIdFromQuery) {
-                 showToast("Vui lòng chọn địa chỉ giao hàng hoặc thêm và lưu địa chỉ mới.", "warning");
-                 return;
+                showToast("Vui lòng 'Lưu & Sử dụng địa chỉ này' hoặc chọn một địa chỉ đã lưu.", "warning"); return;
+            } else if (!addressIdFromQuery) {
+                 showToast("Vui lòng chọn địa chỉ giao hàng hoặc thêm và lưu địa chỉ mới.", "warning"); return;
             } else {
-                 showToast("Vui lòng chọn hoặc xác nhận địa chỉ giao hàng.", "warning");
-                 return;
+                 showToast("Vui lòng chọn hoặc xác nhận địa chỉ giao hàng.", "warning"); return;
             }
         }
         window.scrollTo(0, 0);
     };
 
-
     const handlePrevStep = () => {
         clearOrderError();
         const params = new URLSearchParams(locationHook.search);
-        if (step === 2) {
-            navigate('/cart');
-        } else if (step > 2) {
-            params.set('step', (step - 1).toString());
-            // Xóa các params không cần thiết khi quay lại
+        if (step === 2) { navigate('/cart'); }
+        else if (step > 2) {
+            const prevStep = step - 1;
+            params.set('step', prevStep.toString());
             const paramsToRemove = ['vnp_Amount', 'vnp_BankCode', 'vnp_OrderInfo', 'vnp_PayDate', 'vnp_ResponseCode', 'vnp_SecureHash', 'vnp_TmnCode', 'vnp_TransactionNo', 'vnp_TransactionStatus', 'vnp_TxnRef'];
             paramsToRemove.forEach(p => params.delete(p));
-
-            if(step === 4 && paymentMethod !== "COD") { // Nếu quay lại từ trang hoàn tất của VNPAY
-                 params.delete('orderId'); // Xóa orderId vì nó sẽ được tạo lại nếu người dùng thanh toán lại
-            }
             
+            // Không xóa orderId khi quay lại từ bước 4 nếu đó là COD, nhưng reset các cờ xử lý
+            if (step === 4) {
+                 if (paymentMethod === "VNPAY") {
+                    // Nếu là VNPAY và quay lại, có thể orderId này sẽ không được dùng nữa nếu họ chọn thanh toán lại
+                    // params.delete('orderId'); // Cân nhắc việc này
+                 }
+                 setOrderProcessedForEmailAndCartClear(false); // Cho phép xử lý lại NẾU là đơn hàng mới
+                 // Không reset emailSentForOrderId ở đây, nó được reset khi tạo đơn hàng mới.
+            }
             navigate({ pathname: locationHook.pathname, search: params.toString() });
-            setStep(step - 1);
+            setStep(prevStep);
             if (vnpayStatus) setVnpayStatus(null);
-            setOrderProcessedForEmailAndCartClear(false); // Cho phép xử lý lại nếu cần
-            setOrderIdForPostProcessing(null); // Reset
         }
         window.scrollTo(0, 0);
     };
 
     const handleAddAddressAndContinue = async () => {
         if (!shippingInfo.fullName || !shippingInfo.phone || !shippingInfo.address || !selectedProvinceCode || !selectedDistrictCode || !selectedWardCode) {
-            showToast("Vui lòng điền đầy đủ thông tin địa chỉ.", "error");
-            return;
+            showToast("Vui lòng điền đầy đủ thông tin địa chỉ.", "error"); return;
         }
         setIsPlacingOrder(true);
-        const addressData = {
-            fullName: shippingInfo.fullName,
-            phoneNumber: shippingInfo.phone,
-            email: shippingInfo.email,
-            street: shippingInfo.address,
-            province: shippingInfo.city,
-            district: shippingInfo.district,
-            ward: shippingInfo.ward,
-            note: shippingInfo.note,
-        };
+        const addressData = { fullName: shippingInfo.fullName, phoneNumber: shippingInfo.phone, email: shippingInfo.email, street: shippingInfo.address, province: shippingInfo.city, district: shippingInfo.district, ward: shippingInfo.ward, note: shippingInfo.note };
         try {
             const newAddedAddressResponse = await addNewAddressContext(addressData);
             const newAddedAddress = newAddedAddressResponse.data || newAddedAddressResponse;
@@ -370,57 +339,38 @@ const Checkout = () => {
                 params.set('step', '3');
                 params.set('addressId', newAddedAddress.id.toString());
                 navigate({ pathname: locationHook.pathname, search: params.toString() });
-                setStep(3);
-                window.scrollTo(0, 0);
+                setStep(3); window.scrollTo(0, 0);
             } else {
                 showToast("Thêm địa chỉ thành công nhưng có lỗi khi tự động chọn. Vui lòng chọn lại từ danh sách.", "info");
                 fetchAddresses();
                 setShippingInfo({ fullName: "", phone: "", email: "", address: "", city: "", district: "", ward: "", note: "" });
                 setSelectedProvinceCode(''); setSelectedDistrictCode(''); setSelectedWardCode('');
             }
-        } catch (error) {
-            showToast(error.message || "Có lỗi xảy ra khi thêm địa chỉ.", "error");
-        } finally {
-            setIsPlacingOrder(false);
-        }
+        } catch (error) { showToast(error.message || "Có lỗi xảy ra khi thêm địa chỉ.", "error");
+        } finally { setIsPlacingOrder(false); }
     };
 
     const handlePlaceOrder = async () => {
-        if (authIsLoading) {
-            showToast("Hệ thống đang xử lý thông tin đăng nhập, vui lòng thử lại sau giây lát.", "warning");
-            return;
-        }
-
-        setIsPlacingOrder(true);
-        clearOrderError();
+        if (authIsLoading) { showToast("Hệ thống đang xử lý thông tin đăng nhập, vui lòng thử lại sau giây lát.", "warning"); return; }
+        setIsPlacingOrder(true); clearOrderError();
         const addressIdFromUrl = queryParams.get('addressId');
-        if (!addressIdFromUrl) {
-            showToast("Vui lòng chọn hoặc lưu địa chỉ giao hàng hợp lệ ở bước trước.", "error");
-            setIsPlacingOrder(false);
-            return;
-        }
+        if (!addressIdFromUrl) { showToast("Vui lòng chọn hoặc lưu địa chỉ giao hàng hợp lệ ở bước trước.", "error"); setIsPlacingOrder(false); return; }
         const finalAddressId = Number(addressIdFromUrl);
 
         try {
             const createdOrder = await createNewOrderContext(finalAddressId);
-            if (!createdOrder || !createdOrder.id) {
-                throw new Error("Không nhận được ID đơn hàng sau khi tạo.");
-            }
+            if (!createdOrder || !createdOrder.id) { throw new Error("Không nhận được ID đơn hàng sau khi tạo."); }
 
             setProcessedOrderId(createdOrder.id.toString());
+            setOrderIdForPostProcessing(createdOrder.id.toString());
+            setEmailSentForOrderId(null); // **QUAN TRỌNG: Reset cờ đã gửi mail khi tạo đơn hàng MỚI**
+            setOrderProcessedForEmailAndCartClear(false); // Reset cờ đã xử lý post-processing
 
             if (paymentMethod === "VNPAY") {
                 const paymentResponse = await orderService.createVNPayPayment(createdOrder.id);
-                if (paymentResponse.data?.paymentUrl) {
-                    window.location.href = paymentResponse.data.paymentUrl;
-                    return;
-                } else {
-                    throw new Error("Không nhận được link thanh toán VNPAY.");
-                }
+                if (paymentResponse.data?.paymentUrl) { window.location.href = paymentResponse.data.paymentUrl; return; }
+                else { throw new Error("Không nhận được link thanh toán VNPAY."); }
             } else { // COD
-                setOrderIdForPostProcessing(createdOrder.id.toString());
-                setOrderProcessedForEmailAndCartClear(false); // Để effect sau xử lý
-
                 const params = new URLSearchParams();
                 params.set('step', '4');
                 params.set('orderId', createdOrder.id.toString());
@@ -430,22 +380,16 @@ const Checkout = () => {
         } catch (err) {
             console.error("[Checkout] Lỗi trong quá trình đặt hàng:", err.message, err);
             const apiErrorMessage = orderContextError || err.message || "Đặt hàng thất bại. Vui lòng thử lại.";
-            if (err.message && err.message.includes("Authentication in progress")) {
-                showToast("Hệ thống đang xử lý thông tin đăng nhập, vui lòng thử lại sau giây lát.", "warning");
-            } else {
-                showToast(apiErrorMessage, "error");
-            }
+            if (err.message && err.message.includes("Authentication in progress")) { showToast("Hệ thống đang xử lý thông tin đăng nhập, vui lòng thử lại sau giây lát.", "warning");
+            } else { showToast(apiErrorMessage, "error"); }
         } finally {
-             if (paymentMethod !== 'VNPAY' || (err && !err.message?.toLowerCase().includes("vnpay"))) {
-                 setIsPlacingOrder(false);
-            }
+             if (paymentMethod !== 'VNPAY' || (err && !err.message?.toLowerCase().includes("vnpay"))) { setIsPlacingOrder(false); }
         }
     };
 
     const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
 
-    const CheckoutProgress = () => (
-        <div className="flex items-center justify-between mb-10 w-full max-w-3xl mx-auto px-2 sm:px-0">
+    const CheckoutProgress = () => ( /* ... (Giữ nguyên) ... */ <div className="flex items-center justify-between mb-10 w-full max-w-3xl mx-auto px-2 sm:px-0">
             {["Giỏ hàng", "Thông tin", "Thanh toán", "Hoàn tất"].map((label, index) => {
                 const isActive = (index + 1) <= step;
                 const isNextConnectorActive = (index + 1) < step;
@@ -463,11 +407,8 @@ const Checkout = () => {
                     </React.Fragment>
                 );
             })}
-        </div>
-    );
-
-    const PaymentStep = () => (
-        <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
+        </div>);
+    const PaymentStep = () => ( /* ... (Giữ nguyên) ... */ <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Chọn phương thức thanh toán</h2>
             <div className="space-y-4 mb-8">
                 <div
@@ -516,11 +457,8 @@ const Checkout = () => {
                     {isPlacingOrder || authIsLoading ? <CircularProgress size={24} color="inherit" /> : 'Hoàn tất đặt hàng'}
                 </MuiButton>
             </div>
-        </div>
-    );
-
-    const CompleteStep = () => {
-        const orderDetails = orderFromContext;
+        </div>);
+    const CompleteStep = () => { /* ... (Giữ nguyên) ... */ const orderDetails = orderFromContext;
         const orderIdToDisplay = processedOrderId || orderDetails?.id;
 
         if (vnpayStatus === 'processing' || (isOrderContextLoadingGlobal && !orderDetails && !orderContextError && step === 4)) {
@@ -594,17 +532,12 @@ const Checkout = () => {
                     </div>
                 </div>
             </div>
-        );
-    };
-
+        ); };
 
     if (step < 2 && !locationHook.pathname.endsWith('/cart')) {
-         useEffect(() => {
-            navigate('/cart', { replace: true });
-        }, [navigate]);
+         useEffect(() => { navigate('/cart', { replace: true }); }, [navigate]);
         return <div className="text-center py-10">Đang chuyển hướng...</div>;
     }
-
 
     return (
         <div className="bg-gray-100 min-h-screen py-8">
@@ -614,32 +547,17 @@ const Checkout = () => {
                 </h1>
                 <CheckoutProgress />
                 {orderContextError && step < 4 && !isPlacingOrder && (
-                    <Alert severity="error" sx={{ mb: 2 }} onClose={clearOrderError}>
-                        {orderContextError}
-                    </Alert>
+                    <Alert severity="error" sx={{ mb: 2 }} onClose={clearOrderError}>{orderContextError}</Alert>
                 )}
                 {step === 2 && (
                     <AddressStep
-                        savedAddresses={savedAddressesContext || []}
-                        selectedAddress={selectedAddress}
-                        handleAddressSelect={handleAddressSelect}
-                        shippingInfo={shippingInfo}
-                        handleShippingChange={handleShippingChange}
-                        selectedProvinceId={selectedProvinceCode}
-                        selectedDistrictId={selectedDistrictCode}
-                        selectedWardId={selectedWardCode}
-                        handleProvinceChange={handleProvinceChange}
-                        handleDistrictChange={handleDistrictChange}
-                        handleWardChange={handleWardChange}
-                        provinces={provinces}
-                        districts={districts}
-                        wards={wards}
-                        isLoadingProvinces={isLoadingProvinces}
-                        isLoadingDistricts={isLoadingDistricts}
-                        isLoadingWards={isLoadingWards}
-                        handlePrevStep={handlePrevStep}
-                        onAddAddressAndContinue={handleAddAddressAndContinue}
-                        handleNextStep={handleNextStep}
+                        savedAddresses={savedAddressesContext || []} selectedAddress={selectedAddress} handleAddressSelect={handleAddressSelect}
+                        shippingInfo={shippingInfo} handleShippingChange={handleShippingChange}
+                        selectedProvinceId={selectedProvinceCode} selectedDistrictId={selectedDistrictCode} selectedWardId={selectedWardCode}
+                        handleProvinceChange={handleProvinceChange} handleDistrictChange={handleDistrictChange} handleWardChange={handleWardChange}
+                        provinces={provinces} districts={districts} wards={wards}
+                        isLoadingProvinces={isLoadingProvinces} isLoadingDistricts={isLoadingDistricts} isLoadingWards={isLoadingWards}
+                        handlePrevStep={handlePrevStep} onAddAddressAndContinue={handleAddAddressAndContinue} handleNextStep={handleNextStep}
                         isAddingAddress={isPlacingOrder}
                     />
                 )}

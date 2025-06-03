@@ -16,12 +16,11 @@ const initialCartState = {
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(initialCartState);
-  const [isLoading, setIsLoading] = useState(false); // Loading chung cho các action của cart
+  const [isLoading, setIsLoading] = useState(false); // Loading chung cho các hoạt động của CartContext
   const [error, setError] = useState(null);
-  const { isAuthenticated, user, isLoading: authIsLoading } = useAuthContext(); // Thêm authIsLoading
+  const { isAuthenticated, user, isLoading: authIsLoading } = useAuthContext();
 
   const normalizeCartData = (dataFromApi) => {
-    // ... (giữ nguyên)
     if (dataFromApi && typeof dataFromApi === 'object') {
       return {
         cartItems: dataFromApi.cartItems || [],
@@ -36,24 +35,25 @@ export const CartProvider = ({ children }) => {
     return initialCartState;
   };
 
-  const fetchCart = useCallback(async (isActionLoadingSetter) => {
-    // Đợi AuthContext load xong trước khi fetch cart
+  // Hàm fetch cốt lõi, được gọi nội bộ
+  const internalFetchCart = useCallback(async () => {
+    // console.log("[CartContext] internalFetchCart called. authIsLoading:", authIsLoading, "isAuthenticated:", isAuthenticated);
     if (authIsLoading) {
-        console.log("[CartContext] AuthContext is loading, deferring fetchCart.");
-        if (isActionLoadingSetter) isActionLoadingSetter(false); else setIsLoading(false);
-        return;
+      // console.log("[CartContext] AuthContext is loading, deferring internalFetchCart.");
+      return; // Đợi AuthContext xử lý xong
     }
 
     if (!isAuthenticated || !user) {
+      // console.log("[CartContext] Not authenticated or no user, setting cart to initial state.");
       setCart(initialCartState);
-      if (isActionLoadingSetter) isActionLoadingSetter(false); else setIsLoading(false);
+      setIsLoading(false); // Đảm bảo isLoading là false
       setError(null);
       return;
     }
 
-    if (!isActionLoadingSetter) setIsLoading(true);
+    // console.log("[CartContext] Attempting to fetch cart via internalFetchCart.");
+    setIsLoading(true);
     setError(null);
-
     try {
       const response = await cartService.getCart();
       const cartDataFromApi = response.data.data || response.data;
@@ -62,48 +62,46 @@ export const CartProvider = ({ children }) => {
       console.error("[CartContext] Lỗi khi lấy giỏ hàng:", err);
       const errorMessage = err.response?.data?.message || err.message || "Không thể tải giỏ hàng.";
       setError(errorMessage);
-      setCart(initialCartState);
+      setCart(initialCartState); // Vẫn reset về initial nếu lỗi
     } finally {
-      if (isActionLoadingSetter) isActionLoadingSetter(false); else setIsLoading(false);
+      setIsLoading(false);
+      // console.log("[CartContext] internalFetchCart finished.");
     }
-  }, [isAuthenticated, user, cart?.id, authIsLoading]); // Thêm authIsLoading
+  }, [isAuthenticated, user, authIsLoading]); // Chỉ phụ thuộc vào các yếu tố xác thực
 
+
+  // Effect chính: Chạy khi trạng thái xác thực thay đổi hoặc khi auth loading hoàn tất
   useEffect(() => {
-    // Chỉ fetch cart khi authIsLoading là false và user đã được xác thực
-    if (!authIsLoading) {
-        if (isAuthenticated && user) {
-            fetchCart();
-        } else {
-            setCart(initialCartState);
-            setIsLoading(false);
-            setError(null);
-        }
+    // console.log("[CartContext Main Effect] Auth state changed. authIsLoading:", authIsLoading, "isAuthenticated:", isAuthenticated);
+    if (!authIsLoading) { // Chỉ fetch khi auth đã xử lý xong
+      if (isAuthenticated && user) {
+        // console.log("[CartContext Main Effect] User authenticated, calling internalFetchCart.");
+        internalFetchCart();
+      } else {
+        // console.log("[CartContext Main Effect] User not authenticated, resetting cart.");
+        setCart(initialCartState);
+        setIsLoading(false);
+        setError(null);
+      }
     }
-  }, [isAuthenticated, user, fetchCart, authIsLoading]); // Thêm authIsLoading
+    // Bỏ internalFetchCart ra khỏi dependency array này để tránh vòng lặp không cần thiết.
+    // Effect này chỉ nên re-run khi trạng thái xác thực thay đổi.
+  }, [isAuthenticated, user, authIsLoading, internalFetchCart]);
+
 
   const addItemToCart = async (cartData) => {
-    if (authIsLoading) {
-        setError("Đang kiểm tra thông tin đăng nhập, vui lòng thử lại sau giây lát.");
-        throw new Error("Authentication in progress");
-    }
-    if (!isAuthenticated) {
-      setError("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.");
-      throw new Error("User not authenticated");
-    }
-    // ... (phần còn lại của hàm giữ nguyên)
+    if (authIsLoading) { throw new Error("Authentication in progress"); }
+    if (!isAuthenticated) { throw new Error("User not authenticated"); }
     setIsLoading(true);
     setError(null);
     try {
-      console.log("[CartContext] Đang thêm sản phẩm vào giỏ:", cartData);
       const response = await cartService.addToCart(cartData);
-      console.log("[CartContext] Phản hồi sau khi thêm sản phẩm:", response.data);
       const updatedCartData = response.data.data || response.data;
-      setCart(normalizeCartData(updatedCartData));
+      setCart(normalizeCartData(updatedCartData)); // Cập nhật state ngay lập tức
       return updatedCartData;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể thêm vào giỏ hàng.";
       setError(errorMessage);
-      console.error("[CartContext] Lỗi khi thêm vào giỏ hàng:", err);
       throw err;
     } finally {
       setIsLoading(false);
@@ -113,80 +111,71 @@ export const CartProvider = ({ children }) => {
   const removeItemFromCart = async (cartItemId) => {
     if (authIsLoading) throw new Error("Authentication in progress");
     if (!isAuthenticated) throw new Error("User not authenticated");
-    // ... (phần còn lại của hàm giữ nguyên)
-    setIsLoading(true);
+    setIsLoading(true); // Bắt đầu loading cho action này
     setError(null);
     try {
-      console.log(`[CartContext] Đang xóa sản phẩm khỏi giỏ: ${cartItemId}`);
       await cartService.removeFromCart(cartItemId);
-      console.log("[CartContext] Xóa sản phẩm thành công, đang fetch lại giỏ hàng...");
-      await fetchCart(setIsLoading);
+      await internalFetchCart(); // Fetch lại toàn bộ giỏ hàng sau khi xóa
     } catch (err) {
-      // ...
-      setIsLoading(false);
+      const errorMessage = err.response?.data?.message || err.message || "Không thể xóa sản phẩm.";
+      setError(errorMessage);
+      setIsLoading(false); // Đảm bảo set false nếu internalFetchCart không được gọi hoặc lỗi
       throw err;
     }
+    // setIsLoading(false) sẽ được xử lý bởi internalFetchCart nếu nó chạy thành công
   };
 
   const updateCartItem = async (cartItemId, newQuantity) => {
     if (authIsLoading) throw new Error("Authentication in progress");
     if (!isAuthenticated) throw new Error("User not authenticated");
-    // ... (phần còn lại của hàm giữ nguyên)
-     setIsLoading(true);
+    setIsLoading(true);
     setError(null);
     try {
       const payload = { quantity: newQuantity };
-      console.log(`[CartContext] Đang cập nhật sản phẩm ${cartItemId} với số lượng ${newQuantity}`);
       await cartService.updateCartItem(payload, cartItemId);
-      console.log("[CartContext] Cập nhật sản phẩm thành công, đang fetch lại giỏ hàng...");
-      await fetchCart(setIsLoading);
+      await internalFetchCart(); // Fetch lại toàn bộ giỏ hàng sau khi cập nhật
     } catch (err) {
-      // ...
+      const errorMessage = err.response?.data?.message || err.message || "Không thể cập nhật số lượng.";
+      setError(errorMessage);
       setIsLoading(false);
       throw err;
     }
   };
 
   const clearCartContext = async () => {
-    if (authIsLoading) {
-        console.warn("[CartContext] clearCartContext called while auth is loading. Aborting.");
-        setError("Đang kiểm tra thông tin đăng nhập, không thể xóa giỏ hàng lúc này.");
-        throw new Error("Authentication in progress, cannot clear cart.");
-    }
-    if (!isAuthenticated) {
-      console.warn("[CartContext] clearCartContext called but user is not authenticated.");
-      setError("Vui lòng đăng nhập để thực hiện thao tác này.");
-      throw new Error("User not authenticated"); // Lỗi này sẽ được bắt ở Checkout.jsx
-    }
+    if (authIsLoading) { throw new Error("Authentication in progress, cannot clear cart."); }
+    if (!isAuthenticated) { throw new Error("User not authenticated"); }
     setIsLoading(true);
     setError(null);
     try {
-      console.log("[CartContext] Đang xóa toàn bộ giỏ hàng (đã xác thực)...");
       await cartService.clearCart();
-      console.log("[CartContext] Xóa toàn bộ giỏ hàng thành công.");
-      setCart({ ...initialCartState, id: cart?.id });
+      setCart({ ...initialCartState, id: cart?.id }); // Giữ lại ID của cart nếu có
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể xóa giỏ hàng.";
       setError(errorMessage);
-      console.error("[CartContext] Lỗi khi xóa sạch giỏ hàng:", err);
       throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Hàm fetchCart được export ra để component khác có thể gọi khi cần (ví dụ, pull-to-refresh)
+  // Nó sẽ chỉ gọi internalFetchCart nếu auth không còn loading.
+  const exportedFetchCart = useCallback(() => {
+    // console.log("[CartContext] exportedFetchCart called. authIsLoading:", authIsLoading);
+    if (!authIsLoading) {
+      internalFetchCart();
+    } else {
+      // console.log("[CartContext] Auth is loading, exportedFetchCart deferred.");
+    }
+  }, [authIsLoading, internalFetchCart]); // Phụ thuộc vào internalFetchCart để có phiên bản mới nhất
+
 
   const value = {
     cart,
-    isLoading,
+    isLoading, // State loading của CartContext
     error,
-    fetchCart: useCallback(() => { // Đảm bảo fetchCart gọi phiên bản mới nhất
-        if (!authIsLoading) { // Chỉ fetch nếu auth không loading
-            fetchCart();
-        } else {
-            console.log("[CartContext] Auth is loading, fetchCart deferred by manual call.");
-        }
-    }, [authIsLoading, fetchCart]),
+    fetchCart: exportedFetchCart, // Export hàm fetch đã được tối ưu
     addItemToCart,
     removeItemFromCart,
     updateCartItem,
