@@ -1,12 +1,9 @@
 // src/pages/Home/Home.jsx
-import React from "react";
 import { useState, useEffect } from "react";
-import CustomBuilds from "../../components/features/product/CustomBuilds";
+import TopSale from "../../components/features/product/TopSale";
 import Slider from "../../components/features/product/Slider";
 import FlashSale from "../../components/features/product/FlashSale";
-import TabMenu from "../../components/features/catalog/TabMenu";
-import Desktops from "../../components/features/product/Desktops";
-import GamingMonitors from "../../components/features/product/GamingMonitors";
+import LatestTop from "../../components/features/product/LatestTop";
 
 const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -39,12 +36,8 @@ const Home = () => {
       <div className="flex flex-col items-center self-end mt-3 w-full max-w-[1652px] max-md:mr-2 max-md:max-w-full">
         <Slider />
         <FlashSale />
-        {/* <TabMenu/> */}
-        <CustomBuilds />
-        {/* <TabMenu/> */}
-        <Desktops />
-        {/* <TabMenu/> */}
-        {/* <GamingMonitors /> */}
+        <TopSale />
+        <LatestTop />
       </div>
     </div>
   );

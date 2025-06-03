@@ -1,51 +1,59 @@
 import React from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 
-function Pagination({ totalPages = 10, basePath = "product/all", onPageChange }) {
+function Pagination({ currentPage, totalPages = 10, onPageChange }) {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Extract current page from URL
+  // If currentPage is passed as prop, use it directly (for callback-based pagination)
+  // Otherwise, extract from URL (for URL-based pagination)
   const getCurrentPage = () => {
+    if (currentPage !== undefined) {
+      return Math.max(1, Math.min(currentPage, totalPages));
+    }
+    
+    // Fallback to URL-based extraction
+    const searchParams = new URLSearchParams(location.search);
+    const pageFromQuery = parseInt(searchParams.get('page'), 10);
+    if (!isNaN(pageFromQuery)) {
+      return Math.max(1, Math.min(pageFromQuery, totalPages));
+    }
+    
+    // Extract from path as last resort
     const pathSegments = location.pathname.split('/');
     const lastSegment = pathSegments[pathSegments.length - 1];
-    const currentPage = parseInt(lastSegment, 10);
-    return isNaN(currentPage) ? 1 : currentPage;
+    const pageFromPath = parseInt(lastSegment, 10);
+    return isNaN(pageFromPath) ? 1 : Math.max(1, Math.min(pageFromPath, totalPages));
   };
 
-  const currentPage = getCurrentPage();
+  const activePage = getCurrentPage();
   
-  // Generate page links with query parameters
+  // Generate page URL with query parameters
   const getPageUrl = (page) => {
     const params = new URLSearchParams(location.search);
-    return `/${basePath}/${page}${params.toString() ? `?${params.toString()}` : ''}`;
+    params.set('page', page.toString());
+    return `${location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
   };
   
   // Define which page numbers to show
   const getVisiblePages = () => {
     let pages = [];
     
-    // Always include page 1, 2, and 3
     if (totalPages <= 7) {
       // If we have 7 or fewer pages, show all
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      // Always show first 3
-      pages = [1, 2, 3];
-      
-      // Add ellipsis and last 3 pages if we're in the first 3 pages
-      if (currentPage <= 3) {
-        pages.push("ellipsis", totalPages - 2, totalPages - 1, totalPages);
-      } 
-      // Add ellipsis at start and end if we're in the middle
-      else if (currentPage > 3 && currentPage < totalPages - 2) {
-        pages = [1, "ellipsis", currentPage - 1, currentPage, currentPage + 1, "ellipsis", totalPages];
-      } 
-      // Add first pages, ellipsis, and last 3 if we're in the last 3 pages
-      else {
-        pages = [1, 2, 3, "ellipsis", totalPages - 2, totalPages - 1, totalPages];
+      if (activePage <= 4) {
+        // Show first 5 pages + ellipsis + last page
+        pages = [1, 2, 3, 4, 5, "ellipsis", totalPages];
+      } else if (activePage >= totalPages - 3) {
+        // Show first page + ellipsis + last 5 pages
+        pages = [1, "ellipsis", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+      } else {
+        // Show first + ellipsis + current-1, current, current+1 + ellipsis + last
+        pages = [1, "ellipsis", activePage - 1, activePage, activePage + 1, "ellipsis", totalPages];
       }
     }
     
@@ -56,12 +64,20 @@ function Pagination({ totalPages = 10, basePath = "product/all", onPageChange })
 
   const handleNavigate = (e, page) => {
     e.preventDefault();
-    if (onPageChange) {
+    
+    // If onPageChange callback is provided, use it (for controlled pagination)
+    if (onPageChange && typeof onPageChange === 'function') {
       onPageChange(page);
     } else {
+      // Otherwise, navigate using URL (for URL-based pagination)
       navigate(getPageUrl(page));
     }
   };
+
+  // Don't render pagination if there's only one page or no pages
+  if (totalPages <= 1) {
+    return null;
+  }
 
   return (
     <div
@@ -72,17 +88,17 @@ function Pagination({ totalPages = 10, basePath = "product/all", onPageChange })
       <ul className="flex flex-row gap-2 items-center p-0 m-0">
         {/* Previous button */}
         <li>
-          <Link
+          <button
             className={`flex gap-1 items-center px-3 py-2 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all ${
-              currentPage <= 1 ? "text-zinc-300 cursor-not-allowed" : "text-zinc-500 cursor-pointer"
+              activePage <= 1 
+                ? "text-zinc-300 cursor-not-allowed" 
+                : "text-zinc-500 hover:text-zinc-700 cursor-pointer"
             } duration-200`}
-            to={currentPage <= 1 ? "#" : getPageUrl(currentPage - 1)}
+            disabled={activePage <= 1}
             aria-label="Go to previous page"
             onClick={(e) => {
-              if (currentPage <= 1) {
-                e.preventDefault();
-              } else {
-                handleNavigate(e, currentPage - 1);
+              if (activePage > 1) {
+                handleNavigate(e, activePage - 1);
               }
             }}
           >
@@ -99,7 +115,7 @@ function Pagination({ totalPages = 10, basePath = "product/all", onPageChange })
               <path d="M15 18l-6-6 6-6" />
             </svg>
             <span>Previous</span>
-          </Link>
+          </button>
         </li>
 
         {/* Page numbers */}
@@ -133,39 +149,38 @@ function Pagination({ totalPages = 10, basePath = "product/all", onPageChange })
             );
           }
           
-          const isActive = page === currentPage;
+          const isActive = page === activePage;
           
           return (
             <li key={page}>
-              <Link
-                className={`w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border ${
+              <button
+                className={`flex justify-center items-center w-9 h-9 px-3 py-3 text-sm font-medium no-underline bg-transparent rounded-md border ${
                   isActive 
-                    ? "text-black border-zinc-400" 
-                    : "text-zinc-500 border-transparent"
+                    ? "text-white bg-zinc-900 border-zinc-900" 
+                    : "text-zinc-500 border-transparent hover:text-zinc-700 hover:border-zinc-300"
                 } border-solid transition-all cursor-pointer duration-200`}
-                to={getPageUrl(page)}
                 aria-current={isActive ? "page" : undefined}
                 onClick={(e) => handleNavigate(e, page)}
               >
                 {page}
-              </Link>
+              </button>
             </li>
           );
         })}
 
         {/* Next button */}
         <li>
-          <Link
+          <button
             className={`flex gap-1 items-center px-3 py-2 text-sm font-medium no-underline bg-transparent rounded-md border border-transparent border-solid transition-all ${
-              currentPage >= totalPages ? "text-zinc-300 cursor-not-allowed" : "text-zinc-500 cursor-pointer"
+              activePage >= totalPages 
+                ? "text-zinc-300 cursor-not-allowed" 
+                : "text-zinc-500 hover:text-zinc-700 cursor-pointer"
             } duration-200`}
-            to={currentPage >= totalPages ? "#" : getPageUrl(currentPage + 1)}
+            disabled={activePage >= totalPages}
             aria-label="Go to next page"
             onClick={(e) => {
-              if (currentPage >= totalPages) {
-                e.preventDefault();
-              } else {
-                handleNavigate(e, currentPage + 1);
+              if (activePage < totalPages) {
+                handleNavigate(e, activePage + 1);
               }
             }}
           >
@@ -182,7 +197,7 @@ function Pagination({ totalPages = 10, basePath = "product/all", onPageChange })
             >
               <path d="M9 18l6-6-6-6" />
             </svg>
-          </Link>
+          </button>
         </li>
       </ul>
     </div>

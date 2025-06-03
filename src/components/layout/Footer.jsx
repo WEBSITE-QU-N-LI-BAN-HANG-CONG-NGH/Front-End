@@ -69,7 +69,6 @@ const FooterCopyright = () => {
 };
 
 const Footer = () => {
-  const informationLinks = ["Báo cáo vấn đề"];
   const componentsLinks = ["CPU", "Ổ cứng", "Card đồ họa", "Vỏ case/ Nguồn", "RAM", "Tai nghe / Loa", "Bàn phím / Chuột"];
   const desktopLinks = ["Custom PC", "MSI All-In-One PC", "HP/Compaq PC", "AUS PC", "Tecs PC"];
   const phoneLinks = ["iPhone series", "Oppo", "Xiaomi", "Samsung", "Vivo", "Gaming phone"];
@@ -80,13 +79,12 @@ const Footer = () => {
     <footer className="bg-black text-gray-300">
       <div className="container mx-auto px-6 py-12 md:py-16">
         {/* Phần các cột link */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-6 gap-y-10 mb-10">
+        <div className="grid grid-cols- sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-x-20 gap-y-10 mb-10">
           <FooterLinkSection title="Linh kiện" links={componentsLinks} pathPrefix="/components" />
           <FooterLinkSection title="Máy tính bàn" links={desktopLinks} pathPrefix="/desktop" />
           <FooterLinkSection title="Điện thoại" links={phoneLinks} pathPrefix="/phone" />
           <FooterLinkSection title="Laptop" links={laptopLinks} pathPrefix="/laptop" />
           <FooterLinkSection title="Phụ kiện" links={accessoryLinks} pathPrefix="/accessories" />
-          <FooterLinkSection title="Liên hệ" links={informationLinks} pathPrefix="/information" />
         </div>
 
         {/* Đường kẻ ngang */}

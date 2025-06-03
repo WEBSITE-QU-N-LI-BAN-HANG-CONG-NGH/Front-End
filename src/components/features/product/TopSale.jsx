@@ -1,4 +1,3 @@
-// src/components/features/product/FlashSale.jsx
 import React, { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import { productService } from "../../../services/product.service";
@@ -9,16 +8,15 @@ const formatPrice = (price) => {
   return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 };
 
-const FlashSale = () => {
+
+const TopSale = () => {
   const [products, setProducts] = useState([]);
   const navigate = useNavigate(); // Khởi tạo useNavigate
 
   const fetchProducts = async () => {
     try {
       const filterPayload = {
-        sort: "discount" || undefined,
-        // sort: "price_low" || undefined,
-        // sort: "newest" || undefined,
+        sort: "price_low" || undefined,
       };
       const response = await productService.getProductByFilter(filterPayload);
       setProducts(response.data.slice(0, 5)); // Vẫn giữ nguyên lấy 6 sản phẩm
@@ -35,7 +33,7 @@ const FlashSale = () => {
     <div className="flex flex-col w-full max-md:max-w-full px-4"> {/* Thêm px-4 để có khoảng trống hai bên */}
       <div className="flex flex-wrap gap-5 justify-between items-center mb-2 mt-5 max-md:max-w-full"> {/* Giảm mb, thêm items-center */}
         <div className="text-2xl font-semibold text-black">
-          FLASH SALE
+          TOP SALE 
         </div>
         <a
           href="/product/all" // Cân nhắc dùng Link của react-router-dom nếu đây là SPA
@@ -81,4 +79,4 @@ const FlashSale = () => {
   );
 };
 
-export default FlashSale;
+export default TopSale;
