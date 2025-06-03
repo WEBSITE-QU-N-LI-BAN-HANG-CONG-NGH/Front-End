@@ -23,6 +23,7 @@
     "autoprefixer": "^9.8.8",
     "axios": "^1.8.4",
     "bootstrap": "^5.3.3",
+    "js-cookie": "^3.0.5",
     "postcss": "^7.0.39",
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.9",

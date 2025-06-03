@@ -88,50 +88,66 @@ const Checkout = () => {
     }, [step, locationHook.search, queryParams, fetchOrderByIdContext, processedOrderId, orderFromContext]); // Thêm queryParams
 
     useEffect(() => {
-        const fetchProvincesAPI = async () => {
-            setIsLoadingProvinces(true);
-            try {
-                const response = await axios.get(`${API_LOCATION_BASE_URL}/p/`);
-                setProvinces(response.data || []);
-            } catch (error) { console.error("Error fetching provinces:", error); setProvinces([]); }
-            finally { setIsLoadingProvinces(false); }
-        };
-        fetchProvincesAPI();
+    const fetchProvinces = async () => {
+        setIsLoadingProvinces(true);
+        try {
+        // 2. & 3. Sửa URL và cách lấy dữ liệu
+        const response = await axios.get(`${API_BASE_URL_LOCATION}/provinces?page=0&size=63`); // Lấy nhiều hơn nếu cần
+        setProvinces(response.data?.data || []); // Lấy từ thuộc tính 'data'
+        } catch (error) {
+        console.error("Error fetching provinces:", error);
+        } finally {
+        setIsLoadingProvinces(false);
+        }
+    };
+    fetchProvinces();
     }, []);
 
     useEffect(() => {
-        if (!selectedProvinceCode) {
-            setDistricts([]); setSelectedDistrictCode('');
-            setWards([]); setSelectedWardCode('');
-            return;
+    if (!selectedProvinceId) {
+        setDistricts([]);
+        setSelectedDistrictId('');
+        setWards([]); // Clear wards as well
+        setSelectedWardId('');
+        return;
+    }
+    const fetchDistricts = async () => {
+        setIsLoadingDistricts(true);
+        setWards([]);
+        setSelectedWardId('');
+        try {
+        // 2. & 3. & 4. Sửa URL, cách lấy dữ liệu và endpoint
+        const response = await axios.get(`${API_BASE_URL_LOCATION}/districts/${selectedProvinceId}?page=0&size=50`);
+        setDistricts(response.data?.data || []); // Lấy từ thuộc tính 'data'
+        } catch (error) {
+        console.error("Error fetching districts:", error);
+        } finally {
+        setIsLoadingDistricts(false);
         }
-        const fetchDistrictsAPI = async () => {
-            setIsLoadingDistricts(true);
-            setWards([]); setSelectedWardCode('');
-            try {
-                const response = await axios.get(`${API_LOCATION_BASE_URL}/p/${selectedProvinceCode}?depth=2`);
-                setDistricts(response.data?.districts || []);
-            } catch (error) { console.error("Error fetching districts:", error); setDistricts([]); }
-            finally { setIsLoadingDistricts(false); }
-        };
-        fetchDistrictsAPI();
-    }, [selectedProvinceCode]);
+    };
+    fetchDistricts();
+    }, [selectedProvinceId]); // Chạy khi selectedProvinceId thay đổi
 
     useEffect(() => {
-        if (!selectedDistrictCode) {
-            setWards([]); setSelectedWardCode('');
-            return;
+    if (!selectedDistrictId) {
+        setWards([]);
+        setSelectedWardId('');
+        return;
+    }
+    const fetchWards = async () => {
+        setIsLoadingWards(true);
+        try {
+            // 2. & 3. & 4. Sửa URL, cách lấy dữ liệu và endpoint
+        const response = await axios.get(`${API_BASE_URL_LOCATION}/wards/${selectedDistrictId}?page=0&size=50`);
+        setWards(response.data?.data || []); // Lấy từ thuộc tính 'data'
+        } catch (error) {
+        console.error("Error fetching wards:", error);
+        } finally {
+        setIsLoadingWards(false);
         }
-        const fetchWardsAPI = async () => {
-            setIsLoadingWards(true);
-            try {
-                const response = await axios.get(`${API_LOCATION_BASE_URL}/d/${selectedDistrictCode}?depth=2`);
-                setWards(response.data?.wards || []);
-            } catch (error) { console.error("Error fetching wards:", error); setWards([]); }
-            finally { setIsLoadingWards(false); }
-        };
-        fetchWardsAPI();
-    }, [selectedDistrictCode]);
+    };
+    fetchWards();
+    }, [selectedDistrictId]); // Chạy khi selectedDistrictId thay đổi
 
     useEffect(() => {
         const searchParams = new URLSearchParams(locationHook.search);
