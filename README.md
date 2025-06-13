@@ -35,36 +35,6 @@ Dự án được xây dựng với các công nghệ hiện đại và phổ bi
     * **ESLint:** Đảm bảo chất lượng và tính nhất quán của mã nguồn.
     * **Heroicons**, **React Icons**: Thư viện icon.
 
-## 🌟 Tính năng nổi bật
-
-* **Xác thực người dùng:**
-    * Đăng ký, Đăng nhập bằng Email & Mật khẩu.
-    * Xác thực OTP qua email khi đăng ký.
-    * Chức năng "Quên mật khẩu".
-    * Đăng nhập nhanh qua **Google** và **GitHub** (OAuth2).
-    * Phân quyền người dùng (customer và seller), tự động chuyển hướng seller sang trang quản trị riêng.
-* **Quản lý sản phẩm:**
-    * Hiển thị danh mục sản phẩm đa cấp (ví dụ: Laptop -> Asus, Dell,...).
-    * Trang chi tiết sản phẩm với thư viện ảnh, thông tin, thông số kỹ thuật.
-    * Hệ thống đánh giá và xếp hạng sản phẩm.
-* **Bộ lọc và Tìm kiếm:**
-    * Thanh tìm kiếm sản phẩm theo từ khóa.
-    * Hệ thống lọc sản phẩm nâng cao theo danh mục con, khoảng giá, màu sắc.
-    * Sắp xếp sản phẩm theo giá, mức độ giảm giá, sản phẩm mới nhất.
-* **Giỏ hàng & Thanh toán:**
-    * Thêm, xóa, cập nhật số lượng sản phẩm trong giỏ hàng.
-    * Quy trình thanh toán (Checkout) nhiều bước:
-        1.  Xem lại giỏ hàng.
-        2.  Chọn hoặc thêm địa chỉ giao hàng mới (tích hợp API tỉnh/thành Việt Nam).
-        3.  Chọn phương thức thanh toán (COD, VNPAY).
-        4.  Hoàn tất và xác nhận đơn hàng.
-* **Quản lý tài khoản người dùng:**
-    * Cập nhật thông tin cá nhân.
-    * Xem lịch sử và trạng thái các đơn hàng đã đặt.
-    * Xem chi tiết từng đơn hàng.
-* **Tích hợp AI:**
-    * **Chatbot** hỗ trợ khách hàng, được cung cấp bởi **Google Gemini API** thông qua một backend Flask riêng.
-
 ## 🚀 Hướng dẫn cài đặt và khởi chạy
 
 ### Yêu cầu hệ thống
@@ -74,36 +44,21 @@ Dự án được xây dựng với các công nghệ hiện đại và phổ bi
 
 ### Các bước cài đặt
 
-1.  **Clone repository về máy của bạn:**
+1.  **Clone repository về máy và di chuyển vào thư mục dự án:**
     ```bash
-    git clone <URL_CUA_REPOSITORY>
+    git clone https://github.com/WEBSITE-QU-N-LI-BAN-HANG-CONG-NGH/FrontEnd-Customer
+    cd FrontEnd-Customer
     ```
 
-2.  **Di chuyển vào thư mục dự án:**
-    ```bash
-    cd website-qu-n-li-ban-hang-cong-ngh/frontend-customer/FrontEnd-Customer-a6f21c717d1c37d42216f0609bb3a196bda68af3
-    ```
 
-3.  **Cài đặt các dependencies:**
+2.  **Cài đặt các dependencies:**
     ```bash
     npm install
     ```
     *(Hoặc `yarn install` nếu bạn dùng Yarn)*
 
-4.  **Tạo file môi trường `.env`:**
 
-    Tạo một file mới tên là `.env` ở thư mục gốc của dự án (cùng cấp với file `package.json`). Sao chép và dán nội dung dưới đây vào file đó.
-
-    ```env
-    # URL của backend Spring Boot chính (quản lý sản phẩm, đơn hàng, người dùng)
-    VITE_API_BASE_URL=http://localhost:8080/api/v1
-
-    # URL của backend Flask cho Chatbot Gemini
-    VITE_CHATBOT_BACKEND_URL=http://localhost:5006/api/chat
-    ```
-    *Lưu ý: Bạn cần đảm bảo các server backend đang chạy ở đúng các địa chỉ và cổng này.*
-
-5.  **Chạy dự án ở chế độ development:**
+3.  **Chạy dự án ở chế độ development:**
     ```bash
     npm run dev
     ```
@@ -147,6 +102,35 @@ src/
 └── main.jsx        # File khởi tạo và render ứng dụng React
 ```
 
+## 🌟 Tính năng nổi bật
+
+* **Xác thực người dùng:**
+    * Đăng ký, Đăng nhập bằng Email & Mật khẩu.
+    * Xác thực OTP qua email khi đăng ký.
+    * Chức năng "Quên mật khẩu".
+    * Đăng nhập nhanh qua **Google** và **GitHub** (OAuth2).
+    * Phân quyền người dùng (customer và seller), tự động chuyển hướng seller sang trang quản trị riêng.
+* **Quản lý sản phẩm:**
+    * Hiển thị danh mục sản phẩm đa cấp (ví dụ: Laptop -> Asus, Dell,...).
+    * Trang chi tiết sản phẩm với thư viện ảnh, thông tin, thông số kỹ thuật.
+    * Hệ thống đánh giá và xếp hạng sản phẩm.
+* **Bộ lọc và Tìm kiếm:**
+    * Thanh tìm kiếm sản phẩm theo từ khóa.
+    * Hệ thống lọc sản phẩm nâng cao theo danh mục con, khoảng giá, màu sắc.
+    * Sắp xếp sản phẩm theo giá, mức độ giảm giá, sản phẩm mới nhất.
+* **Giỏ hàng & Thanh toán:**
+    * Thêm, xóa, cập nhật số lượng sản phẩm trong giỏ hàng.
+    * Quy trình thanh toán (Checkout) nhiều bước:
+        1.  Xem lại giỏ hàng.
+        2.  Chọn hoặc thêm địa chỉ giao hàng mới (tích hợp API tỉnh/thành Việt Nam).
+        3.  Chọn phương thức thanh toán (COD, VNPAY).
+        4.  Hoàn tất và xác nhận đơn hàng.
+* **Quản lý tài khoản người dùng:**
+    * Cập nhật thông tin cá nhân.
+    * Xem lịch sử và trạng thái các đơn hàng đã đặt.
+    * Xem chi tiết từng đơn hàng.
+* **Tích hợp AI:**
+    * **Chatbot** hỗ trợ khách hàng, được cung cấp bởi **Google Gemini API** thông qua một backend Flask riêng.
+
 ---
 
-Hy vọng file README này sẽ giúp bạn và những người khác dễ dàng tiếp cận và phát triển dự án hơn. Chúc bạn có những giờ lập trình vui vẻ!
