@@ -1,9 +1,3 @@
-Chào bạn, tôi đã xem qua toàn bộ cấu trúc dự án của bạn và chuẩn bị một file `README.md` chi tiết. File này không chỉ hướng dẫn cách chạy dự án mà còn giới thiệu tổng quan về các công nghệ và tính năng bạn đã xây dựng.
-
-Bạn có thể sao chép nội dung dưới đây và dán vào file `README.md` trong thư mục gốc của dự án `frontend-customer`.
-
----
-
 # 🚀 Dự án Website Bán Hàng Công Nghệ - Tech Shop
 
 Đây là dự án frontend cho một website thương mại điện tử chuyên bán các sản phẩm công nghệ. Dự án được xây dựng bằng **ReactJS** và **Vite**, tập trung vào việc tạo ra trải nghiệm người dùng hiện đại, nhanh chóng và mượt mà.
