@@ -62,6 +62,7 @@ const Checkout = () => {
     const [orderIdForPostProcessing, setOrderIdForPostProcessing] = useState(null);
     const [orderProcessedForEmailAndCartClear, setOrderProcessedForEmailAndCartClear] = useState(false);
     const [emailSentForOrderId, setEmailSentForOrderId] = useState(null); // Cờ theo dõi email đã gửi
+    const [isProcessingPostOrder, setIsProcessingPostOrder] = useState(false);
 
     useEffect(() => {
         fetchAddresses();
@@ -195,63 +196,46 @@ const Checkout = () => {
 
     useEffect(() => {
         const performPostProcessing = async () => {
+            // Nếu một quá trình đã bắt đầu, không chạy lại
+            if (isProcessingPostOrder) {
+                console.log(`[POST_PROCESSING_EFFECT] Skipped: A process is already running.`);
+                return;
+            }
+
             if (step === 4 && orderIdForPostProcessing && !authIsLoading && !orderProcessedForEmailAndCartClear) {
-                console.log(`[POST_PROCESSING_EFFECT] Triggered. Order ID: ${orderIdForPostProcessing}, authLoading: ${authIsLoading}, processedClear: ${orderProcessedForEmailAndCartClear}, emailSentId: ${emailSentForOrderId}, vnpayStatus: ${vnpayStatus}`);
-                
                 if (orderFromContext && orderFromContext.id?.toString() === orderIdForPostProcessing) {
                     const isVNPaySuccessAndCompleted = orderFromContext.paymentMethod === 'VNPAY' && orderFromContext.paymentStatus === 'COMPLETED';
                     const isCOD = orderFromContext.paymentMethod === 'COD';
 
                     if (isVNPaySuccessAndCompleted || isCOD) {
-                        console.log(`[POST_PROCESSING_EFFECT] Conditions met for order ${orderIdForPostProcessing}. Checking emailSentForOrderId: ${emailSentForOrderId}`);
                         if (emailSentForOrderId !== orderIdForPostProcessing) {
+                            
+                            // ---- BẮT ĐẦU KHÓA ----
+                            setIsProcessingPostOrder(true);
+                            
                             try {
                                 console.log(`[POST_PROCESSING_EFFECT] ATTEMPTING TO SEND EMAIL AND CLEAR CART for order ${orderIdForPostProcessing}`);
                                 
                                 await orderService.sendOrderToEmail(orderIdForPostProcessing);
                                 showToast("Thông tin đơn hàng đã được gửi qua email.", "success");
-                                setEmailSentForOrderId(orderIdForPostProcessing); // Đánh dấu đã gửi email
-                                console.log(`[POST_PROCESSING_EFFECT] Email sent. Set emailSentForOrderId to ${orderIdForPostProcessing}`);
+                                setEmailSentForOrderId(orderIdForPostProcessing);
 
                                 await clearCartContext();
                                 showToast("Giỏ hàng đã được xóa.", "info");
                                 
-                                setOrderProcessedForEmailAndCartClear(true); // Đánh dấu toàn bộ quá trình xong
-                                console.log(`[POST_PROCESSING_EFFECT] Cart cleared. Set orderProcessedForEmailAndCartClear to true`);
+                                setOrderProcessedForEmailAndCartClear(true);
                             } catch (error) {
                                 console.error(`[POST_PROCESSING_EFFECT] Error during post-processing for order ${orderIdForPostProcessing}:`, error);
                                 const errorMessage = error.message || "Lỗi khi hoàn tất các bước cuối của đơn hàng.";
                                 showToast(errorMessage, "error");
-                                // Nếu gửi mail hoặc clear cart lỗi, không nên reset emailSentForOrderId nếu mail đã gửi thành công trước đó.
-                                // Chỉ reset orderProcessedForEmailAndCartClear nếu muốn thử lại toàn bộ (cẩn thận spam mail)
-                                // Hiện tại, nếu có lỗi, chúng ta vẫn để orderProcessedForEmailAndCartClear là false (do chưa set true)
-                                // và emailSentForOrderId có thể đã được set hoặc chưa.
-                                // Cần một logic rõ ràng hơn nếu muốn retry.
-                            }
-                        } else {
-                            console.log(`[POST_PROCESSING_EFFECT] Email already marked as sent for ${orderIdForPostProcessing}. Ensuring cart is cleared.`);
-                            // Email đã gửi, chỉ cần đảm bảo giỏ hàng đã được xóa
-                            if (!orderProcessedForEmailAndCartClear) { // Kiểm tra lại cờ này
-                                try {
-                                    await clearCartContext();
-                                    setOrderProcessedForEmailAndCartClear(true);
-                                } catch (cartError) {
-                                    console.error("[POST_PROCESSING_EFFECT] Error clearing cart (when email already sent):", cartError);
-                                    showToast("Lỗi làm trống giỏ hàng (kiểm tra lại).", "error");
-                                }
+                            } finally {
+                                // ---- MỞ KHÓA ----
+                                setIsProcessingPostOrder(false);
                             }
                         }
-                    } else {
-                         console.log(`[POST_PROCESSING_EFFECT] Order ${orderIdForPostProcessing} status not ready for post-processing. Method: ${orderFromContext.paymentMethod}, Status: ${orderFromContext.paymentStatus}`);
                     }
                 } else if (!orderFromContext && !isOrderContextLoadingGlobal) {
-                    console.warn(`[POST_PROCESSING_EFFECT] Order context not loaded for ${orderIdForPostProcessing}. Fetching details.`);
                     fetchOrderByIdContext(orderIdForPostProcessing);
-                } else if (orderFromContext && orderFromContext.id?.toString() !== orderIdForPostProcessing) {
-                     console.warn(`[POST_PROCESSING_EFFECT] Order context ID ${orderFromContext.id} MISMATCH with orderIdForPostProcessing ${orderIdForPostProcessing}. Fetching correct order.`);
-                    fetchOrderByIdContext(orderIdForPostProcessing);
-                } else if (isOrderContextLoadingGlobal) {
-                    console.log(`[POST_PROCESSING_EFFECT] Order context is loading for ${orderIdForPostProcessing}. Waiting.`);
                 }
             }
         };
@@ -263,12 +247,13 @@ const Checkout = () => {
         orderIdForPostProcessing,
         authIsLoading,
         orderProcessedForEmailAndCartClear,
-        emailSentForOrderId, // Quan trọng
+        emailSentForOrderId,
         orderFromContext,
         isOrderContextLoadingGlobal,
         fetchOrderByIdContext,
         clearCartContext,
-        showToast
+        showToast,
+        isProcessingPostOrder 
     ]);
 
     const handleShippingChange = (e) => { const { name, value } = e.target; setShippingInfo(prev => ({ ...prev, [name]: value })); };
