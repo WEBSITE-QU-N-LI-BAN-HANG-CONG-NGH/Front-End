@@ -32,7 +32,7 @@ const Home = () => {
   }
 
   return (
-    <div className="flex overflow-hidden flex-col pt-3 bg-white mr-50">
+    <div className="flex overflow-hidden flex-col pt-3 bg-white mr-33">
       <div className="flex flex-col items-center self-end mt-3 w-full max-w-[1652px] max-md:mr-2 max-md:max-w-full">
         <Slider />
         <FlashSale />
