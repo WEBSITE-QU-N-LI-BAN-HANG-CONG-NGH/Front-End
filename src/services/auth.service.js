@@ -4,6 +4,7 @@ import { API_BASE_URL } from "../config/ApiConfig";
 import { api } from "../config/ApiConfig";
 import {
     getRefreshTokenFromCookie,
+    getTokenFromLocalStorage,
 } from "./util";
 
 export const authService = {
@@ -109,5 +110,15 @@ export const authService = {
         } catch (error) {
             throw error;
         }
-    }
+    },
+
+    changeRoleToSeller: async () => {
+        try {
+            const response = await api.post(`${API_BASE_URL}/users/change-role`, { role: 'SELLER' });
+            return response;
+        } catch (error) {
+            console.error("Lỗi khi đổi vai trò thành Seller:", error.response?.data || error.message);
+            throw error;
+        }
+    },
 };

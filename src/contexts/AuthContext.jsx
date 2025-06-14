@@ -152,6 +152,23 @@ export const AuthProvider = ({ children }) => {
   }, [fetchUserProfileInternal]);
 
 
+  const upgradeToSellerAndLogout = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await authService.changeRoleToSeller();
+      alert("Nâng cấp thành Người bán thành công! Vui lòng đăng nhập lại để truy cập trang quản lý.");
+
+      await logout();
+
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || "Nâng cấp tài khoản thất bại.";
+      setError(errorMessage);
+      setIsLoading(false);
+      throw err;
+    }
+  };
+
   const value = {
     user,
     jwt,
@@ -161,6 +178,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    upgradeToSellerAndLogout,
     fetchUserProfile: useCallback(() => { // Bọc trong useCallback nếu fetchUserProfileInternal là callback
         if(jwt) return fetchUserProfileInternal(jwt);
         return Promise.resolve();
