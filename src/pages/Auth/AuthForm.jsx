@@ -27,10 +27,13 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Github from "@mui/icons-material/GitHub";
 import Google from "@mui/icons-material/Google";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 const AuthForms = ({ handleClose }) => {
   const [showLoginForm, setShowLoginForm] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login, register, isAuthenticated, isLoading: authIsLoading, error: authError, clearAuthError } = useAuthContext();
+
 
   const toggleForm = () => {
     setShowLoginForm(!showLoginForm);
@@ -136,8 +139,8 @@ function LoginForm({
 
   const handleTogglePassword = (e) => { e.stopPropagation(); setShowPassword(!showPassword); };
   const handleForgotPasswordClick = (e) => { e.preventDefault(); e.stopPropagation(); if (onForgotPasswordClick) onForgotPasswordClick(); };
-  const handleGoogleLogin = (e) => { e.stopPropagation(); window.location.href = 'http://localhost:8080/oauth2/authorization/google'; };
-  const handleGitHubLogin = (e) => { e.stopPropagation(); window.location.href = 'http://localhost:8080/oauth2/authorization/github'; };
+  const handleGoogleLogin = (e) => { e.stopPropagation(); window.location.href = `${BACKEND_URL}/oauth2/authorization/google`; };
+  const handleGitHubLogin = (e) => { e.stopPropagation(); window.location.href = `${BACKEND_URL}/oauth2/authorization/github`; };
 
   return (
     <Card sx={{ maxWidth: 400, width: '100%', mx: "auto", p: { xs: 2, sm: 3 }, boxShadow: { xs: 0, sm: 3 } }} onClick={(e) => e.stopPropagation()}>
@@ -335,8 +338,8 @@ function RegisterForm({
   };
 
   const handleBackToDetails = () => { setActiveStep(0); setStatusMessage(""); clearAuthError(); setFormErrors({}); };
-  const handleGoogleSignUp = (e) => { e.stopPropagation(); window.location.href = 'http://localhost:8080/oauth2/authorization/google'; };
-  const handleGitHubSignUp = (e) => { e.stopPropagation(); window.location.href = 'http://localhost:8080/oauth2/authorization/github'; };
+  const handleGoogleSignUp = (e) => { e.stopPropagation(); window.location.href = `${BACKEND_URL}/oauth2/authorization/google`; };
+  const handleGitHubSignUp = (e) => { e.stopPropagation(); window.location.href = `${BACKEND_URL}/oauth2/authorization/github`; };
 
   return (
     <Card sx={{ width: "100%", mx: "auto", boxShadow: 0 }} onClick={(e) => e.stopPropagation()}>

@@ -2,7 +2,9 @@ import axios from "axios";
 import { authService } from "../services/auth.service";
 import { getTokenFromLocalStorage, removeTokenFromLocalStorage } from "../services/util";
 
-export const API_BASE_URL = 'http://localhost:8080/api/v1';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+
+export const API_BASE_URL = `${BACKEND_URL}/api/v1` || "http://localhost:8080/api/v1";
 
 export const api = axios.create({
     baseURL: API_BASE_URL,
