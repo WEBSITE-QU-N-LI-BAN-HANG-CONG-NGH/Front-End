@@ -1,74 +1,82 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CircularProgress, Typography, Box, Alert } from '@mui/material';
-import { useAuthContext } from '../../contexts/AuthContext'; // Sử dụng AuthContext
-import { saveTokenToLocalStorage, getTokenFromLocalStorage } from '../../services/util'; // getToken có thể không cần ở đây nữa
+import { useAuthContext } from '../../contexts/AuthContext';
+import { saveTokenToLocalStorage } from '../../services/util';
 
 const OAuthRedirect = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  // Lấy hàm setAuthTokenAndFetchUser (hoặc tên tương tự) từ AuthContext
-  // Giả sử bạn đã tạo hàm này trong AuthContext để xử lý token từ bên ngoài
   const { setAuthTokenAndFetchUser } = useAuthContext();
 
-  const [status, setStatus] = useState('loading'); // 'loading', 'success', 'error'
+  const [status, setStatus] = useState('loading');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    console.log('OAuthRedirect mounted');
+    console.log('Current location:', location);
+    console.log('Search params:', location.search);
+
     const handleOAuthRedirect = async () => {
-      const params = new URLSearchParams(location.search);
-      const token = params.get('token');
-      const oauthError = params.get('error');
+      try {
+        const params = new URLSearchParams(location.search);
+        const token = params.get('token');
+        const oauthError = params.get('error');
 
-      if (oauthError) {
-        // Xử lý lỗi từ server OAuth
-        console.error("Lỗi OAuth từ backend:", oauthError);
-        setStatus('error');
-        setErrorMessage(`Đăng nhập thất bại: ${oauthError}`);
-        setTimeout(() => navigate('/'), 3000); // Chuyển hướng về trang chủ sau 3 giây
-        return;
-      }
+        console.log('Token from URL:', token);
+        console.log('Error from URL:', oauthError);
 
-      if (token) {
-        // Nếu có token, xử lý nó
-        try {
-          if (typeof setAuthTokenAndFetchUser === 'function') {
-            // Gọi hàm từ AuthContext để lưu token và fetch user
-            await setAuthTokenAndFetchUser(token);
-            setStatus('success');
-            // AuthContext sẽ xử lý việc cập nhật isAuthenticated và user
-            // Sau đó, useEffect trong các component khác (ví dụ Header, AuthForms)
-            // sẽ nhận biết sự thay đổi và có thể tự động đóng modal hoặc cập nhật UI
-            setTimeout(() => {
-              navigate('/'); // Chuyển hướng về trang chủ
-            }, 1500); // Đợi một chút để người dùng thấy thông báo
-          } else {
-            // Fallback nếu hàm trong context chưa sẵn sàng (cần kiểm tra lại AuthContext)
-            console.error("Hàm setAuthTokenAndFetchUser không tồn tại trong AuthContext.");
-            saveTokenToLocalStorage(token); // Lưu tạm token
-            setStatus('success'); // Vẫn báo thành công ở UI
-            setTimeout(() => {
-              window.location.href = '/'; // Reload để AuthProvider đọc token từ localStorage
-            }, 1500);
-          }
-        } catch (e) {
-          // Xử lý lỗi trong quá trình set token hoặc fetch user
-          console.error("Lỗi khi xử lý token hoặc fetch user:", e);
+        if (oauthError) {
+          console.error("OAuth error from backend:", oauthError);
           setStatus('error');
-          setErrorMessage('Có lỗi xảy ra khi xử lý thông tin đăng nhập.');
+          setErrorMessage(`Đăng nhập thất bại: ${oauthError}`);
+          setTimeout(() => navigate('/'), 3000);
+          return;
+        }
+
+        if (token) {
+          console.log('Processing token...');
+          setStatus('loading');
+          
+          try {
+            // Lưu token vào localStorage trước
+            saveTokenToLocalStorage(token);
+            
+            if (setAuthTokenAndFetchUser && typeof setAuthTokenAndFetchUser === 'function') {
+              console.log('Calling setAuthTokenAndFetchUser...');
+              await setAuthTokenAndFetchUser(token);
+            } else {
+              console.warn('setAuthTokenAndFetchUser not available, using fallback');
+            }
+            
+            setStatus('success');
+            console.log('OAuth success, redirecting to home...');
+            
+            setTimeout(() => {
+              navigate('/');
+            }, 1500);
+            
+          } catch (error) {
+            console.error("Error processing token:", error);
+            setStatus('error');
+            setErrorMessage('Có lỗi xảy ra khi xử lý thông tin đăng nhập.');
+            setTimeout(() => navigate('/'), 3000);
+          }
+        } else {
+          console.error("No token found in URL");
+          setStatus('error');
+          setErrorMessage('Không tìm thấy thông tin xác thực.');
           setTimeout(() => navigate('/'), 3000);
         }
-      } else {
-        // Không tìm thấy token
-        console.error("Không tìm thấy tham số 'token' trong URL redirect.");
+      } catch (error) {
+        console.error("Unexpected error in handleOAuthRedirect:", error);
         setStatus('error');
-        setErrorMessage('Thông tin đăng nhập không hợp lệ từ máy chủ.');
+        setErrorMessage('Có lỗi không mong muốn xảy ra.');
         setTimeout(() => navigate('/'), 3000);
       }
     };
 
     handleOAuthRedirect();
-    // Dependencies: navigate, location.search và hàm từ context
   }, [navigate, location.search, setAuthTokenAndFetchUser]);
 
   return (
@@ -78,35 +86,43 @@ const OAuthRedirect = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        minHeight: '80vh', // Chiều cao tối thiểu để căn giữa trang
+        minHeight: '80vh',
         padding: 3,
+        backgroundColor: '#f5f5f5',
       }}
     >
       {status === 'loading' && (
         <>
-          <CircularProgress size={60} thickness={4} />
-          <Typography variant="h6" sx={{ mt: 4 }}>
+          <CircularProgress size={60} thickness={4} color="primary" />
+          <Typography variant="h6" sx={{ mt: 4, color: 'text.secondary' }}>
             Đang xác thực...
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1, color: 'text.disabled' }}>
+            Vui lòng đợi trong giây lát
           </Typography>
         </>
       )}
 
       {status === 'success' && (
-        <Alert
-          severity="success"
-          sx={{ width: '100%', maxWidth: 500, marginTop: 2 }}
-        >
-          Xác thực thành công! Đang chuyển hướng...
-        </Alert>
+        <>
+          <Alert
+            severity="success"
+            sx={{ width: '100%', maxWidth: 500, marginTop: 2 }}
+          >
+            Xác thực thành công! Đang chuyển hướng về trang chủ...
+          </Alert>
+        </>
       )}
 
       {status === 'error' && (
-        <Alert
-          severity="error"
-          sx={{ width: '100%', maxWidth: 500, marginTop: 2 }}
-        >
-          {errorMessage || 'Đã có lỗi xảy ra.'}. Đang chuyển hướng...
-        </Alert>
+        <>
+          <Alert
+            severity="error"
+            sx={{ width: '100%', maxWidth: 500, marginTop: 2 }}
+          >
+            {errorMessage || 'Đã có lỗi xảy ra.'} Đang chuyển hướng về trang chủ...
+          </Alert>
+        </>
       )}
     </Box>
   );
