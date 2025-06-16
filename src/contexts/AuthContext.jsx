@@ -68,26 +68,25 @@ export const AuthProvider = ({ children }) => {
         saveTokenToLocalStorage(accessToken);
         setJwt(accessToken);
 
-        // Get user data from response
         const responseData = response.data.data || response.data;
         const userFromLogin = responseData.user || responseData;
 
-        // Check seller role before setting user state
         const roles = userFromLogin?.roles ||
             (userFromLogin?.authorities?.map(auth => auth.authority.replace("ROLE_", ""))) ||
             [];
 
-        // Check if user is seller
         if (roles.includes("SELLER") || userFromLogin?.role === "SELLER") {
           console.log("Seller detected, redirecting to seller app");
 
-          // Redirect to seller app with token
-          const sellerUrl = `${urlSeller}/dashboard?token=${encodeURIComponent(accessToken)}`;
-          window.location.href = sellerUrl;
-          return; // Exit early, don't continue customer flow
+          const sellerRedirectUrl = new URL(urlSeller);
+          sellerRedirectUrl.pathname = '/dashboard'; // Đặt đường dẫn
+          sellerRedirectUrl.searchParams.set('token', accessToken); // Thêm token an toàn
+
+          window.location.href = sellerRedirectUrl.href;
+          
+          return; 
         }
 
-        // Continue normal customer flow
         await fetchUserProfileInternal(accessToken);
       } else {
         throw new Error("Đăng nhập thành công nhưng không nhận được token.");
