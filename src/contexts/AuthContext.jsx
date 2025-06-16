@@ -10,6 +10,8 @@ import {
 
 const AuthContext = createContext(null);
 
+const urlSeller = import.meta.env.VITE_SELLER_URL || "http://localhost:5174";
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [jwt, setJwt] = useState(getTokenFromLocalStorage());
@@ -80,7 +82,7 @@ export const AuthProvider = ({ children }) => {
           console.log("Seller detected, redirecting to seller app");
 
           // Redirect to seller app with token
-          const sellerUrl = `http://localhost:5174/dashboard?token=${encodeURIComponent(accessToken)}`;
+          const sellerUrl = `${urlSeller}/dashboard?token=${encodeURIComponent(accessToken)}`;
           window.location.href = sellerUrl;
           return; // Exit early, don't continue customer flow
         }
