@@ -10,47 +10,77 @@ import {
 
 const AuthContext = createContext(null);
 
-const urlSeller = import.meta.env.VITE_SELLER_URL || "http://localhost:5174";
+// Helper function to clean and validate seller URL
+const cleanSellerUrl = (url) => {
+  if (!url) return "http://localhost:5174";
+  
+  // Remove trailing slash if exists
+  url = url.replace(/\/$/, '');
+  
+  // Add protocol if missing
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`;
+  }
+  
+  return url;
+};
+
+const urlSeller = cleanSellerUrl(import.meta.env.VITE_SELLER_URL || "http://localhost:5174");
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [jwt, setJwt] = useState(getTokenFromLocalStorage());
-  const [isLoading, setIsLoading] = useState(true); // Ban đầu là true để checkAuthStatus chạy
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchUserProfileInternal = useCallback(async (currentToken) => {
     if (!currentToken) {
       setUser(null);
       setJwt(null);
-      // setError(null); // Không nên reset lỗi ở đây nếu không muốn mất lỗi từ login/register
       return;
     }
-    // Không setIsLoading ở đây để tránh nhấp nháy khi chỉ fetch user sau khi đã có token
+
     try {
       const response = await authService.getUserProfile();
-      setUser(response.data?.data || response.data);
+      const userData = response.data?.data || response.data;
+      setUser(userData);
+      console.log("User profile fetched successfully:", userData);
     } catch (err) {
-      console.error("Lỗi khi lấy thông tin người dùng (AuthContext - fetchUserProfileInternal):", err);
-      clearAllTokens();
-      setJwt(null);
-      setUser(null);
-      setError("Phiên làm việc hết hạn hoặc token không hợp lệ.");
+      console.error("Error fetching user profile:", err);
+      
+      // Only clear tokens if it's an authentication error (401)
+      if (err.response?.status === 401) {
+        clearAllTokens();
+        setJwt(null);
+        setUser(null);
+        setError("Session expired. Please login again.");
+      } else {
+        // For other errors, don't clear tokens but log the error
+        console.warn("Non-auth error while fetching profile, keeping tokens");
+        setError("Failed to load user profile. Please try again.");
+      }
     }
   }, []);
-
 
   const checkAuthStatus = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    const token = getTokenFromLocalStorage();
-    if (token) {
-      setJwt(token);
-      await fetchUserProfileInternal(token);
-    } else {
-      setUser(null); // Đảm bảo user là null nếu không có token
-      setJwt(null);
+    
+    try {
+      const token = getTokenFromLocalStorage();
+      if (token) {
+        setJwt(token);
+        await fetchUserProfileInternal(token);
+      } else {
+        setUser(null);
+        setJwt(null);
+      }
+    } catch (err) {
+      console.error("Error checking auth status:", err);
+      setError("Authentication check failed");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [fetchUserProfileInternal]);
 
   useEffect(() => {
@@ -60,110 +90,178 @@ export const AuthProvider = ({ children }) => {
   const login = async (userData) => {
     setIsLoading(true);
     setError(null);
+    
     try {
+      console.log("Attempting login with:", userData);
       const response = await authService.login(userData);
+      console.log("Login response:", response);
+      
       const { accessToken } = extractTokensFromResponse(response);
 
-      if (accessToken) {
-        saveTokenToLocalStorage(accessToken);
-        setJwt(accessToken);
-
-        const responseData = response.data.data || response.data;
-        const userFromLogin = responseData.user || responseData;
-
-        const roles = userFromLogin?.roles ||
-            (userFromLogin?.authorities?.map(auth => auth.authority.replace("ROLE_", ""))) ||
-            [];
-
-        if (roles.includes("SELLER") || userFromLogin?.role === "SELLER") {
-          console.log("Seller detected, redirecting to seller app");
-
-          const sellerRedirectUrl = new URL(urlSeller);
-          sellerRedirectUrl.pathname = '/dashboard'; // Đặt đường dẫn
-          sellerRedirectUrl.searchParams.set('token', accessToken); // Thêm token an toàn
-
-          window.location.href = sellerRedirectUrl.href;
-          
-          return; 
-        }
-
-        await fetchUserProfileInternal(accessToken);
-      } else {
-        throw new Error("Đăng nhập thành công nhưng không nhận được token.");
+      if (!accessToken) {
+        throw new Error("No access token received from login response");
       }
-      setIsLoading(false);
+
+      saveTokenToLocalStorage(accessToken);
+      setJwt(accessToken);
+
+      const responseData = response.data?.data || response.data;
+      const userFromLogin = responseData.user || responseData;
+
+      // Extract roles safely
+      const roles = userFromLogin?.roles || 
+                   (userFromLogin?.authorities?.map(auth => 
+                     auth.authority?.replace("ROLE_", "") || auth
+                   )) || 
+                   [];
+
+      console.log("User roles:", roles);
+
+      // Check if user is a seller
+      if (roles.includes("SELLER") || userFromLogin?.role === "SELLER") {
+        console.log("Seller detected, redirecting to seller app");
+        
+        try {
+          // Construct seller URL safely
+          const sellerUrl = new URL(urlSeller);
+          sellerUrl.pathname = '/dashboard';
+          sellerUrl.searchParams.set('token', accessToken);
+          
+          console.log("Redirecting to:", sellerUrl.href);
+          window.location.href = sellerUrl.href;
+          return;
+        } catch (urlError) {
+          console.error("Error constructing seller URL:", urlError);
+          setError("Failed to redirect to seller dashboard. Invalid seller URL configuration.");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // For regular users, fetch profile
+      await fetchUserProfileInternal(accessToken);
+      
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Đăng nhập thất bại.";
+      console.error("Login error:", err);
+      
+      let errorMessage = "Login failed. Please try again.";
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       setUser(null);
       setJwt(null);
-      setIsLoading(false);
+      clearAllTokens();
+      
       throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const register = async (userData) => {
     setIsLoading(true);
     setError(null);
+    
     try {
-      await authService.register(userData);
-      // Sau khi đăng ký thành công (thường là chỉ gửi OTP), không tự động login ở đây
-      // Việc login sẽ xảy ra sau khi xác thực OTP thành công trong RegisterForm
+      console.log("Attempting registration with:", userData);
+      const response = await authService.register(userData);
+      console.log("Registration response:", response);
+      
+      // Registration successful - usually just sends OTP
+      // Don't auto-login here, wait for OTP verification
+      
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Đăng ký thất bại.";
+      console.error("Registration error:", err);
+      
+      let errorMessage = "Registration failed. Please try again.";
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
-      throw err; // Ném lỗi để RegisterForm xử lý
+      throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = async () => {
-    // Không cần setIsLoading(true) vì đây là hành động nhanh và chủ động từ người dùng
     setError(null);
+    
     try {
       await authService.logout();
+      console.log("Logout API call successful");
     } catch (err) {
-      console.error("Lỗi trong quá trình gọi API logout (có thể bỏ qua):", err);
+      console.error("Logout API error (can be ignored):", err);
     } finally {
+      // Always clear local state regardless of API call result
       clearAllTokens();
       setUser(null);
       setJwt(null);
-      // Không cần setIsLoading(false)
+      
+      // Redirect to home page if not already there
       if (window.location.pathname !== '/') {
-         window.location.href = "/"; // Chuyển hướng về trang chủ
+        window.location.href = "/";
       }
     }
   };
 
   const setAuthTokenAndFetchUser = useCallback(async (token) => {
-    setIsLoading(true); // Bắt đầu loading khi set token mới
+    setIsLoading(true);
     setError(null);
-    if (token) {
-      saveTokenToLocalStorage(token);
-      setJwt(token);
-      await fetchUserProfileInternal(token);
-    } else {
-      clearAllTokens();
-      setJwt(null);
-      setUser(null);
-      setError("Không nhận được token xác thực hợp lệ.");
+    
+    try {
+      if (token) {
+        saveTokenToLocalStorage(token);
+        setJwt(token);
+        await fetchUserProfileInternal(token);
+      } else {
+        clearAllTokens();
+        setJwt(null);
+        setUser(null);
+        setError("Invalid authentication token received");
+      }
+    } catch (err) {
+      console.error("Error setting auth token:", err);
+      setError("Failed to authenticate with provided token");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false); // Kết thúc loading
   }, [fetchUserProfileInternal]);
-
 
   const upgradeToSellerAndLogout = async () => {
     setIsLoading(true);
     setError(null);
+    
     try {
       await authService.changeRoleToSeller();
-      alert("Nâng cấp thành Người bán thành công! Vui lòng đăng nhập lại để truy cập trang quản lý.");
-
+      console.log("Role upgrade successful");
+      
+      // Show success message
+      alert("Successfully upgraded to Seller! Please login again to access the seller dashboard.");
+      
+      // Logout after successful upgrade
       await logout();
-
+      
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Nâng cấp tài khoản thất bại.";
+      console.error("Role upgrade error:", err);
+      
+      let errorMessage = "Failed to upgrade account. Please try again.";
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       setIsLoading(false);
       throw err;
@@ -175,14 +273,16 @@ export const AuthProvider = ({ children }) => {
     jwt,
     isLoading,
     error,
-    isAuthenticated: !!jwt && !!user, // User phải tồn tại và có JWT
+    isAuthenticated: !!jwt && !!user,
     login,
     register,
     logout,
     upgradeToSellerAndLogout,
-    fetchUserProfile: useCallback(() => { // Bọc trong useCallback nếu fetchUserProfileInternal là callback
-        if(jwt) return fetchUserProfileInternal(jwt);
-        return Promise.resolve();
+    fetchUserProfile: useCallback(() => {
+      if (jwt) {
+        return fetchUserProfileInternal(jwt);
+      }
+      return Promise.resolve();
     }, [jwt, fetchUserProfileInternal]),
     checkAuthStatus,
     clearAuthError: () => setError(null),
