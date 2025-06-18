@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Cookies from "js-cookie";
-import { v4 as uuidv4 } from 'uuid'; // Thư viện để tạo ID duy nhất
+import { v4 as uuidv4 } from 'uuid';
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([
@@ -11,7 +11,7 @@ const ChatBot = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // --- THAY ĐỔI 1: Lấy hoặc tạo Sender ID cho Rasa ---
+
   const getSenderId = () => {
     let senderId = Cookies.get('rasa_sender_id');
     if (!senderId) {
@@ -21,7 +21,7 @@ const ChatBot = () => {
     return senderId;
   };
 
-  // --- LOGIC LƯU VÀ TẢI LỊCH SỬ CHAT (GIỮ NGUYÊN) ---
+
   useEffect(() => {
     const storedMessages = Cookies.get('tech_shop_rasa_chat_history'); 
     if (storedMessages) {
@@ -63,13 +63,13 @@ const ChatBot = () => {
     setIsTyping(true);
 
     try {
-      // URL của Rasa server (REST channel)
+ 
       const backendUrl = import.meta.env.VITE_RASA_BACKEND_URL || "http://localhost:5005/webhooks/rest/webhook";
       
       const response = await fetch(backendUrl, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Định dạng body request theo yêu cầu của Rasa
+
         body: JSON.stringify({ 
           sender: senderId,
           message: messageToSend
@@ -86,7 +86,7 @@ const ChatBot = () => {
       
       if (botResponses && Array.isArray(botResponses)) {
         botResponses.forEach(msg => {
-          // Xử lý tin nhắn văn bản
+
           if (msg.text) {
             let formattedText = msg.text
                 .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -131,7 +131,7 @@ const ChatBot = () => {
     ]);
   };
   
-  // --- PHẦN GIAO DIỆN (JSX) - chỉ thay đổi nhỏ ---
+
   return (
     <div className="fixed bottom-4 right-4 z-50 font-sans">
       <button 
